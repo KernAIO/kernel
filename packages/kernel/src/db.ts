@@ -1,0 +1,60 @@
+import path from 'node:path'
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { pgSchema, type PgSchema } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import pg from 'pg'
+import type { Logger } from './logger.js'
+
+export type Db = NodePgDatabase<Record<string, never>>
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
+export type DbOrTx = Db | Tx
+
+export interface Database {
+  db: Db
+  pool: pg.Pool
+  /** Run `fn` in a transaction with RLS context `app.workspace_id` (and `app.user_id`) set for the connection. */
+  withWorkspace<T>(workspaceId: string | null, fn: (tx: Tx) => Promise<T>, opts?: { userId?: string | null }): Promise<T>
+  /** Apply the migrations folder of a module into its own schema (`drizzle` bookkeeping table lives in that schema too). */
+  migrateModule(moduleId: string, migrationsFolder: string): Promise<void>
+  ensureSchema(name: string): Promise<void>
+  close(): Promise<void>
+}
+
+/** Every module gets its own Postgres schema: `mod_<id>`. */
+export const moduleSchema = (moduleId: string): PgSchema => pgSchema(`mod_${moduleId}`)
+export const moduleSchemaName = (moduleId: string) => `mod_${moduleId}`
+
+export function createDatabase(opts: { url: string; max?: number; log: Logger }): Database {
+  const pool = new pg.Pool({ connectionString: opts.url, max: opts.max ?? 20, application_name: 'kern' })
+  pool.on('error', (err) => opts.log.error({ err }, 'pg pool error'))
+  const db = drizzle({ client: pool })
+  return {
+    db,
+    pool,
+    async withWorkspace(workspaceId, fn, o = {}) {
+      return db.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.workspace_id', ${workspaceId ?? ''}, true), set_config('app.user_id', ${o.userId ?? ''}, true)`)
+        return fn(tx)
+      })
+    },
+    async ensureSchema(name) { await db.execute(sql.raw(`create schema if not exists "${name}"`)) },
+    async migrateModule(moduleId, migrationsFolder) {
+      const schema = moduleSchemaName(moduleId)
+      await this.ensureSchema(schema)
+      await migrate(db, { migrationsFolder: path.resolve(migrationsFolder), migrationsSchema: schema, migrationsTable: '__migrations' })
+      opts.log.info({ module: moduleId, schema }, 'migrations applied')
+    },
+    async close() { await pool.end() },
+  }
+}
+
+/** Common column helpers for module schemas. */
+export { sql }
+export const rlsPolicySql = (schema: string, table: string) => `
+alter table "${schema}"."${table}" enable row level security;
+alter table "${schema}"."${table}" force row level security;
+create policy "${table}_ws_isolation" on "${schema}"."${table}"
+  using (workspace_id::text = current_setting('app.workspace_id', true))
+  with check (workspace_id::text = current_setting('app.workspace_id', true));
+`

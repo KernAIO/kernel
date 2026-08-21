@@ -1,0 +1,20 @@
+{
+  "name": "@kernalo/sdk",
+  "version": "0.1.0",
+  "description": "Typed client SDK for the Kern API and realtime WebSocket",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "repository": { "type": "git", "url": "https://github.com/KernALO/kernel", "directory": "packages/sdk" },
+  "publishConfig": { "access": "restricted", "registry": "https://npm.pkg.github.com" },
+  "files": ["dist"],
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": { "@kernalo/contracts": "^0.1.0", "@orpc/client": "^1.15.0", "@orpc/contract": "^1.15.0", "zod": "^4.1.0" },
+  "devDependencies": { "@types/node": "^24.0.0", "typescript": "~5.9.3", "vitest": "^4.0.0" }
+}
