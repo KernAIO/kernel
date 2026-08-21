@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": ".",
+    "types": ["svelte", "node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "svelte.config.js"]
+}

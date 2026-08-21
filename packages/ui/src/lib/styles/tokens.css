@@ -1,0 +1,428 @@
+/* ------------------------------------------------------------------
+   Kern "Ink / Paper" design tokens. Source of truth: repos/app/DESIGN.md
+   Light palette is the shipped design; dark is the proposed counterpart.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  /* paper */
+  --kern-canvas: #e9e6dd;
+  --kern-shell: #f0eee7;
+  --kern-surface: #fbfaf7;
+  --kern-surface-raised: #ffffff;
+  --kern-surface-header: #f7f5ef;
+  --kern-surface-input: #f5f2ea;
+  --kern-surface-popover-hover: #f3f0e8;
+  --kern-surface-hover: #f0ede4;
+  --kern-surface-chip: #efebe1;
+  --kern-surface-switcher-hover: #eae7de;
+  --kern-surface-active: #e9e5db;
+  --kern-surface-card-hover: #efeff1;
+  --kern-surface-planner-hover: #ede9de;
+  /* lines */
+  --kern-border: #e4e0d6;
+  --kern-border-hairline: #eae6dc;
+  --kern-border-strong: #dcd7c9;
+  --kern-border-muted: #d5cfc2;
+  --kern-border-hover: #c8c1b0;
+  --kern-scrollbar: #d5cfc2;
+  --kern-scrollbar-hover: #bdb6a4;
+  --kern-caret: #b5ad9b;
+  --kern-priority-off: #cfc8b8;
+  /* ink */
+  --kern-ink-900: #1c1a17;
+  --kern-ink-800: #2a2721;
+  --kern-ink-700: #3a362e;
+  --kern-ink-650: #413d35;
+  --kern-ink-600: #474339;
+  --kern-ink-580: #4e4940;
+  --kern-ink-550: #575247;
+  --kern-ink-520: #5b564b;
+  --kern-ink-500: #615b4f;
+  --kern-ink-450: #6b6459;
+  --kern-ink-400: #7a7365;
+  --kern-ink-350: #8a8375;
+  --kern-ink-330: #8e8779;
+  --kern-ink-300: #97907f;
+  --kern-ink-280: #9a9285;
+  --kern-ink-250: #a79f8e;
+  --kern-ink-hover: #38332b;
+  --kern-ink-inverse: #fbfaf7;
+  /* accent */
+  --kern-accent: #b4661c;
+  --kern-accent-text: #a85a18;
+  --kern-accent-deep: #8a4512;
+  --kern-accent-tint: #f3e9da;
+  --kern-accent-tint-2: #f5eada;
+  --kern-ring: rgba(180, 102, 28, 0.16);
+  /* semantic */
+  --kern-danger: #a63d26;
+  --kern-danger-tint: #f7deda;
+  --kern-success: #4f7a55;
+  --kern-success-chip: #3d9a63;
+  --kern-success-group: #3d8a5f;
+  --kern-success-tint: #deede4;
+  --kern-success-tint-2: #e8efe8;
+  --kern-success-ink: #3e6144;
+  --kern-info: #3a69b8;
+  --kern-info-bar: #4474c4;
+  --kern-info-tint: #dce6f5;
+  --kern-slate: #4a5c6a;
+  --kern-slate-tint: #eaeef1;
+  --kern-purple: #7a55b5;
+  --kern-purple-status: #6e5a8c;
+  --kern-purple-tint: #e7ddf7;
+  --kern-purple-tint-2: #ede9f3;
+  --kern-purple-ink: #584571;
+  --kern-warning: #b5742a;
+  --kern-warning-tint: #f7e9d8;
+  --kern-neutral-flag: #8a8a8f;
+  /* overlays */
+  --kern-overlay: rgba(0, 0, 0, 0.2);
+  --kern-btn-secondary-bg: rgba(0, 0, 0, 0.02);
+  --kern-btn-secondary-hover: rgba(0, 0, 0, 0.05);
+  --kern-ghost-hover-dark: rgba(0, 0, 0, 0.08);
+  --kern-desk-hover-border: rgba(0, 0, 0, 0.2);
+  /* identity (avatars / projects) */
+  --kern-av-1: #7e6a93;
+  --kern-av-2: #5f7383;
+  --kern-av-3: #b7714e;
+  --kern-av-4: #6e8b62;
+  --kern-av-5: #85947a;
+  --kern-av-6: #b4661c;
+  --kern-av-7: #a05a48;
+  --kern-av-8: #b49a5f;
+  --kern-av-0: #8e8779;
+  --kern-av-fg: #fbfaf7;
+  /* type */
+  --kern-font-sans: "Instrument Sans", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --kern-font-mono: "DM Mono", "Vazir Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* radii */
+  --kern-r-xs: 4px;
+  --kern-r-sm: 5px;
+  --kern-r-md: 6px;
+  --kern-r-md2: 7px;
+  --kern-r-lg: 8px;
+  --kern-r-xl: 9px;
+  --kern-r-2xl: 10px;
+  --kern-r-card: 11px;
+  --kern-r-dialog: 12px;
+  --kern-r-full: 999px;
+  /* layout */
+  --kern-rail-w: 60px;
+  --kern-sidebar-w: 268px;
+  --kern-header-h: 60px;
+  --kern-toolbar-h: 52px;
+  --kern-detail-w: 440px;
+  --kern-inbox-list-w: 380px;
+  --kern-planner-side-w: 300px;
+  --kern-board-col-w: 284px;
+  --kern-bottombar-h: 56px;
+  /* shadows */
+  --kern-shadow-panel: -8px 0 24px #eae6dc;
+  --kern-shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --kern-shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.28);
+  --kern-shadow-toast: 0 8px 24px rgba(0, 0, 0, 0.24);
+  --kern-shadow-segment: 0 1px 2px #d5cfc2;
+  --kern-shadow-avatar-ring: 0 0 0 2px #ffffff;
+  /* motion */
+  --kern-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --kern-dur-fast: 80ms;
+  --kern-dur-panel: 160ms;
+  --kern-dur-fade: 120ms;
+}
+
+/* ---- dark (proposed) — toggled by the app via data-theme on <html> ---- */
+[data-theme="dark"],
+.dark {
+  color-scheme: dark;
+  --kern-canvas: #121110;
+  --kern-shell: #181715;
+  --kern-surface: #1c1a17;
+  --kern-surface-raised: #23211d;
+  --kern-surface-header: #201e1a;
+  --kern-surface-input: #26231f;
+  --kern-surface-popover-hover: #2a2722;
+  --kern-surface-hover: #2a2722;
+  --kern-surface-chip: #2e2b25;
+  --kern-surface-switcher-hover: #262320;
+  --kern-surface-active: #312d27;
+  --kern-surface-card-hover: #2b2926;
+  --kern-surface-planner-hover: #2c2923;
+  --kern-border: #2f2c26;
+  --kern-border-hairline: #292621;
+  --kern-border-strong: #3a362e;
+  --kern-border-muted: #413d35;
+  --kern-border-hover: #5b564b;
+  --kern-scrollbar: #413d35;
+  --kern-scrollbar-hover: #575247;
+  --kern-caret: #6b6459;
+  --kern-priority-off: #4e4940;
+  --kern-ink-900: #f5f2ea;
+  --kern-ink-800: #ede9de;
+  --kern-ink-700: #dcd7c9;
+  --kern-ink-650: #cfc8b8;
+  --kern-ink-600: #c8c1b0;
+  --kern-ink-580: #bdb6a4;
+  --kern-ink-550: #b5ad9b;
+  --kern-ink-520: #a79f8e;
+  --kern-ink-500: #a79f8e;
+  --kern-ink-450: #9a9285;
+  --kern-ink-400: #8e8779;
+  --kern-ink-350: #8a8375;
+  --kern-ink-330: #7a7365;
+  --kern-ink-300: #7a7365;
+  --kern-ink-280: #6b6459;
+  --kern-ink-250: #615b4f;
+  --kern-ink-hover: #e4e0d6;
+  --kern-ink-inverse: #1c1a17;
+  --kern-accent: #c97a2e;
+  --kern-accent-text: #d98a3d;
+  --kern-accent-deep: #e59a52;
+  --kern-accent-tint: #3a2a18;
+  --kern-accent-tint-2: #3e2d1a;
+  --kern-ring: rgba(201, 122, 46, 0.28);
+  --kern-danger: #d2553a;
+  --kern-danger-tint: #3c211c;
+  --kern-success: #6fa076;
+  --kern-success-chip: #5db47f;
+  --kern-success-group: #5db47f;
+  --kern-success-tint: #1f3226;
+  --kern-success-tint-2: #1e2c21;
+  --kern-success-ink: #9cc7a3;
+  --kern-info: #6f95d8;
+  --kern-info-bar: #6f95d8;
+  --kern-info-tint: #1f2a3d;
+  --kern-slate: #9fb0be;
+  --kern-slate-tint: #242c33;
+  --kern-purple: #a88ad9;
+  --kern-purple-status: #a08bc0;
+  --kern-purple-tint: #2e2640;
+  --kern-purple-tint-2: #2a2536;
+  --kern-purple-ink: #c0aedc;
+  --kern-warning: #d59548;
+  --kern-warning-tint: #3a2c1c;
+  --kern-neutral-flag: #8a8a8f;
+  --kern-overlay: rgba(0, 0, 0, 0.5);
+  --kern-btn-secondary-bg: rgba(255, 255, 255, 0.03);
+  --kern-btn-secondary-hover: rgba(255, 255, 255, 0.07);
+  --kern-ghost-hover-dark: rgba(255, 255, 255, 0.1);
+  --kern-desk-hover-border: rgba(255, 255, 255, 0.25);
+  --kern-shadow-panel: -8px 0 24px rgba(0, 0, 0, 0.5);
+  --kern-shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --kern-shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --kern-shadow-toast: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --kern-shadow-segment: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --kern-shadow-avatar-ring: 0 0 0 2px #23211d;
+}
+
+/* ---- RTL flips (logical props cover the rest) ---- */
+[dir="rtl"] {
+  --kern-shadow-panel: 8px 0 24px #eae6dc;
+}
+[dir="rtl"][data-theme="dark"],
+[dir="rtl"] .dark,
+[dir="rtl"].dark {
+  --kern-shadow-panel: 8px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- base ---- */
+html,
+body {
+  background: var(--kern-canvas);
+}
+body {
+  margin: 0;
+  color: var(--kern-ink-700);
+  font-family: var(--kern-font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+a {
+  color: var(--kern-accent-text);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--kern-accent-deep);
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--kern-ring);
+  border-color: var(--kern-accent);
+}
+::selection {
+  background: var(--kern-accent-tint);
+  color: var(--kern-ink-900);
+}
+::placeholder {
+  color: var(--kern-ink-250);
+}
+/* Arabic/Persian script: reset Latin tracking, add line-height */
+:lang(fa),
+:lang(ar) {
+  letter-spacing: 0 !important;
+}
+:lang(fa) body,
+:lang(ar) body,
+:lang(fa) p,
+:lang(ar) p {
+  line-height: 1.7;
+}
+
+/* ---- scrollbars ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--kern-scrollbar) transparent;
+}
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--kern-scrollbar);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--kern-scrollbar-hover);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+/* ---- motion ---- */
+@keyframes kslide {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes kslide-rtl {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes kslide-up {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes kfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes kpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- utility classes (DESIGN.md §7.2) ---- */
+.kern-section-label {
+  font-family: var(--kern-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kern-ink-300);
+}
+.kern-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kern-ink-350);
+}
+.kern-mono-meta {
+  font-family: var(--kern-font-mono);
+  font-size: 11.5px;
+  letter-spacing: -0.01em;
+  color: var(--kern-ink-250);
+}
+.kern-key {
+  font-size: 13px;
+  color: var(--kern-ink-350);
+}
+.kern-hairline {
+  border-bottom: 1px solid var(--kern-border-hairline);
+}
+.kern-ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.kern-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.kern-skip-link {
+  position: fixed;
+  inset-inline-start: 12px;
+  top: -48px;
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-ink-900);
+  color: var(--kern-ink-inverse);
+  font-size: 13px;
+  transition: top 120ms;
+}
+.kern-skip-link:focus {
+  top: 12px;
+}
