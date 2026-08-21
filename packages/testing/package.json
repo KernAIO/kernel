@@ -14,5 +14,5 @@
     "test": "vitest run"
   },
   "dependencies": { "@kernalo/kernel": "^0.1.0", "@testcontainers/postgresql": "^12.1.0", "pg": "^8.16.0", "testcontainers": "^12.1.0" },
-  "devDependencies": { "@types/node": "^24.0.0", "typescript": "~5.9.3", "vitest": "^4.0.0" }
+  "devDependencies": { "@types/node": "^24.0.0", "@types/pg": "^8.15.0", "typescript": "~5.9.3", "vitest": "^4.0.0" }
 }
