@@ -45,7 +45,10 @@ export const Timestamp = z.iso.datetime({ offset: true })
 export type Timestamp = z.infer<typeof Timestamp>
 export const Locale = z.enum(['en', 'fa', 'ar', 'de'])
 export type Locale = z.infer<typeof Locale>
-export const Email = z.email().max(254).transform((s) => s.trim().toLowerCase())
+export const Email = z
+  .email()
+  .max(254)
+  .transform((s) => s.trim().toLowerCase())
 export const Color = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 export const Json = z.json()
 export type Json = z.infer<typeof Json>

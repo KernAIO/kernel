@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { ModuleId, ObjectRef, WorkspaceId } from '../ids.js'
 import { Timestamp } from '../common.js'
+import { ModuleId, ObjectRef, WorkspaceId } from '../ids.js'
 
 export const SearchHit = z.object({
   object: ObjectRef,

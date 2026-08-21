@@ -32,7 +32,11 @@ export const NotificationTypeDef = z.object({
   type: z.string(),
   label: z.string(),
   description: z.string().optional(),
-  defaults: z.object({ inapp: z.boolean().default(true), push: z.boolean().default(true), email: z.boolean().default(false) }),
+  defaults: z.object({
+    inapp: z.boolean().default(true),
+    push: z.boolean().default(true),
+    email: z.boolean().default(false),
+  }),
   /** mention-like → bypasses mute/digest */
   urgent: z.boolean().default(false),
 })
@@ -52,7 +56,16 @@ export const NotificationSettings = z.object({
 })
 
 export const CreateNotification = Notification.pick({
-  userId: true, workspaceId: true, module: true, type: true, title: true, body: true, object: true, url: true, data: true, groupKey: true,
+  userId: true,
+  workspaceId: true,
+  module: true,
+  type: true,
+  title: true,
+  body: true,
+  object: true,
+  url: true,
+  data: true,
+  groupKey: true,
 }).extend({ actorId: UserId.nullable().default(null) })
 export type CreateNotification = z.infer<typeof CreateNotification>
 

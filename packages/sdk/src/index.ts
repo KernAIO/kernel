@@ -1,7 +1,7 @@
+import { type ClientMessage, type CoreContract, coreContract, type ServerMessage } from '@kernalo/contracts'
 import { createORPCClient, onError } from '@orpc/client'
 import { RPCLink } from '@orpc/client/fetch'
 import type { ContractRouterClient } from '@orpc/contract'
-import { type ClientMessage, type CoreContract, type ServerMessage, coreContract } from '@kernalo/contracts'
 
 export type CoreClient = ContractRouterClient<CoreContract>
 export interface KernClientOptions {
@@ -23,7 +23,11 @@ export function createModuleLink(opts: KernClientOptions, module: string) {
       const token = await opts.getToken?.()
       return { ...(opts.headers ?? {}), ...(token ? { authorization: `Bearer ${token}` } : {}) }
     },
-    interceptors: [onError((e: any) => { if (e?.code === 'UNAUTHORIZED') opts.onUnauthorized?.() })],
+    interceptors: [
+      onError((e: any) => {
+        if (e?.code === 'UNAUTHORIZED') opts.onUnauthorized?.()
+      }),
+    ],
   })
 }
 /** Typed client for any module given its contract type. */
@@ -66,14 +70,23 @@ export class RealtimeClient {
     ws.onopen = async () => {
       this.retry = 0
       const token = (await this.opts.getToken()) ?? ''
-      this.send({ t: 'hello', token, clientId: this.opts.clientId ?? cryptoId(), since: this.seq || undefined })
+      this.send({
+        t: 'hello',
+        token,
+        clientId: this.opts.clientId ?? cryptoId(),
+        since: this.seq || undefined,
+      })
       if (this.subs.size) this.send({ t: 'sub', channels: [...this.subs] })
       this.opts.onStatus?.('open')
       this.pingTimer = setInterval(() => this.send({ t: 'ping' }), 25_000)
     }
     ws.onmessage = (ev) => {
       let msg: ServerMessage
-      try { msg = JSON.parse(String(ev.data)) } catch { return }
+      try {
+        msg = JSON.parse(String(ev.data))
+      } catch {
+        return
+      }
       if ('seq' in msg && typeof msg.seq === 'number') this.seq = msg.seq
       this.opts.onMessage(msg)
     }
@@ -86,11 +99,32 @@ export class RealtimeClient {
     }
     ws.onerror = () => ws.close()
   }
-  send(msg: ClientMessage) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(msg)) }
-  subscribe(...channels: string[]) { for (const c of channels) this.subs.add(c); this.send({ t: 'sub', channels }) }
-  unsubscribe(...channels: string[]) { for (const c of channels) this.subs.delete(c); this.send({ t: 'unsub', channels }) }
-  typing(workspaceId: string, channelId: string, threadId?: string) { this.send({ t: 'typing', workspaceId: workspaceId as any, channelId: channelId as any, threadId: threadId as any }) }
-  presence(status: 'online' | 'away' | 'dnd' | 'offline') { this.send({ t: 'presence', status }) }
-  close() { this.closed = true; this.ws?.close() }
+  send(msg: ClientMessage) {
+    if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(msg))
+  }
+  subscribe(...channels: string[]) {
+    for (const c of channels) this.subs.add(c)
+    this.send({ t: 'sub', channels })
+  }
+  unsubscribe(...channels: string[]) {
+    for (const c of channels) this.subs.delete(c)
+    this.send({ t: 'unsub', channels })
+  }
+  typing(workspaceId: string, channelId: string, threadId?: string) {
+    this.send({
+      t: 'typing',
+      workspaceId: workspaceId as any,
+      channelId: channelId as any,
+      threadId: threadId as any,
+    })
+  }
+  presence(status: 'online' | 'away' | 'dnd' | 'offline') {
+    this.send({ t: 'presence', status })
+  }
+  close() {
+    this.closed = true
+    this.ws?.close()
+  }
 }
-const cryptoId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2))
+const cryptoId = () =>
+  globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2)

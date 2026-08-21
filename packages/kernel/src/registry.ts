@@ -10,10 +10,18 @@ export class ModuleRegistry {
     if (this.modules.has(id)) throw new Error(`Module already registered: ${id}`)
     this.modules.set(id, mod)
   }
-  get(id: string): ServerModule | undefined { return this.modules.get(id) }
-  has(id: string) { return this.modules.has(id) }
-  all(): ServerModule[] { return this.sorted() }
-  ids(): string[] { return this.sorted().map((m) => m.definition.id) }
+  get(id: string): ServerModule | undefined {
+    return this.modules.get(id)
+  }
+  has(id: string) {
+    return this.modules.has(id)
+  }
+  all(): ServerModule[] {
+    return this.sorted()
+  }
+  ids(): string[] {
+    return this.sorted().map((m) => m.definition.id)
+  }
   /** topologically sorted by dependsOn (deps first) */
   private sorted(): ServerModule[] {
     const out: ServerModule[] = []
@@ -31,9 +39,13 @@ export class ModuleRegistry {
     return out
   }
   permissions() {
-    return this.all().flatMap((m) => (m.definition.permissions ?? []).map((p) => ({ ...p, module: m.definition.id })))
+    return this.all().flatMap((m) =>
+      (m.definition.permissions ?? []).map((p) => ({ ...p, module: m.definition.id })),
+    )
   }
   notificationTypes() {
-    return this.all().flatMap((m) => (m.definition.notificationTypes ?? []).map((t) => ({ ...t, module: m.definition.id })))
+    return this.all().flatMap((m) =>
+      (m.definition.notificationTypes ?? []).map((t) => ({ ...t, module: m.definition.id })),
+    )
   }
 }

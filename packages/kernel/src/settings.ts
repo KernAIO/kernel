@@ -8,13 +8,25 @@ import type { ProcedureBroker } from './call.js'
  */
 export class Settings {
   private readonly cache = new Map<string, { v: unknown; exp: number }>()
-  constructor(private readonly broker: ProcedureBroker, private readonly system: Principal, private readonly ttlMs = 15_000) {}
+  constructor(
+    private readonly broker: ProcedureBroker,
+    private readonly system: Principal,
+    private readonly ttlMs = 15_000,
+  ) {}
 
-  async module<T extends z.ZodTypeAny>(workspaceId: string, moduleId: string, schema: T): Promise<z.infer<T>> {
+  async module<T extends z.ZodTypeAny>(
+    workspaceId: string,
+    moduleId: string,
+    schema: T,
+  ): Promise<z.infer<T>> {
     const key = `m:${workspaceId}:${moduleId}`
     const hit = this.cache.get(key)
     if (hit && hit.exp > Date.now()) return hit.v as z.infer<T>
-    const raw = await this.broker.call<Record<string, unknown>>('core.settings.getModule', { workspaceId, moduleId }, this.system)
+    const raw = await this.broker.call<Record<string, unknown>>(
+      'core.settings.getModule',
+      { workspaceId, moduleId },
+      this.system,
+    )
     const v = schema.parse(raw ?? {})
     this.cache.set(key, { v, exp: Date.now() + this.ttlMs })
     return v
@@ -34,11 +46,16 @@ export class Settings {
     const key = `e:${workspaceId}:${moduleId}`
     const hit = this.cache.get(key)
     if (hit && hit.exp > Date.now()) return hit.v as boolean
-    const v = await this.broker.call<boolean>('core.modules.isEnabled', { workspaceId, moduleId }, this.system)
+    const v = await this.broker.call<boolean>(
+      'core.modules.isEnabled',
+      { workspaceId, moduleId },
+      this.system,
+    )
     this.cache.set(key, { v, exp: Date.now() + this.ttlMs })
     return v
   }
   invalidate(workspaceId: string, moduleId?: string) {
-    for (const k of this.cache.keys()) if (k.includes(`:${workspaceId}:`) && (!moduleId || k.endsWith(`:${moduleId}`))) this.cache.delete(k)
+    for (const k of this.cache.keys())
+      if (k.includes(`:${workspaceId}:`) && (!moduleId || k.endsWith(`:${moduleId}`))) this.cache.delete(k)
   }
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { Id, ModuleId, UserId, WorkspaceId } from './ids.js'
 import { Timestamp } from './common.js'
+import { Id, ModuleId, UserId, WorkspaceId } from './ids.js'
 
 /**
  * Event names are `<module>.<entity>.<action>`, e.g. `tracker.issue.created`.
@@ -38,7 +38,13 @@ export function defineEvent<TName extends string, TSchema extends z.ZodTypeAny>(
   opts: { version?: number; description?: string } = {},
 ): EventDef<TName, TSchema> {
   EventName.parse(name)
-  return { name, module: name.split('.')[0]!, version: opts.version ?? 1, schema, description: opts.description }
+  return {
+    name,
+    module: name.split('.')[0]!,
+    version: opts.version ?? 1,
+    schema,
+    description: opts.description,
+  }
 }
 
 /** Generic CRUD change event payload used by the realtime layer for cache invalidation. */

@@ -1,8 +1,8 @@
 import path from 'node:path'
+import { sql } from 'drizzle-orm'
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { pgSchema, type PgSchema } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+import { type PgSchema, pgSchema } from 'drizzle-orm/pg-core'
 import pg from 'pg'
 import type { Logger } from './logger.js'
 
@@ -14,7 +14,11 @@ export interface Database {
   db: Db
   pool: pg.Pool
   /** Run `fn` in a transaction with RLS context `app.workspace_id` (and `app.user_id`) set for the connection. */
-  withWorkspace<T>(workspaceId: string | null, fn: (tx: Tx) => Promise<T>, opts?: { userId?: string | null }): Promise<T>
+  withWorkspace<T>(
+    workspaceId: string | null,
+    fn: (tx: Tx) => Promise<T>,
+    opts?: { userId?: string | null },
+  ): Promise<T>
   /** Apply the migrations folder of a module into its own schema (`drizzle` bookkeeping table lives in that schema too). */
   migrateModule(moduleId: string, migrationsFolder: string): Promise<void>
   ensureSchema(name: string): Promise<void>
@@ -34,18 +38,28 @@ export function createDatabase(opts: { url: string; max?: number; log: Logger })
     pool,
     async withWorkspace(workspaceId, fn, o = {}) {
       return db.transaction(async (tx) => {
-        await tx.execute(sql`select set_config('app.workspace_id', ${workspaceId ?? ''}, true), set_config('app.user_id', ${o.userId ?? ''}, true)`)
+        await tx.execute(
+          sql`select set_config('app.workspace_id', ${workspaceId ?? ''}, true), set_config('app.user_id', ${o.userId ?? ''}, true)`,
+        )
         return fn(tx)
       })
     },
-    async ensureSchema(name) { await db.execute(sql.raw(`create schema if not exists "${name}"`)) },
+    async ensureSchema(name) {
+      await db.execute(sql.raw(`create schema if not exists "${name}"`))
+    },
     async migrateModule(moduleId, migrationsFolder) {
       const schema = moduleSchemaName(moduleId)
       await this.ensureSchema(schema)
-      await migrate(db, { migrationsFolder: path.resolve(migrationsFolder), migrationsSchema: schema, migrationsTable: '__migrations' })
+      await migrate(db, {
+        migrationsFolder: path.resolve(migrationsFolder),
+        migrationsSchema: schema,
+        migrationsTable: '__migrations',
+      })
       opts.log.info({ module: moduleId, schema }, 'migrations applied')
     },
-    async close() { await pool.end() },
+    async close() {
+      await pool.end()
+    },
   }
 }
 

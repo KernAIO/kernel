@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { BuiltinRole } from './permissions.js'
-import { UserId, WorkspaceId } from './ids.js'
 import { Locale } from './common.js'
+import { UserId, WorkspaceId } from './ids.js'
+import { BuiltinRole } from './permissions.js'
 
 /** Claims carried in Kern-issued JWTs (verified by every service via core's JWKS). */
 export const JwtClaims = z.object({

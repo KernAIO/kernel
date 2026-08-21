@@ -38,7 +38,13 @@ export const UpdateWorkspace = Workspace.pick({
 }).partial()
 
 /** A workspace as seen in the user's switcher */
-export const WorkspaceSummary = Workspace.pick({ id: true, slug: true, name: true, logoUrl: true, accentColor: true }).extend({
+export const WorkspaceSummary = Workspace.pick({
+  id: true,
+  slug: true,
+  name: true,
+  logoUrl: true,
+  accentColor: true,
+}).extend({
   role: BuiltinRole,
   unread: z.number().int().default(0),
   mentions: z.number().int().default(0),

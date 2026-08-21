@@ -28,13 +28,27 @@ export class Secrets {
   /** Encrypt string-valued leaves of an object marked in `secretKeys` (e.g. ['pass','apiKey']). */
   encryptFields<T extends Record<string, unknown>>(obj: T, secretKeys: string[], aad?: string): T {
     const out: Record<string, unknown> = { ...obj }
-    for (const k of secretKeys) if (typeof out[k] === 'string' && !(out[k] as string).startsWith('v1.')) out[k] = this.encrypt(out[k] as string, aad)
+    for (const k of secretKeys)
+      if (typeof out[k] === 'string' && !(out[k] as string).startsWith('v1.'))
+        out[k] = this.encrypt(out[k] as string, aad)
     return out as T
   }
   decryptFields<T extends Record<string, unknown>>(obj: T, secretKeys: string[], aad?: string): T {
     const out: Record<string, unknown> = { ...obj }
-    for (const k of secretKeys) if (typeof out[k] === 'string' && (out[k] as string).startsWith('v1.')) out[k] = this.decrypt(out[k] as string, aad)
+    for (const k of secretKeys)
+      if (typeof out[k] === 'string' && (out[k] as string).startsWith('v1.'))
+        out[k] = this.decrypt(out[k] as string, aad)
     return out as T
   }
 }
-export const SECRET_FIELD_NAMES = ['pass', 'password', 'apiKey', 'secretAccessKey', 'serverToken', 'clientSecret', 'refreshToken', 'accessToken', 'token']
+export const SECRET_FIELD_NAMES = [
+  'pass',
+  'password',
+  'apiKey',
+  'secretAccessKey',
+  'serverToken',
+  'clientSecret',
+  'refreshToken',
+  'accessToken',
+  'token',
+]

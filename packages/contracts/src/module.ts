@@ -17,7 +17,14 @@ export const ModuleManifest = z.object({
   events: z.array(z.string()).default([]),
   /** object types this module owns (for mentions/links/object channels) */
   objectTypes: z
-    .array(z.object({ type: z.string(), label: z.string(), icon: z.string().optional(), channelable: z.boolean().default(false) }))
+    .array(
+      z.object({
+        type: z.string(),
+        label: z.string(),
+        icon: z.string().optional(),
+        channelable: z.boolean().default(false),
+      }),
+    )
     .default([]),
   /** JSON schema of workspace-level settings (derived from zod) */
   settingsSchema: z.record(z.string(), z.unknown()).optional(),

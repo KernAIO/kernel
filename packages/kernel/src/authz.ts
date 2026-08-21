@@ -16,14 +16,26 @@ export interface AuthzStore {
   /** bindings relevant to this user (direct, via groups, via builtin role) in a workspace */
   bindings(workspaceId: string, userId: string, groupIds: string[], role: BuiltinRole): Promise<Binding[]>
 }
-export interface AuthzCache { get(key: string): Promise<string | null>; set(key: string, value: string, ttlSec: number): Promise<void>; del(prefix: string): Promise<void> }
+export interface AuthzCache {
+  get(key: string): Promise<string | null>
+  set(key: string, value: string, ttlSec: number): Promise<void>
+  del(prefix: string): Promise<void>
+}
 
 const ROLE_RANK: Record<BuiltinRole, number> = { guest: 0, member: 1, admin: 2, owner: 3 }
 
 export class Authz {
   private readonly defs = new Map<string, PermissionDef & { module: string }>()
-  private readonly builtinDefaults: Record<BuiltinRole, Set<string>> = { owner: new Set(), admin: new Set(), member: new Set(), guest: new Set() }
-  constructor(private readonly store: AuthzStore | null, private readonly cache?: AuthzCache) {}
+  private readonly builtinDefaults: Record<BuiltinRole, Set<string>> = {
+    owner: new Set(),
+    admin: new Set(),
+    member: new Set(),
+    guest: new Set(),
+  }
+  constructor(
+    private readonly store: AuthzStore | null,
+    private readonly cache?: AuthzCache,
+  ) {}
 
   registerPermissions(defs: Array<PermissionDef & { module: string }>) {
     for (const d of defs) {
@@ -35,11 +47,19 @@ export class Authz {
     for (const k of this.builtinDefaults.member) this.builtinDefaults.admin.add(k)
     for (const k of this.builtinDefaults.admin) this.builtinDefaults.owner.add(k)
   }
-  allPermissions() { return [...this.defs.values()] }
-  isKnown(key: string) { return this.defs.has(key) }
-  defaultsFor(role: BuiltinRole) { return [...this.builtinDefaults[role]] }
+  allPermissions() {
+    return [...this.defs.values()]
+  }
+  isKnown(key: string) {
+    return this.defs.has(key)
+  }
+  defaultsFor(role: BuiltinRole) {
+    return [...this.builtinDefaults[role]]
+  }
 
-  membership(principal: Principal, workspaceId: string) { return principal.memberships.find((m) => m.workspaceId === workspaceId && m.status === 'active') }
+  membership(principal: Principal, workspaceId: string) {
+    return principal.memberships.find((m) => m.workspaceId === workspaceId && m.status === 'active')
+  }
 
   /** Effective workspace-level permission set (builtin role defaults ∪ custom roles ∪ workspace-scope bindings). */
   async effective(principal: Principal, workspaceId: string): Promise<Set<string>> {
@@ -65,16 +85,24 @@ export class Authz {
    * Check a permission at a scope. Object/project/space bindings override workspace-level results:
    * nearest scope wins; explicit deny beats allow at the same level; owners/instance admins always pass.
    */
-  async can(principal: Principal, permission: string, scope: PermissionScope & { workspaceId: string }): Promise<boolean> {
+  async can(
+    principal: Principal,
+    permission: string,
+    scope: PermissionScope & { workspaceId: string },
+  ): Promise<boolean> {
     if (principal.instanceAdmin) return true
     const m = this.membership(principal, scope.workspaceId)
     if (!m) return false
     if (m.role === 'owner') return true
     if (this.store && scope.kind !== 'workspace') {
-      const chain = [{ kind: scope.kind, id: scope.id ?? '' }, ...(scope.parents ?? [])].filter((s) => s.kind !== 'workspace')
+      const chain = [{ kind: scope.kind, id: scope.id ?? '' }, ...(scope.parents ?? [])].filter(
+        (s) => s.kind !== 'workspace',
+      )
       const bindings = await this.store.bindings(scope.workspaceId, principal.userId!, m.groupIds, m.role)
       for (const s of chain) {
-        const here = bindings.filter((b) => b.scopeKind === s.kind && b.scopeId === s.id && b.permissions.includes(permission))
+        const here = bindings.filter(
+          (b) => b.scopeKind === s.kind && b.scopeId === s.id && b.permissions.includes(permission),
+        )
         if (here.length) return !here.some((b) => b.deny)
       }
     }
@@ -88,5 +116,7 @@ export class Authz {
     if (!m || ROLE_RANK[m.role] < ROLE_RANK[minRole]) throw KernError.forbidden()
     return m
   }
-  async invalidate(workspaceId: string, userId?: string) { await this.cache?.del(userId ? `authz:${workspaceId}:${userId}:` : `authz:${workspaceId}:`) }
+  async invalidate(workspaceId: string, userId?: string) {
+    await this.cache?.del(userId ? `authz:${workspaceId}:${userId}:` : `authz:${workspaceId}:`)
+  }
 }
