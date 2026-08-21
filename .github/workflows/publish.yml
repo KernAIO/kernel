@@ -11,7 +11,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm, registry-url: https://npm.pkg.github.com, scope: '@kernalo' }
-      - run: pnpm install --frozen-lockfile
+      - run: if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
         env: { NODE_AUTH_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
       - run: pnpm build
       - name: Version or publish
