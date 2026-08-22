@@ -81,7 +81,15 @@ const SubContent = $derived(P.SubContent)
   :global(.kmenu-ic) { width: 16px; display: inline-grid; place-items: center; color: var(--kern-ink-400); flex: none; }
   :global(.kmenu-item.danger .kmenu-ic) { color: inherit; }
   :global(.kmenu-l) { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  :global(.kmenu-hint) { font-size: 12px; color: var(--kern-ink-250); }
+  :global(.kmenu-l) { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+  /* the hint explains why an item is unavailable; it yields to the label rather than truncating it */
+  :global(.kmenu-hint) {
+    font-size: 12px; color: var(--kern-ink-250);
+    flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* an item carrying a hint may wrap onto two lines rather than squeeze both onto one */
+  :global(.kmenu-item:has(.kmenu-hint)) { height: auto; min-height: 34px; padding-block: 5px; flex-wrap: wrap; }
+  :global(.kmenu-item:has(.kmenu-hint) .kmenu-hint) { flex-basis: 100%; padding-inline-start: 24px; }
   :global(.kmenu-chev) { color: var(--kern-ink-250); }
   :global([dir='rtl'] .kmenu-chev) { transform: scaleX(-1); }
   :global(.kmenu-sep) { height: 1px; background: var(--kern-border-hairline); margin: 5px 4px; }
