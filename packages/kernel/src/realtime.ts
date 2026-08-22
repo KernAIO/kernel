@@ -9,10 +9,20 @@ const sc = StringCodec()
  *   kern.rt.ch.<channel>  – fan out to all sockets subscribed to that channel
  *   kern.rt.user.<userId> – direct to a user's sockets
  */
+/**
+ * A `ServerMessage` as published by a service. `seq` is assigned per connection by the WebSocket
+ * gateway, so publishers omit it. Distributive, so the discriminated union survives the Omit.
+ */
+export type OutgoingMessage = ServerMessage extends infer M
+  ? M extends { t: string }
+    ? Omit<M, 'seq'> & { seq?: number }
+    : never
+  : never
+
 export interface Realtime {
-  toChannel(ch: string, msg: Omit<ServerMessage, 'seq'> & { seq?: number }): Promise<void>
-  toUser(userId: string, msg: Omit<ServerMessage, 'seq'> & { seq?: number }): Promise<void>
-  toUsers(userIds: string[], msg: Omit<ServerMessage, 'seq'> & { seq?: number }): Promise<void>
+  toChannel(ch: string, msg: OutgoingMessage): Promise<void>
+  toUser(userId: string, msg: OutgoingMessage): Promise<void>
+  toUsers(userIds: string[], msg: OutgoingMessage): Promise<void>
   /** convenience: entity change → workspace channel (+ object channel) */
   change(workspaceId: string, change: EntityChange): Promise<void>
 }

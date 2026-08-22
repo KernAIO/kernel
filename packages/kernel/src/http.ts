@@ -30,16 +30,22 @@ export const authed = o.middleware(async ({ context, next }) => {
   if (context.principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
   return next()
 })
-/** Middleware factory: require active membership in `input.workspaceId` and that `moduleId` is enabled there. */
+/**
+ * Middleware factory: require active membership in `input.workspaceId` and that `moduleId` is enabled there.
+ * Input is typed `unknown` so the middleware can be applied at router level, where oRPC cannot prove
+ * every procedure's input shape; each procedure behind it must take `{ workspaceId }`.
+ */
 export const workspaceScoped = (moduleId?: string) =>
-  o.middleware(async ({ context, next }, input: { workspaceId: string }) => {
+  o.middleware(async ({ context, next }, input) => {
+    const { workspaceId } = input as { workspaceId: string }
     const { kernel, principal } = context
     if (principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
+    if (typeof workspaceId !== 'string') throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
     if (!principal.instanceAdmin && principal.kind !== 'service')
-      kernel.authz.requireMember(principal, input.workspaceId)
-    if (moduleId && !(await kernel.isModuleEnabled(input.workspaceId, moduleId)))
+      kernel.authz.requireMember(principal, workspaceId)
+    if (moduleId && !(await kernel.isModuleEnabled(workspaceId, moduleId)))
       throw new ORPCError('MODULE_DISABLED', { data: { module: moduleId } })
-    return next({ context: { ...context, workspaceId: input.workspaceId } })
+    return next({ context: { ...context, workspaceId } })
   })
 /** Middleware factory: require a permission at workspace scope. */
 export const requires = (permission: string) =>
