@@ -14,6 +14,8 @@ interface Props {
   label?: string
   description?: string
   class?: string
+  /** accessible name when the checkbox carries no visible label (matrix cells) */
+  ariaLabel?: string
   onCheckedChange?: (v: boolean) => void
   children?: Snippet
 }
@@ -26,6 +28,7 @@ let {
   id,
   label,
   description,
+  ariaLabel,
   class: className,
   onCheckedChange,
   children,
@@ -33,7 +36,7 @@ let {
 </script>
 
 <label class={cn('kcb', disabled && 'disabled', className)}>
-  <CheckboxPrimitive.Root bind:checked bind:indeterminate {disabled} {name} {value} {id} {onCheckedChange} class="kcb-box">
+  <CheckboxPrimitive.Root bind:checked bind:indeterminate {disabled} {name} {value} {id} {onCheckedChange} aria-label={ariaLabel} class="kcb-box">
     {#snippet children({ checked, indeterminate })}
       {#if indeterminate}<span class="dash"></span>{:else if checked}<Icon name="check" size={11} strokeWidth={2.6} />{/if}
     {/snippet}
