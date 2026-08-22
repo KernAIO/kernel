@@ -46,7 +46,9 @@ let {
     border-radius: 999px; background: var(--kern-border-muted);
     transition: background-color 120ms; padding: 0; border: 0;
   }
-  :global(.ksw-track[data-state='checked']) { background: var(--kern-ink-900); }
+    /* accent rather than ink: in dark mode ink-900 is near-white, which leaves a white thumb on a
+     white track and reads as off */
+  :global(.ksw-track[data-state='checked']) { background: var(--kern-accent); }
   :global(.ksw-track:focus-visible) { box-shadow: 0 0 0 3px var(--kern-ring); }
   :global(.ksw-thumb) {
     position: absolute; top: 2px; inset-inline-start: 2px; width: var(--t); height: var(--t);

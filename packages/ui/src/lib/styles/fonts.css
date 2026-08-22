@@ -1,3 +1,15 @@
 /* Kern fonts — Instrument Sans (UI), DM Mono (metadata), Vazirmatn (fa/ar).
-   Loaded from Google Fonts; local() fallbacks are used when self-hosted/offline. */
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400&family=DM+Mono:wght@400;500&family=Vazirmatn:wght@400..700&display=swap");
+ *
+ * The web fonts are requested from the document, not from CSS: a remote `@import` has to precede every
+ * rule in the sheet, which cannot be guaranteed once an app composes this file with Tailwind and its
+ * own styles, and a <link> lets the browser start fetching without waiting for the CSS to parse.
+ *
+ * Add this to the document head (or self-host the same families):
+ *
+ *   <link rel="preconnect" href="https://fonts.googleapis.com" />
+ *   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+ *   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400&family=DM+Mono:wght@400;500&family=Vazirmatn:wght@400..700&display=swap" />
+ *
+ * The stacks below fall back to system faces, so the interface stays usable offline or when the
+ * request is blocked.
+ */
