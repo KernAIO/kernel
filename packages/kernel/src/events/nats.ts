@@ -2,7 +2,6 @@ import type { EventDef, EventEnvelope, EventPayload } from '@kernalo/contracts'
 import {
   AckPolicy,
   connect,
-  consumerOpts,
   DeliverPolicy,
   type JetStreamClient,
   type JetStreamManager,
@@ -34,8 +33,7 @@ const patternToSubject = (pattern: string) =>
 export interface NatsBusOptions {
   url: string
   service: string
-  log: Logger /** also deliver locally without round-trip (default true) */
-  local?: boolean
+  log: Logger
 }
 
 /**
@@ -46,11 +44,8 @@ export class NatsEventBus implements EventBus {
   private nc!: NatsConnection
   private js!: JetStreamClient
   private jsm!: JetStreamManager
-  private readonly local: InMemoryEventBus
   private subs: Unsubscribe[] = []
-  private constructor(private readonly opts: NatsBusOptions) {
-    this.local = new InMemoryEventBus(opts.log)
-  }
+  private constructor(private readonly opts: NatsBusOptions) {}
 
   static async connect(opts: NatsBusOptions) {
     const bus = new NatsEventBus(opts)

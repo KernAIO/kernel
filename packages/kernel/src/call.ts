@@ -73,7 +73,7 @@ export class ProcedureBroker {
     return wire.result as TOut
   }
 
-  private async invokeLocal(name: string, def: ProcedureDef, input: unknown, principal: Principal) {
+  private async invokeLocal(_name: string, def: ProcedureDef, input: unknown, principal: Principal) {
     const parsed = def.input ? def.input.parse(input) : input
     const out = await def.handler(parsed, { principal })
     return def.output ? def.output.parse(out) : out

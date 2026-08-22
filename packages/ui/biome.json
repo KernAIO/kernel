@@ -1,14 +1,23 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+  "root": false,
   "extends": ["../../biome.json"],
-  "css": { "parser": { "tailwindDirectives": true } },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "overrides": [
     {
       "includes": ["src/lib/styles/*.css"],
       "linter": {
         "rules": {
-          "complexity": { "noImportantStyles": "off" },
-          "suspicious": { "noImportantInKeyframe": "off" }
+          "complexity": {
+            "noImportantStyles": "off"
+          },
+          "suspicious": {
+            "noImportantInKeyframe": "off"
+          }
         }
       }
     }
