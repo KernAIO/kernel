@@ -28,3 +28,35 @@ The repositories are **public**, so every commit is visible the moment it is pus
 - `pnpm typecheck && pnpm lint && pnpm test && pnpm build` must pass before pushing.
 - UI follows `app/DESIGN.md` (Ink/paper design system) and must work in RTL (fa/ar) and dark mode.
 - All user-facing strings go through i18n (Paraglide) — no hardcoded English in components.
+
+## Keeping this file current
+This file is how the next person — or the next agent — avoids repeating what we already worked out.
+When you learn something durable, add it here **in the same commit as the change that taught you**:
+- a trap that cost you time (a silent failure, a misleading error, a tool that lies about success)
+- a convention you had to infer from reading several files
+- a decision and the reason behind it, especially where the obvious choice is wrong
+Keep it specific and short. Delete anything that stops being true — a stale note is worse than none.
+
+---
+
+# This repository: kernel (shared libraries)
+
+Publishes the packages every other repository consumes: `@kernhq/contracts` (Zod models, oRPC
+contracts, events, permissions), `@kernhq/kernel` (the module runtime), `@kernhq/sdk` (typed API and
+realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`, `@kernhq/tsconfig`.
+
+**Things worth knowing**
+- **Contracts first.** A change here lands and publishes before its consumers are updated. Breaking a
+  contract without publishing leaves every other repository's CI red.
+- Packages go to **npm**, not GitHub Packages — the latter demands a token even for public packages,
+  which would mean nobody could install without credentials. Publishing is authenticated with the
+  `NPM_TOKEN` organisation secret; installing is anonymous.
+- `@kernhq/tsconfig` exists because every repository is built standalone in CI, where a config file at
+  the root of the local workspace does not exist. Never point a repo's `tsconfig` outside its own
+  checkout.
+- `Omit<Union, K>` collapses a discriminated union. `Realtime`'s publisher types distribute over
+  `ServerMessage` on purpose — see `src/realtime.ts`.
+- Biome 2.5 refuses a nested config that extends a root one unless it declares `"root": false`
+  (`packages/ui/biome.json`).
+- An ESM-only package still needs a `default` condition in its `exports`, or tools that resolve
+  without the `import` condition (drizzle-kit among them) cannot find it.
