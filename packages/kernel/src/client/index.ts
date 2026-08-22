@@ -1,5 +1,5 @@
 /**
- * Client-side module SDK (framework-agnostic types). `@kernalo/ui` re-exports these bound to Svelte components.
+ * Client-side module SDK (framework-agnostic types). `@kernaio/ui` re-exports these bound to Svelte components.
  * A client module contributes routes, navigation, command-palette actions, presenters and slots to the app shell.
  */
 export interface ClientNavItem {

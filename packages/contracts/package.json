@@ -1,5 +1,5 @@
 {
-  "name": "@kernalo/contracts",
+  "name": "@kernaio/contracts",
   "version": "0.1.0",
   "description": "Shared Zod schemas, oRPC contracts, events and permissions for Kern",
   "license": "AGPL-3.0-only",
@@ -7,7 +7,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/KernALO/kernel",
+    "url": "https://github.com/KernAIO/kernel",
     "directory": "packages/contracts"
   },
   "publishConfig": {

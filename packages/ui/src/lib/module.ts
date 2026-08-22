@@ -1,5 +1,5 @@
 /**
- * Client-module surface of `@kernalo/kernel/client`, re-exported with the
+ * Client-module surface of `@kernaio/kernel/client`, re-exported with the
  * component type bound to Svelte's `Component`. Modules written for the Kern
  * app should import `defineClientModule` from here so their `routes`,
  * `presenters` and `slots` are type-checked as Svelte components.
@@ -18,7 +18,7 @@ import {
   type ObjectPresenter,
   type SlotContribution,
   type SlotName,
-} from '@kernalo/kernel/client'
+} from '@kernaio/kernel/client'
 import type { Component } from 'svelte'
 
 /** Any Svelte 5 component (props unknown to the shell). */

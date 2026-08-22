@@ -1,12 +1,12 @@
 {
-  "name": "@kernalo/testing",
+  "name": "@kernaio/testing",
   "version": "0.1.0",
   "description": "Test helpers for Kern services and modules",
   "license": "AGPL-3.0-only",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KernALO/kernel",
+    "url": "https://github.com/KernAIO/kernel",
     "directory": "packages/testing"
   },
   "publishConfig": {
@@ -29,7 +29,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kernalo/kernel": "^0.1.0",
+    "@kernaio/kernel": "^0.1.0",
     "@testcontainers/postgresql": "^12.1.0",
     "pg": "^8.16.0",
     "testcontainers": "^12.1.0"

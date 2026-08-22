@@ -1,4 +1,4 @@
-import type { EventDef, EventEnvelope, EventPayload } from '@kernalo/contracts'
+import type { EventDef, EventEnvelope, EventPayload } from '@kernaio/contracts'
 import {
   AckPolicy,
   connect,

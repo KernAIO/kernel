@@ -1,4 +1,4 @@
-import type { Principal } from '@kernalo/contracts'
+import type { Principal } from '@kernaio/contracts'
 import { type NatsConnection, StringCodec } from 'nats'
 import type { z } from 'zod'
 import { KernError } from './errors.js'

@@ -1,4 +1,4 @@
-import type { EventDef, EventEnvelope, EventPayload, Principal } from '@kernalo/contracts'
+import type { EventDef, EventEnvelope, EventPayload, Principal } from '@kernaio/contracts'
 import { Redis } from 'ioredis'
 import type { NatsConnection } from 'nats'
 import { type AuthVerifier, createAuthVerifier, systemPrincipal } from './auth.js'

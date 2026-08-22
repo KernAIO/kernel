@@ -1,5 +1,5 @@
 {
-  "name": "@kernalo/sdk",
+  "name": "@kernaio/sdk",
   "version": "0.1.0",
   "description": "Typed client SDK for the Kern API and realtime WebSocket",
   "license": "AGPL-3.0-only",
@@ -7,7 +7,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/KernALO/kernel",
+    "url": "https://github.com/KernAIO/kernel",
     "directory": "packages/sdk"
   },
   "publishConfig": {
@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kernalo/contracts": "^0.1.0",
+    "@kernaio/contracts": "^0.1.0",
     "@orpc/client": "^1.15.0",
     "@orpc/contract": "^1.15.0",
     "zod": "^4.1.0"

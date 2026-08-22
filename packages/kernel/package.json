@@ -1,12 +1,12 @@
 {
-  "name": "@kernalo/kernel",
+  "name": "@kernaio/kernel",
   "version": "0.1.0",
   "description": "Kern module runtime (defineModule, registry, events, call, authz, jobs, settings, storage, http)",
   "license": "AGPL-3.0-only",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KernALO/kernel",
+    "url": "https://github.com/KernAIO/kernel",
     "directory": "packages/kernel"
   },
   "publishConfig": {
@@ -45,7 +45,7 @@
     "@fastify/cors": "^11.0.0",
     "@fastify/helmet": "^13.0.0",
     "@fastify/rate-limit": "^10.0.0",
-    "@kernalo/contracts": "^0.1.0",
+    "@kernaio/contracts": "^0.1.0",
     "@orpc/contract": "^1.15.0",
     "@orpc/openapi": "^1.15.0",
     "@orpc/server": "^1.15.0",

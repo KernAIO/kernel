@@ -1,4 +1,4 @@
-import type { BuiltinRole, PermissionDef, PermissionScope, Principal } from '@kernalo/contracts'
+import type { BuiltinRole, PermissionDef, PermissionScope, Principal } from '@kernaio/contracts'
 import { KernError } from './errors.js'
 
 export interface Binding {
