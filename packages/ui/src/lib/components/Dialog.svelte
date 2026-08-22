@@ -15,6 +15,12 @@ interface Props {
   class?: string
   /** remove body padding (for custom layouts) */
   flush?: boolean
+  /**
+   * What holds focus when the dialog opens. Defaults to the first control in the body, which is
+   * almost always what someone wants to type into. Pass an element getter to be explicit, or
+   * `false` to leave the browser and bits-ui to it.
+   */
+  initialFocus?: (() => HTMLElement | null | undefined) | string | false
   hideClose?: boolean
   onOpenChange?: (o: boolean) => void
 }
@@ -29,15 +35,39 @@ let {
   class: className,
   flush = false,
   hideClose = false,
+  initialFocus,
   onOpenChange,
 }: Props = $props()
+
+let bodyEl = $state<HTMLElement | null>(null)
+
+const FOCUSABLE =
+  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [contenteditable="true"], button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+
+/**
+ * Without this the close button is the first tabbable element in the dialog, so it takes focus on
+ * open — and then a space in what someone thought was the title field closes the dialog and throws
+ * away what they typed. Focus goes to the first control in the body instead. A dialog whose body
+ * has nothing focusable (a confirmation, say) keeps the default: close is a safe thing to activate.
+ */
+function focusOnOpen(event: Event) {
+  if (initialFocus === false) return
+  const target =
+    typeof initialFocus === 'function'
+      ? initialFocus()
+      : (bodyEl?.querySelector<HTMLElement>(typeof initialFocus === 'string' ? initialFocus : FOCUSABLE) ??
+        null)
+  if (!target) return
+  event.preventDefault()
+  target.focus()
+}
 </script>
 
 <P.Root bind:open {onOpenChange}>
   {#if trigger}<P.Trigger>{#snippet child({ props })}{@render trigger(props)}{/snippet}</P.Trigger>{/if}
   <P.Portal>
     <P.Overlay class="kdlg-overlay" />
-    <P.Content class={cn('kdlg', `s-${size}`, className)}>
+    <P.Content class={cn('kdlg', `s-${size}`, className)} onOpenAutoFocus={focusOnOpen}>
       {#if title || !hideClose}
         <div class="kdlg-head">
           <div class="tt">
@@ -47,7 +77,7 @@ let {
           {#if !hideClose}<P.Close>{#snippet child({ props })}<IconButton icon="x" label="Close" size={28} variant="ghost" strokeWidth={1.8} {...props} />{/snippet}</P.Close>{/if}
         </div>
       {/if}
-      <div class={cn('kdlg-body', flush && 'flush')}>{@render children()}</div>
+      <div bind:this={bodyEl} class={cn('kdlg-body', flush && 'flush')}>{@render children()}</div>
       {#if footer}<div class="kdlg-foot">{@render footer()}</div>{/if}
     </P.Content>
   </P.Portal>
