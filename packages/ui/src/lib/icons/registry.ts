@@ -10,6 +10,7 @@ import BellOff from '@lucide/svelte/icons/bell-off'
 import Bookmark from '@lucide/svelte/icons/bookmark'
 import Bot from '@lucide/svelte/icons/bot'
 import Briefcase from '@lucide/svelte/icons/briefcase'
+import Bug from '@lucide/svelte/icons/bug'
 import Building2 from '@lucide/svelte/icons/building-2'
 import Calendar from '@lucide/svelte/icons/calendar'
 import Check from '@lucide/svelte/icons/check'
@@ -39,6 +40,7 @@ import Filter from '@lucide/svelte/icons/filter'
 import Flag from '@lucide/svelte/icons/flag'
 import Folder from '@lucide/svelte/icons/folder'
 import Globe from '@lucide/svelte/icons/globe'
+import GitBranch from '@lucide/svelte/icons/git-branch'
 import Hash from '@lucide/svelte/icons/hash'
 import House from '@lucide/svelte/icons/house'
 import Image from '@lucide/svelte/icons/image'
@@ -116,6 +118,7 @@ const registry: Record<string, IconComponent> = {
   bell: Bell,
   'bell-off': BellOff,
   bookmark: Bookmark,
+  bug: Bug,
   bot: Bot,
   briefcase: Briefcase,
   'building-2': Building2,
@@ -148,6 +151,7 @@ const registry: Record<string, IconComponent> = {
   filter: Filter,
   flag: Flag,
   folder: Folder,
+  'git-branch': GitBranch,
   globe: Globe,
   hash: Hash,
   house: House,
