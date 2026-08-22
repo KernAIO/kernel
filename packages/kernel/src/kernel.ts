@@ -23,7 +23,8 @@ export interface KernelOptions {
   service: string
   version?: string
   modules: ServerModule[]
-  env?: Partial<KernelEnv> & Record<string, string | undefined>
+  /** raw environment overrides, merged over `process.env` before validation (values are strings) */
+  env?: Record<string, string | undefined>
   /** role of this process */
   role?: 'api' | 'worker' | 'both'
   /** core service provides a DB-backed store; others default to call-based */
