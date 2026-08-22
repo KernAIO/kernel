@@ -45,7 +45,13 @@ export const workspaceScoped = (moduleId?: string) =>
     if (!principal.instanceAdmin && principal.kind !== 'service')
       kernel.authz.requireMember(principal, workspaceId)
     if (moduleId && !(await kernel.isModuleEnabled(workspaceId, moduleId)))
-      throw new ORPCError('MODULE_DISABLED', { data: { module: moduleId } })
+      // `MODULE_DISABLED` is ours, not one of oRPC's standard codes, so oRPC has no status to fall
+      // back on and would answer 500. Every Kern-specific code has to carry its status explicitly.
+      throw new ORPCError('MODULE_DISABLED', {
+        message: `Module ${moduleId} is disabled in this workspace`,
+        data: { module: moduleId },
+        status: httpStatusFor('MODULE_DISABLED'),
+      })
     return next({ context: { ...context, workspaceId } })
   })
 /** Middleware factory: require a permission at workspace scope. */
