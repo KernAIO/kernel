@@ -1,5 +1,5 @@
 {
-  "extends": "@kernhq/tsconfig/base.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],

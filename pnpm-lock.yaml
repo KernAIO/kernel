@@ -14,6 +14,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.0
         version: 2.31.1(@types/node@24.13.3)
+      '@kernhq/tsconfig':
+        specifier: workspace:*
+        version: link:packages/tsconfig
       turbo:
         specifier: ^2.10.0
         version: 2.10.11
@@ -33,6 +36,9 @@ importers:
         specifier: ^4.1.0
         version: 4.4.3
     devDependencies:
+      '@kernhq/tsconfig':
+        specifier: ^0.1.0
+        version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
@@ -106,6 +112,9 @@ importers:
         specifier: ^4.1.0
         version: 4.4.3
     devDependencies:
+      '@kernhq/tsconfig':
+        specifier: ^0.1.0
+        version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
@@ -134,6 +143,9 @@ importers:
         specifier: ^4.1.0
         version: 4.4.3
     devDependencies:
+      '@kernhq/tsconfig':
+        specifier: ^0.1.0
+        version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
@@ -159,6 +171,9 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
     devDependencies:
+      '@kernhq/tsconfig':
+        specifier: ^0.1.0
+        version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
@@ -171,6 +186,8 @@ importers:
       vitest:
         specifier: ^4.0.0
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3)(yaml@2.9.0))
+
+  packages/tsconfig: {}
 
   packages/ui:
     dependencies:
@@ -190,6 +207,9 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@kernhq/tsconfig':
+        specifier: ^0.1.0
+        version: link:../tsconfig
       '@sveltejs/package':
         specifier: ^2.5.8
         version: 2.5.8(svelte@5.56.10)(typescript@5.9.3)
