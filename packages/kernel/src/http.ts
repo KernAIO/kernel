@@ -40,7 +40,8 @@ export const workspaceScoped = (moduleId?: string) =>
     const { workspaceId } = input as { workspaceId: string }
     const { kernel, principal } = context
     if (principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
-    if (typeof workspaceId !== 'string') throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
+    if (typeof workspaceId !== 'string')
+      throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
     if (!principal.instanceAdmin && principal.kind !== 'service')
       kernel.authz.requireMember(principal, workspaceId)
     if (moduleId && !(await kernel.isModuleEnabled(workspaceId, moduleId)))
@@ -159,20 +160,15 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
     if (!mod.router) continue
     const prefix = `/api/${mod.definition.apiPrefix ?? mod.definition.id}`
     const router = mod.router(kernel)
-    const rpc = new RPCHandler(router, {
-      interceptors: [
-        onError((e) => {
-          if (e instanceof KernError) throw kernErrorToORPC(e)
-        }),
-      ],
-    })
-    const rest = new OpenAPIHandler(router, {
-      interceptors: [
-        onError((e) => {
-          if (e instanceof KernError) throw kernErrorToORPC(e)
-        }),
-      ],
-    })
+    // Translate domain errors into oRPC errors and make anything unexpected visible in the logs –
+    // oRPC answers with a bare 500 otherwise, which is impossible to diagnose in production.
+    const onProcedureError = (e: unknown) => {
+      if (e instanceof KernError) throw kernErrorToORPC(e)
+      if (e instanceof ORPCError) return
+      kernel.log.error({ err: e, module: mod.definition.id }, 'unhandled error in module procedure')
+    }
+    const rpc = new RPCHandler(router, { interceptors: [onError(onProcedureError)] })
+    const rest = new OpenAPIHandler(router, { interceptors: [onError(onProcedureError)] })
     const spec = await generator.generate(router, {
       info: {
         title: `${opts.openapi?.title ?? 'Kern'} – ${mod.definition.name}`,
@@ -184,23 +180,30 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
       components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } },
     })
     app.get(`${prefix}/openapi.json`, async () => spec)
-    app.all(`${prefix}/*`, async (req, reply) => {
-      const principal = await opts.resolvePrincipal(req, kernel).catch(() => ANONYMOUS)
-      const context: RequestContext = {
-        kernel,
-        principal,
-        requestId: req.id,
-        ip: req.ip,
-        headers: req.headers as any,
-      }
-      const isRpc = req.url.startsWith(`${prefix}/rpc`)
-      const handler = isRpc ? rpc : rest
-      const { matched } = await handler.handle(req.raw, reply.raw, {
-        prefix: (isRpc ? `${prefix}/rpc` : prefix) as `/${string}`,
-        context,
+    // Module routes are registered in their own encapsulated scope with a pass-through body parser:
+    // oRPC reads the raw request stream itself, so Fastify must not consume it first (otherwise every
+    // request with a body arrives at the handler as `undefined`).
+    await app.register(async (scope) => {
+      scope.removeAllContentTypeParsers()
+      scope.addContentTypeParser('*', (_req, payload, done) => done(null, payload))
+      scope.all(`${prefix}/*`, async (req, reply) => {
+        const principal = await opts.resolvePrincipal(req, kernel).catch(() => ANONYMOUS)
+        const context: RequestContext = {
+          kernel,
+          principal,
+          requestId: req.id,
+          ip: req.ip,
+          headers: req.headers as any,
+        }
+        const isRpc = req.url.startsWith(`${prefix}/rpc`)
+        const handler = isRpc ? rpc : rest
+        const { matched } = await handler.handle(req.raw, reply.raw, {
+          prefix: (isRpc ? `${prefix}/rpc` : prefix) as `/${string}`,
+          context,
+        })
+        if (!matched) reply.status(404).send({ code: 'NOT_FOUND', message: 'Route not found' })
+        else reply.hijack()
       })
-      if (!matched) reply.status(404).send({ code: 'NOT_FOUND', message: 'Route not found' })
-      else reply.hijack()
     })
     kernel.log.info({ module: mod.definition.id, prefix }, 'module routes mounted')
   }

@@ -3,7 +3,6 @@ import {
   AckPolicy,
   connect,
   consumerOpts,
-  createInbox,
   DeliverPolicy,
   type JetStreamClient,
   type JetStreamManager,
@@ -92,6 +91,42 @@ export class NatsEventBus implements EventBus {
   async publishRaw(event: EventEnvelope) {
     await this.js.publish(subjectFor(event.name), sc.encode(JSON.stringify(event)), { msgID: event.id })
   }
+  /**
+   * Idempotently creates the durable pull consumer. Tolerates concurrent replicas racing to create it
+   * and replaces a consumer left over from an older release whose config is no longer compatible
+   * (for example a push consumer bound to a delivery subject).
+   */
+  private async ensureConsumer(durable: string, subject: string) {
+    const config = {
+      durable_name: durable,
+      filter_subject: subject,
+      ack_policy: AckPolicy.Explicit,
+      deliver_policy: DeliverPolicy.All,
+      ack_wait: 30 * 1e9,
+      max_ack_pending: 256,
+      max_deliver: 10,
+    }
+    const existing = await this.jsm.consumers.info(STREAM, durable).catch(() => null)
+    if (existing) {
+      const incompatible =
+        Boolean(existing.config.deliver_subject) || existing.config.filter_subject !== subject
+      if (!incompatible) return
+      this.opts.log.warn({ durable }, 'replacing incompatible jetstream consumer')
+      await this.jsm.consumers.delete(STREAM, durable).catch(() => {})
+    }
+    try {
+      await this.jsm.consumers.add(STREAM, config)
+    } catch (err) {
+      // another replica created it first
+      if (!String(err).includes('already exists')) throw err
+    }
+  }
+
+  /**
+   * Durable, at-least-once subscription. Uses a pull consumer so that several replicas of the same
+   * service share one durable and load-balance its events; a push consumer would reject the second
+   * replica ("duplicate subscription") because each would bind its own delivery inbox.
+   */
   async subscribe(
     pattern: string,
     handler: (e: EventEnvelope) => Promise<void> | void,
@@ -99,18 +134,11 @@ export class NatsEventBus implements EventBus {
   ) {
     const subject = patternToSubject(pattern)
     const durable = (opts.durable ?? `${this.opts.service}-${pattern}`).replace(/[^a-zA-Z0-9_-]/g, '_')
-    const o = consumerOpts()
-    o.durable(durable)
-    o.manualAck()
-    o.ackExplicit()
-    o.deliverTo(createInbox())
-    o.deliverAll()
-    o.ackWait(30_000)
-    o.maxAckPending(256)
-    o.filterSubject(subject)
-    const sub = await this.js.subscribe(subject, o)
+    await this.ensureConsumer(durable, subject)
+    const consumer = await this.js.consumers.get(STREAM, durable)
+    const messages = await consumer.consume()
     ;(async () => {
-      for await (const m of sub) {
+      for await (const m of messages) {
         let event: EventEnvelope
         try {
           event = JSON.parse(sc.decode(m.data))
@@ -128,11 +156,12 @@ export class NatsEventBus implements EventBus {
       }
     })().catch((err) => this.opts.log.error({ err, durable }, 'subscription loop ended'))
     const unsub = () => {
-      sub.unsubscribe()
+      messages.stop()
     }
     this.subs.push(unsub)
     return unsub
   }
+
   async close() {
     for (const u of this.subs) u()
     await this.nc.drain()
