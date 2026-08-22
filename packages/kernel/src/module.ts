@@ -1,4 +1,4 @@
-import type { core, EventDef, ModuleManifest, PermissionDef, Principal } from '@kernaio/contracts'
+import type { core, EventDef, ModuleManifest, PermissionDef, Principal } from '@kernhq/contracts'
 import type { ContractRouter } from '@orpc/contract'
 import type { Router } from '@orpc/server'
 import type { PgSchema } from 'drizzle-orm/pg-core'
@@ -8,7 +8,7 @@ import type { Kernel } from './kernel.js'
 
 /** Handler for a subscribed event. Runs in the hosting service; errors are logged and retried by the bus when durable. */
 export type EventHandler<P = unknown> = (
-  event: import('@kernaio/contracts').EventEnvelope<P>,
+  event: import('@kernhq/contracts').EventEnvelope<P>,
   kernel: Kernel,
 ) => Promise<void> | void
 

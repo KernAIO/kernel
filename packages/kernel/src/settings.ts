@@ -1,4 +1,4 @@
-import type { Principal } from '@kernaio/contracts'
+import type { Principal } from '@kernhq/contracts'
 import type { z } from 'zod'
 import type { ProcedureBroker } from './call.js'
 

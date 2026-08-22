@@ -1,5 +1,5 @@
-import type { EntityChange, ServerMessage } from '@kernaio/contracts'
-import { channel } from '@kernaio/contracts'
+import type { EntityChange, ServerMessage } from '@kernhq/contracts'
+import { channel } from '@kernhq/contracts'
 import { type NatsConnection, StringCodec } from 'nats'
 
 const sc = StringCodec()

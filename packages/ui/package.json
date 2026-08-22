@@ -1,5 +1,5 @@
 {
-  "name": "@kernaio/ui",
+  "name": "@kernhq/ui",
   "version": "0.1.0",
   "description": "Kern design system \u2014 Svelte 5 components, tokens and app-shell layout (Ink/paper)",
   "license": "AGPL-3.0-only",
@@ -45,7 +45,7 @@
     "svelte": "^5.46.0"
   },
   "dependencies": {
-    "@kernaio/kernel": "^0.1.0",
+    "@kernhq/kernel": "^0.1.0",
     "@lucide/svelte": "^1.33.0",
     "bits-ui": "^2.19.0",
     "clsx": "^2.1.1",

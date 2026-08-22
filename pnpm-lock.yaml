@@ -60,7 +60,7 @@ importers:
       '@fastify/rate-limit':
         specifier: ^10.0.0
         version: 10.3.0
-      '@kernaio/contracts':
+      '@kernhq/contracts':
         specifier: ^0.1.0
         version: link:../contracts
       '@orpc/contract':
@@ -121,7 +121,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@kernaio/contracts':
+      '@kernhq/contracts':
         specifier: ^0.1.0
         version: link:../contracts
       '@orpc/client':
@@ -146,7 +146,7 @@ importers:
 
   packages/testing:
     dependencies:
-      '@kernaio/kernel':
+      '@kernhq/kernel':
         specifier: ^0.1.0
         version: link:../kernel
       '@testcontainers/postgresql':
@@ -174,7 +174,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@kernaio/kernel':
+      '@kernhq/kernel':
         specifier: ^0.1.0
         version: link:../kernel
       '@lucide/svelte':

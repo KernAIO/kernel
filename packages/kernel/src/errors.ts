@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@kernaio/contracts'
+import type { ErrorCode } from '@kernhq/contracts'
 
 export class KernError extends Error {
   constructor(

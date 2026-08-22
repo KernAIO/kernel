@@ -1,4 +1,4 @@
-import { ANONYMOUS, type Principal } from '@kernaio/contracts'
+import { ANONYMOUS, type Principal } from '@kernhq/contracts'
 import { InMemoryEventBus } from './events/bus.js'
 
 export { InMemoryEventBus }

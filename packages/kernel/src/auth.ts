@@ -1,5 +1,5 @@
 import { createSecretKey } from 'node:crypto'
-import { ANONYMOUS, type MembershipSummary, type Principal } from '@kernaio/contracts'
+import { ANONYMOUS, type MembershipSummary, type Principal } from '@kernhq/contracts'
 import { createRemoteJWKSet, type JWTPayload, jwtVerify, SignJWT } from 'jose'
 
 /**

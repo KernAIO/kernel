@@ -1,5 +1,5 @@
 {
-  "name": "@kernaio/testing",
+  "name": "@kernhq/testing",
   "version": "0.1.0",
   "description": "Test helpers for Kern services and modules",
   "license": "AGPL-3.0-only",
@@ -28,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kernaio/kernel": "^0.1.0",
+    "@kernhq/kernel": "^0.1.0",
     "@testcontainers/postgresql": "^12.1.0",
     "pg": "^8.16.0",
     "testcontainers": "^12.1.0"

@@ -1,4 +1,4 @@
-# @kernaio/kernel
+# @kernhq/kernel
 
 Kern module runtime: defineModule, registry, event bus (in-proc/NATS), call(), authz, jobs, settings, storage, HTTP server.
 

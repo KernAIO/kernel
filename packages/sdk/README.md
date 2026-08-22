@@ -1,4 +1,4 @@
-# @kernaio/sdk
+# @kernhq/sdk
 
 Typed client SDK for the Kern API (oRPC over fetch) and realtime WebSocket.
 

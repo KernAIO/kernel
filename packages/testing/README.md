@@ -1,4 +1,4 @@
-# @kernaio/testing
+# @kernhq/testing
 
 Test helpers: Testcontainers for Postgres/NATS/MinIO, kernel test harness.
 

@@ -1,4 +1,4 @@
-import { type ClientMessage, type CoreContract, coreContract, type ServerMessage } from '@kernaio/contracts'
+import { type ClientMessage, type CoreContract, coreContract, type ServerMessage } from '@kernhq/contracts'
 import { createORPCClient, onError } from '@orpc/client'
 import { RPCLink } from '@orpc/client/fetch'
 import type { ContractRouterClient } from '@orpc/contract'
@@ -48,7 +48,7 @@ export interface RealtimeOptions {
   onStatus?: (s: 'connecting' | 'open' | 'closed') => void
   WebSocket?: typeof WebSocket
 }
-/** Reconnecting WebSocket client speaking the Kern realtime protocol (see @kernaio/contracts/realtime). */
+/** Reconnecting WebSocket client speaking the Kern realtime protocol (see @kernhq/contracts/realtime). */
 export class RealtimeClient {
   private ws: WebSocket | null = null
   private subs = new Set<string>()

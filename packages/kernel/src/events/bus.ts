@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { EventDef, EventEnvelope, EventPayload } from '@kernaio/contracts'
+import type { EventDef, EventEnvelope, EventPayload } from '@kernhq/contracts'
 import type { Logger } from '../logger.js'
 
 export type Unsubscribe = () => void

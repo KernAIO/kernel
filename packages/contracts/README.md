@@ -1,4 +1,4 @@
-# @kernaio/contracts
+# @kernhq/contracts
 
 Shared Zod schemas, oRPC contracts, event and permission definitions for Kern services and modules.
 

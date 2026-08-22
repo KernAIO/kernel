@@ -1,7 +1,7 @@
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
-import { ANONYMOUS, type Principal } from '@kernaio/contracts'
+import { ANONYMOUS, type Principal } from '@kernhq/contracts'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { OpenAPIHandler } from '@orpc/openapi/node'
 import { ORPCError, onError, os } from '@orpc/server'
@@ -83,7 +83,7 @@ export interface HttpOptions {
 
 /**
  * Fastify server that mounts every hosted module's oRPC router at:
- *   /api/<prefix>/rpc/*   – oRPC binary protocol (used by the SvelteKit app via @kernaio/sdk)
+ *   /api/<prefix>/rpc/*   – oRPC binary protocol (used by the SvelteKit app via @kernhq/sdk)
  *   /api/<prefix>/*       – OpenAPI-style REST (3rd parties, curl, webhooks)
  *   /api/<prefix>/openapi.json
  */

@@ -1,5 +1,5 @@
 {
-  "name": "@kernaio/contracts",
+  "name": "@kernhq/contracts",
   "version": "0.1.0",
   "description": "Shared Zod schemas, oRPC contracts, events and permissions for Kern",
   "license": "AGPL-3.0-only",

@@ -1,5 +1,5 @@
-// @kernaio/ui — Kern "Ink / paper" design system (Svelte 5).
-// Styles are shipped separately: import '@kernaio/ui/styles/index.css' (or fonts/tokens/theme individually).
+// @kernhq/ui — Kern "Ink / paper" design system (Svelte 5).
+// Styles are shipped separately: import '@kernhq/ui/styles/index.css' (or fonts/tokens/theme individually).
 
 // ---- primitives ----
 export { default as Avatar } from './components/Avatar.svelte'
