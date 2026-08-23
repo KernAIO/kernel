@@ -16,7 +16,7 @@ import {
 import { CreateUpload, FileObject, UploadTicket } from './files.js'
 import { Notification, NotificationSettings, NotificationTypeDef, PushSubscription } from './notifications.js'
 import { SearchHit, SearchInput } from './search.js'
-import { InstanceSettings } from './settings.js'
+import { InstanceSettings, ModuleReport } from './settings.js'
 import { UpdatePlan, UpdatePolicy, UpdateStatus } from './updates.js'
 import { UpdateMe, User, UserPublic } from './users.js'
 import {
@@ -428,6 +428,14 @@ export const coreContract = {
     modules: base
       .route({ method: 'GET', path: '/admin/modules', tags: ['admin'] })
       .output(z.array(ModuleManifest.extend({ host: z.string(), healthy: z.boolean() }))),
+
+    /**
+     * What each module registered, checked rather than declared: which procedures are implemented,
+     * which are behind a permission, and what does not line up. The developer panel reads this.
+     */
+    diagnostics: base
+      .route({ method: 'GET', path: '/admin/diagnostics', tags: ['admin'] })
+      .output(z.array(ModuleReport)),
 
     /** Platform updates: what this instance runs, what the newest stable release is, how to take it. */
     updates: {

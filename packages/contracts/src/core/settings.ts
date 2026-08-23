@@ -53,3 +53,42 @@ export const AiProviderConfig = z.object({
   enabled: z.boolean().default(true),
 })
 export type AiProviderConfig = z.infer<typeof AiProviderConfig>
+
+/**
+ * What a module actually registered, for the developer panel.
+ *
+ * `admin.modules` returns a manifest and a hardcoded `healthy: true`. This is the question somebody
+ * building a module actually asks: is it wired up, is every procedure it promises implemented, and
+ * is each one behind a permission check.
+ */
+export const ProcedureReport = z.object({
+  name: z.string(),
+  method: z.string().nullable(),
+  path: z.string().nullable(),
+  middlewares: z.number().int(),
+  gated: z.boolean(),
+})
+export type ProcedureReport = z.infer<typeof ProcedureReport>
+
+export const ModuleReport = z.object({
+  id: z.string(),
+  name: z.string(),
+  version: z.string(),
+  hostedHere: z.boolean(),
+  host: z.string().nullable(),
+  procedures: z.array(ProcedureReport),
+  missing: z.array(z.string()),
+  undeclared: z.array(z.string()),
+  permissions: z.array(z.string()),
+  events: z.array(z.string()),
+  callable: z.array(z.string()),
+  jobs: z.array(z.string()),
+  subscriptions: z.array(z.string()),
+  objectTypes: z.array(z.string()),
+  notificationTypes: z.array(z.string()),
+  public: z.array(z.string()),
+  hasMigrations: z.boolean(),
+  hasSchema: z.boolean(),
+  problems: z.array(z.string()),
+})
+export type ModuleReport = z.infer<typeof ModuleReport>
