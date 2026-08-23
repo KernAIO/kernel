@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/kernel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Kern module runtime (defineModule, registry, events, call, authz, jobs, settings, storage, http)",
   "homepage": "https://kernaio.com",
   "license": "AGPL-3.0-only",
