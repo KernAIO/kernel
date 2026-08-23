@@ -16,8 +16,8 @@ import {
   type KeyboardShortcut,
   type NotificationRenderer,
   type ObjectPresenter,
-  type SlotContribution,
-  type SlotName,
+  type SidebarContribution,
+  type SidebarProps,
   type WidgetDefinition,
   type WidgetOption,
   type WidgetProps,
@@ -35,7 +35,7 @@ export type AnyComponent = Component<any>
 export type SvelteClientModule = ClientModule<AnyComponent>
 export type SvelteClientRoute = ClientRoute<AnyComponent>
 export type SvelteObjectPresenter = ObjectPresenter<AnyComponent>
-export type SvelteSlotContribution = SlotContribution<AnyComponent>
+export type SvelteSidebarContribution = SidebarContribution<AnyComponent>
 export type SvelteNotificationRenderer = NotificationRenderer<AnyComponent>
 export type SvelteClientSettingsPage = ClientSettingsPage<AnyComponent>
 export type SvelteWidgetDefinition = WidgetDefinition<AnyComponent>
@@ -45,7 +45,7 @@ export type {
   ClientNavItem,
   CommandAction,
   KeyboardShortcut,
-  SlotName,
+  SidebarProps,
   WidgetOption,
   WidgetProps,
   WidgetSettingField,

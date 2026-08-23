@@ -34,25 +34,44 @@ export interface ObjectPresenter<C = unknown> {
   card?: () => Promise<{ default: C }>
   page?: (id: string, workspaceSlug: string) => string
 }
-export type SlotName =
-  | 'sidebar.footer'
-  | 'sidebar.widget'
-  | 'header.actions'
-  | 'object.panel.tab'
-  | 'settings.workspace'
-  | 'settings.user'
-  | 'notification.item'
-  | 'chat.message.action'
-  | 'chat.composer.action'
-  | 'cmdk.section'
-export interface SlotContribution<C = unknown> {
-  slot: SlotName
+/**
+ * A sidebar a module owns.
+ *
+ * The rail switches modules and the sidebar holds the one you are in, so the module in view fills
+ * the whole column — its own control strip and its own navigation — rather than reaching into a
+ * shell that happens to leave a gap. `match` names the first path segment after `/<workspace>`;
+ * `''` is the home sidebar, which several modules may contribute a group to at once.
+ *
+ * Matching a *segment* rather than a substring is deliberate: gating on `pathname.includes('/chat')`
+ * also matches a workspace whose slug is `chat`, which is how the previous version of this got it
+ * wrong.
+ */
+export interface SidebarContribution<C = unknown> {
   id: string
+  /** first path segments after `/<workspace>` this fills; `''` is the home sidebar */
+  match: string[]
   order?: number
+  /**
+   * Fills the control strip, replacing the shell's ⌘K box.
+   *
+   * A module that owns the sidebar owns the row above it too — the tracker puts "New issue" there,
+   * chat puts its channel search — so the shell steps aside rather than stacking its own box above
+   * the module's.
+   */
+  controls?: () => Promise<{ default: C }>
   component: () => Promise<{ default: C }>
-  when?: (ctx: ClientContext) => boolean
-  props?: Record<string, unknown>
+  permission?: string
 }
+
+/** What the shell hands a sidebar contribution. */
+export interface SidebarProps {
+  workspaceId: string
+  workspaceSlug: string
+  pathname: string
+  /** the segment that matched, so one contribution can serve several */
+  segment: string
+}
+
 export interface KeyboardShortcut {
   id: string
   keys: string[]
@@ -126,7 +145,7 @@ export type WidgetSettingField =
  * A card a module offers on the workspace dashboard.
  *
  * This is a catalogue entry, not a slot: the shell has to draw it in a picker, validate a saved
- * layout against its sizes, and generate a settings form — none of which a `SlotContribution` says
+ * layout against its sizes, and generate a settings form — none of which an untyped slot says
  * enough to do.
  *
  * `title` and `description` should be declared as getters (`get title() { return m.x() }`), like
@@ -201,7 +220,7 @@ export interface ClientModule<C = unknown> {
   routes?: ClientRoute<C>[]
   commands?: CommandAction[]
   presenters?: ObjectPresenter<C>[]
-  slots?: SlotContribution<C>[]
+  sidebar?: SidebarContribution<C>[]
   shortcuts?: KeyboardShortcut[]
   notifications?: NotificationRenderer<C>[]
   settingsPages?: ClientSettingsPage<C>[]
