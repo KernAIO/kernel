@@ -1,0 +1,151 @@
+/*
+ * `.kern-prose` — how stored rich text looks, whether it is being read or being written.
+ *
+ * There is one rule here and the whole design depends on it: the editor's editable area carries
+ * this same class, so a document does not shift by a pixel when you press Save. Before this file
+ * each surface styled its own `p` and stopped there, and every heading, list, quote and code block
+ * a document could contain rendered unstyled — the renderer emitted them and nothing dressed them.
+ *
+ * Sizing is inherited on purpose. A comment sets 13px and a description 13.5px on the container;
+ * everything below scales from `em` so one stylesheet serves both without a variant for each.
+ */
+
+.kern-prose {
+  line-height: 1.55;
+  color: var(--kern-ink-700);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Blocks share one rhythm, and the first and last never fight the container's own padding. */
+.kern-prose > :first-child {
+  margin-top: 0;
+}
+.kern-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.kern-prose p {
+  margin: 0 0 0.5em;
+}
+
+.kern-prose h2,
+.kern-prose h3,
+.kern-prose h4 {
+  margin: 1.15em 0 0.4em;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--kern-ink-900);
+}
+.kern-prose h2 {
+  font-size: 1.3em;
+}
+.kern-prose h3 {
+  font-size: 1.15em;
+}
+.kern-prose h4 {
+  font-size: 1.03em;
+}
+
+/* `padding-inline-start` rather than `padding-left`: the markers belong on the side the script
+   starts on, and in Persian and Arabic that is the right. */
+.kern-prose ul,
+.kern-prose ol {
+  margin: 0 0 0.5em;
+  padding-inline-start: 1.4em;
+}
+.kern-prose li {
+  margin: 0.15em 0;
+}
+.kern-prose li > p {
+  margin: 0;
+}
+.kern-prose ul {
+  list-style: disc;
+}
+.kern-prose ol {
+  list-style: decimal;
+}
+.kern-prose ul ul {
+  list-style: circle;
+}
+
+.kern-prose blockquote {
+  margin: 0.6em 0;
+  padding-inline-start: 0.9em;
+  border-inline-start: 2px solid var(--kern-border);
+  color: var(--kern-ink-450);
+}
+
+.kern-prose code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--kern-r-xs);
+  background: var(--kern-surface-hover);
+  border: 1px solid var(--kern-border-muted);
+  font-family: var(--kern-font-mono);
+  font-size: 0.9em;
+  color: var(--kern-ink-800);
+}
+
+.kern-prose pre {
+  margin: 0.6em 0;
+  padding: 10px 12px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-surface-hover);
+  overflow-x: auto;
+  /* code is Latin and left-to-right even inside a Persian comment */
+  direction: ltr;
+  text-align: left;
+}
+.kern-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.88em;
+  line-height: 1.5;
+  color: var(--kern-ink-800);
+  white-space: pre;
+}
+
+.kern-prose hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid var(--kern-border);
+}
+
+.kern-prose a {
+  color: var(--kern-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.kern-prose a:hover {
+  color: var(--kern-accent-deep);
+}
+
+.kern-prose strong {
+  font-weight: 600;
+  color: var(--kern-ink-900);
+}
+.kern-prose s {
+  color: var(--kern-ink-450);
+}
+
+/* `renderDoc` emits this, and so does the editor's Mention node. Without a rule a mention reads as
+   ordinary text and the reader cannot tell they were addressed. */
+.kern-prose .kern-mention {
+  padding: 0 3px;
+  border-radius: var(--kern-r-xs);
+  background: var(--kern-info-tint);
+  color: var(--kern-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.kern-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--kern-r-lg);
+}
