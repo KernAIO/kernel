@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://raw.githubusercontent.com/KernAIO/kern/main/assets/kern-mark.svg" width="56" alt="">
+</p>
+
 # kernel
 
 **The libraries every Kern service and module is built on.**
