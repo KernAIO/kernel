@@ -102,7 +102,22 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
     genReqId: () => crypto.randomUUID(),
   })
   await app.register(helmet, {
-    contentSecurityPolicy: false,
+    /*
+     * A JSON API renders nothing, so it needs nothing: no scripts, no styles, no frames. Saying so
+     * costs nothing and means an HTML error page — or an endpoint somebody adds later without
+     * thinking about it — cannot execute anything or be framed.
+     *
+     * `/api/docs` is the one route that does render, and it relaxes this for itself.
+     */
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        'default-src': ["'none'"],
+        'frame-ancestors': ["'none'"],
+        'base-uri': ["'none'"],
+        'form-action': ["'none'"],
+      },
+    },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
   await app.register(cors, {
@@ -118,6 +133,16 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
 
   app.addHook('onRequest', async (req, reply) => {
     reply.header('x-request-id', req.id)
+    // during an upgrade the API says so, so the interface can show a maintenance screen instead of
+    // turning half-applied migrations into a wall of 500s. Health and readiness stay answerable —
+    // they are how the upgrade itself knows when the service is back.
+    if (req.url.startsWith('/api/health') || req.url.startsWith('/api/ready')) return
+    const state = await kernel.maintenance.active()
+    if (state)
+      return reply
+        .status(503)
+        .header('retry-after', '15')
+        .send({ code: 'MAINTENANCE', message: state.reason, details: { since: state.since } })
   })
   app.addHook('onResponse', async (req, reply) => {
     if (req.url.startsWith('/api/health')) return
@@ -148,7 +173,9 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
     ok: true,
     service: kernel.service,
     version: kernel.version,
-    modules: kernel.registry.ids(),
+    // id *and* version: this is what the release-feed generator reads out of a built image, and
+    // what the admin update screen diffs against the newest release
+    modules: kernel.registry.all().map((m) => ({ id: m.definition.id, version: m.definition.version })),
   }))
   app.get('/api/ready', async (_req, reply) => {
     try {

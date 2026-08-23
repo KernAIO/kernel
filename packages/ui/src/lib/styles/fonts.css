@@ -1,5 +1,8 @@
 /* Kern fonts — Instrument Sans (UI), DM Mono (metadata), Vazirmatn (fa/ar).
  *
+ * DM Mono is Latin-only. Under `:lang(fa)` / `:lang(ar)` the mono token resolves to the UI stack
+ * instead (tokens.css), so nothing in an RTL interface asks for glyphs the face does not have.
+ *
  * The web fonts are requested from the document, not from CSS: a remote `@import` has to precede every
  * rule in the sheet, which cannot be guaranteed once an app composes this file with Tailwind and its
  * own styles, and a <link> lets the browser start fetching without waiting for the CSS to parse.

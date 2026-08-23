@@ -49,6 +49,20 @@ export const coreEvents = {
   ),
   fileReady: defineEvent(
     'core.file.ready',
-    z.object({ fileId: Id, workspaceId: WorkspaceId, mimeType: z.string() }),
+    z.object({
+      fileId: Id,
+      workspaceId: WorkspaceId,
+      mimeType: z.string(),
+      /**
+       * Optional so that a rolling deploy, where an older core emits alongside a newer consumer,
+       * does not drop the event on validation. A consumer counting bytes treats a missing size as
+       * unknown and waits for its reconcile pass rather than guessing.
+       */
+      size: z.number().int().nonnegative().optional(),
+    }),
+  ),
+  fileDeleted: defineEvent(
+    'core.file.deleted',
+    z.object({ fileId: Id, workspaceId: WorkspaceId, size: z.number().int().nonnegative() }),
   ),
 } as const

@@ -63,16 +63,26 @@ const groups = $derived.by(() => {
     <P.Content class={cn('kmenu ksel-content', contentClass)} sideOffset={4} collisionPadding={8}>
       <P.Viewport>
         {#each groups as [g, opts] (g)}
-          {#if g}<P.GroupHeading class="kmenu-label">{g}</P.GroupHeading>{/if}
-          {#each opts as o (o.value)}
-            <P.Item value={o.value} label={o.label} disabled={o.disabled} class="kmenu-item ksel-item">
-              {#snippet children({ selected })}
-                <span class="kmenu-ic">{#if o.icon}<Icon name={o.icon} size={15} strokeWidth={1.6} />{/if}</span>
-                <span class="kmenu-l"><span>{o.label}</span>{#if o.description}<span class="ksel-d">{o.description}</span>{/if}</span>
-                {#if selected}<Icon name="check" size={14} strokeWidth={2} class="ksel-check" />{/if}
-              {/snippet}
-            </P.Item>
-          {/each}
+          <!-- GroupHeading reads a context only Group provides, so a heading outside one throws -->
+          {#snippet items()}
+            {#each opts as o (o.value)}
+              <P.Item value={o.value} label={o.label} disabled={o.disabled} class="kmenu-item ksel-item">
+                {#snippet children({ selected })}
+                  <span class="kmenu-ic">{#if o.icon}<Icon name={o.icon} size={15} strokeWidth={1.6} />{/if}</span>
+                  <span class="kmenu-l"><span>{o.label}</span>{#if o.description}<span class="ksel-d">{o.description}</span>{/if}</span>
+                  {#if selected}<Icon name="check" size={14} strokeWidth={2} class="ksel-check" />{/if}
+                {/snippet}
+              </P.Item>
+            {/each}
+          {/snippet}
+          {#if g}
+            <P.Group>
+              <P.GroupHeading class="kmenu-label">{g}</P.GroupHeading>
+              {@render items()}
+            </P.Group>
+          {:else}
+            {@render items()}
+          {/if}
         {/each}
       </P.Viewport>
     </P.Content>

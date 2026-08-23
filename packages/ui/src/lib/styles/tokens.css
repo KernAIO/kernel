@@ -95,7 +95,7 @@
   --kern-av-fg: #fbfaf7;
   /* type */
   --kern-font-sans: "Instrument Sans", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --kern-font-mono: "DM Mono", "Vazir Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --kern-font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* radii */
   --kern-r-xs: 4px;
   --kern-r-sm: 5px;
@@ -110,6 +110,7 @@
   /* layout */
   --kern-rail-w: 60px;
   --kern-sidebar-w: 268px;
+  --kern-tabbar-h: 38px;
   --kern-header-h: 60px;
   --kern-toolbar-h: 52px;
   --kern-detail-w: 440px;
@@ -117,6 +118,10 @@
   --kern-planner-side-w: 300px;
   --kern-board-col-w: 284px;
   --kern-bottombar-h: 56px;
+  /* The content gutter every view pads by. It was referenced as `var(--kern-gutter, 24px)` before
+     it existed, so the fallback was quietly doing all the work — make it real. */
+  --kern-gutter: 24px;
+
   /* shadows */
   --kern-shadow-panel: -8px 0 24px #eae6dc;
   --kern-shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.2);
@@ -218,6 +223,23 @@
 /* ---- RTL flips (logical props cover the rest) ---- */
 [dir="rtl"] {
   --kern-shadow-panel: 8px 0 24px #eae6dc;
+  /*
+   * No metadata face in Persian or Arabic.
+   *
+   * DM Mono is Latin-only, so every timestamp, count, issue key and section label in an RTL
+   * interface fell through to a system monospace — which draws Arabic letters in their isolated
+   * forms. "فضای کاری" came out as separate, unjoined letters spaced like code. That is not a
+   * typographic preference; the script does not work that way.
+   *
+   * There is no Persian monospace here to fall back to, and there should not be. The mono face
+   * carries "this is metadata", and in RTL that is carried by size, weight and colour on the
+   * ordinary UI face instead — which also keeps a Latin run inside a Persian screen (an issue key, a
+   * shortcut) in the same typeface as everything around it.
+   *
+   * This has to live unlayered, with the tokens: `:root` above is unlayered, and an unlayered
+   * declaration beats one inside `@layer base` whatever its specificity.
+   */
+  --kern-font-mono: var(--kern-font-sans);
 }
 [dir="rtl"][data-theme="dark"],
 [dir="rtl"] .dark,

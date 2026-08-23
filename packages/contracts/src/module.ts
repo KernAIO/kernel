@@ -12,6 +12,13 @@ export const ModuleManifest = z.object({
   /** core modules are always enabled and cannot be disabled per workspace */
   core: z.boolean().default(false),
   dependsOn: z.array(ModuleId).default([]),
+  /**
+   * Semver range of the platform this module can run on. Modules are versioned and released
+   * together, so first-party modules rarely need it — it exists for custom builds, where a module
+   * package and the images around it can be moved independently and would otherwise fail at some
+   * unrelated call site instead of at boot.
+   */
+  minKernel: z.string().optional(),
   permissions: z.array(PermissionDef).default([]),
   /** event names this module emits */
   events: z.array(z.string()).default([]),

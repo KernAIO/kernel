@@ -8,6 +8,12 @@ export const KernelEnv = z.object({
   KERN_BASE_URL: z.string().url().default('http://localhost:5173'),
   /** 32+ byte secret used to derive encryption keys for secrets at rest and service tokens */
   KERN_SECRET: z.string().min(32),
+  /**
+   * The release this process belongs to. Baked into the image at build time; every service in an
+   * instance runs the same one, which is what makes "the version of Kern you run" a single answer.
+   * `0.0.0-dev` outside a released image.
+   */
+  KERN_VERSION: z.string().default('0.0.0-dev'),
   DATABASE_URL: z.string().url(),
   DATABASE_POOL_MAX: z.coerce.number().int().default(20),
   NATS_URL: z.string().optional(),

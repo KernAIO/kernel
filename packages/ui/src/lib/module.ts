@@ -18,6 +18,13 @@ import {
   type ObjectPresenter,
   type SlotContribution,
   type SlotName,
+  type WidgetDefinition,
+  type WidgetOption,
+  type WidgetProps,
+  type WidgetSettingField,
+  type WidgetSettings,
+  type WidgetSettingsContext,
+  type WidgetSize,
 } from '@kernhq/kernel/client'
 import type { Component } from 'svelte'
 
@@ -31,8 +38,21 @@ export type SvelteObjectPresenter = ObjectPresenter<AnyComponent>
 export type SvelteSlotContribution = SlotContribution<AnyComponent>
 export type SvelteNotificationRenderer = NotificationRenderer<AnyComponent>
 export type SvelteClientSettingsPage = ClientSettingsPage<AnyComponent>
+export type SvelteWidgetDefinition = WidgetDefinition<AnyComponent>
 
-export type { ClientContext, ClientNavItem, CommandAction, KeyboardShortcut, SlotName }
+export type {
+  ClientContext,
+  ClientNavItem,
+  CommandAction,
+  KeyboardShortcut,
+  SlotName,
+  WidgetOption,
+  WidgetProps,
+  WidgetSettingField,
+  WidgetSettings,
+  WidgetSettingsContext,
+  WidgetSize,
+}
 
 export function defineClientModule(mod: SvelteClientModule): SvelteClientModule {
   return defineUntyped(mod)

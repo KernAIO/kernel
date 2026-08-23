@@ -17,6 +17,8 @@ interface Props {
   side?: 'end' | 'start'
   trigger?: Snippet<[Record<string, unknown>]>
   header?: Snippet
+  /** buttons that belong beside the close button, not beside the title */
+  actions?: Snippet
   children: Snippet
   footer?: Snippet
   class?: string
@@ -31,6 +33,7 @@ let {
   side = 'end',
   trigger,
   header,
+  actions,
   children,
   footer,
   class: className,
@@ -46,6 +49,7 @@ let {
       <div class="ksheet-head">
         {#if header}{@render header()}{:else if title}<P.Title class="ksheet-title">{title}</P.Title>{/if}
         <span class="sp"></span>
+        {#if actions}{@render actions()}{/if}
         <P.Close>{#snippet child({ props })}<IconButton icon="x" label="Close" size={28} variant="sidebar" strokeWidth={1.8} {...props} />{/snippet}</P.Close>
       </div>
       <div class="ksheet-body">{@render children()}</div>

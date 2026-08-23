@@ -1,5 +1,6 @@
 <script lang="ts">
 import Icon from '../icons/Icon.svelte'
+import Avatar from './Avatar.svelte'
 import Kbd from './Kbd.svelte'
 import MenuItems from './MenuItems.svelte'
 import type { MenuItem } from './menu-types.js'
@@ -31,6 +32,7 @@ const SubContent = $derived(P.SubContent)
     <CheckboxItem class="kmenu-item" checked={it.checked} onCheckedChange={it.onCheckedChange} disabled={it.disabled}>
       {#snippet children({ checked }: { checked: boolean })}
         <span class="kmenu-ic">{#if checked}<Icon name="check" size={14} strokeWidth={2} />{/if}</span>
+        {#if it.avatar}<Avatar id={it.avatar.id} name={it.avatar.name} src={it.avatar.src} size={20} />{/if}
         <span class="kmenu-l">{it.label}</span>
       {/snippet}
     </CheckboxItem>
@@ -57,6 +59,7 @@ const SubContent = $derived(P.SubContent)
   {:else}
     <Item class="kmenu-item {it.danger ? 'danger' : ''}" disabled={it.disabled} onSelect={() => { if (it.href && typeof window !== 'undefined') window.location.assign(it.href); it.onSelect?.() }}>
       <span class="kmenu-ic">{#if it.icon}<Icon name={it.icon} size={15} strokeWidth={1.6} />{/if}</span>
+      {#if it.avatar}<Avatar id={it.avatar.id} name={it.avatar.name} src={it.avatar.src} size={20} />{/if}
       <span class="kmenu-l">{it.label}</span>
       {#if it.shortcut}<Kbd keys={it.shortcut} />{:else if it.hint}<span class="kmenu-hint">{it.hint}</span>{/if}
     </Item>

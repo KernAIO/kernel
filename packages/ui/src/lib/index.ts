@@ -20,7 +20,7 @@ export { default as Input } from './components/Input.svelte'
 export { default as Kbd } from './components/Kbd.svelte'
 export { default as Label } from './components/Label.svelte'
 export { default as ListRow } from './components/ListRow.svelte'
-export type { MenuItem } from './components/menu-types.js'
+export type { MenuAvatar, MenuItem } from './components/menu-types.js'
 export { default as Popover } from './components/Popover.svelte'
 export { default as ProgressBar } from './components/ProgressBar.svelte'
 export { default as ScrollArea } from './components/ScrollArea.svelte'
@@ -68,6 +68,8 @@ export { default as SidebarGroup } from './layout/SidebarGroup.svelte'
 export { default as SidebarItem } from './layout/SidebarItem.svelte'
 export { default as SidebarPill } from './layout/SidebarPill.svelte'
 export { default as SidebarSwitcher } from './layout/SidebarSwitcher.svelte'
+export { default as TabBar, type TabBarTab } from './layout/TabBar.svelte'
+export { default as TabBarItem } from './layout/TabBarItem.svelte'
 export { default as Toolbar } from './layout/Toolbar.svelte'
 export { default as ToolbarButton } from './layout/ToolbarButton.svelte'
 export { default as ViewToggle } from './layout/ViewToggle.svelte'
@@ -86,6 +88,13 @@ export {
   type SvelteNotificationRenderer,
   type SvelteObjectPresenter,
   type SvelteSlotContribution,
+  type SvelteWidgetDefinition,
+  type WidgetOption,
+  type WidgetProps,
+  type WidgetSettingField,
+  type WidgetSettings,
+  type WidgetSettingsContext,
+  type WidgetSize,
 } from './module.js'
 // ---- utilities ----
 export {

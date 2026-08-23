@@ -7,12 +7,15 @@ import ArrowUp from '@lucide/svelte/icons/arrow-up'
 import AtSign from '@lucide/svelte/icons/at-sign'
 import Bell from '@lucide/svelte/icons/bell'
 import BellOff from '@lucide/svelte/icons/bell-off'
+import Bold from '@lucide/svelte/icons/bold'
 import Bookmark from '@lucide/svelte/icons/bookmark'
 import Bot from '@lucide/svelte/icons/bot'
 import Briefcase from '@lucide/svelte/icons/briefcase'
 import Bug from '@lucide/svelte/icons/bug'
 import Building2 from '@lucide/svelte/icons/building-2'
 import Calendar from '@lucide/svelte/icons/calendar'
+import ChartColumn from '@lucide/svelte/icons/chart-column'
+import ChartLine from '@lucide/svelte/icons/chart-line'
 import Check from '@lucide/svelte/icons/check'
 import ChevronDown from '@lucide/svelte/icons/chevron-down'
 import ChevronLeft from '@lucide/svelte/icons/chevron-left'
@@ -25,9 +28,11 @@ import CircleCheck from '@lucide/svelte/icons/circle-check'
 import CircleHelp from '@lucide/svelte/icons/circle-help'
 import CircleUser from '@lucide/svelte/icons/circle-user'
 import Clock from '@lucide/svelte/icons/clock'
+import Code from '@lucide/svelte/icons/code'
 import Columns3 from '@lucide/svelte/icons/columns-3'
 import Command from '@lucide/svelte/icons/command'
 import Copy from '@lucide/svelte/icons/copy'
+import CreditCard from '@lucide/svelte/icons/credit-card'
 import Database from '@lucide/svelte/icons/database'
 import Diamond from '@lucide/svelte/icons/diamond'
 import Download from '@lucide/svelte/icons/download'
@@ -39,38 +44,55 @@ import FileText from '@lucide/svelte/icons/file-text'
 import Filter from '@lucide/svelte/icons/filter'
 import Flag from '@lucide/svelte/icons/flag'
 import Folder from '@lucide/svelte/icons/folder'
+import Gauge from '@lucide/svelte/icons/gauge'
 import GitBranch from '@lucide/svelte/icons/git-branch'
 import Globe from '@lucide/svelte/icons/globe'
+import GripVertical from '@lucide/svelte/icons/grip-vertical'
 import Hash from '@lucide/svelte/icons/hash'
+import Heading2 from '@lucide/svelte/icons/heading-2'
+import Heading3 from '@lucide/svelte/icons/heading-3'
 import House from '@lucide/svelte/icons/house'
 import Image from '@lucide/svelte/icons/image'
 import Inbox from '@lucide/svelte/icons/inbox'
 import Info from '@lucide/svelte/icons/info'
+import Italic from '@lucide/svelte/icons/italic'
 import Kanban from '@lucide/svelte/icons/kanban'
 import KeyRound from '@lucide/svelte/icons/key-round'
 import Languages from '@lucide/svelte/icons/languages'
+import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard'
 import LayoutGrid from '@lucide/svelte/icons/layout-grid'
 import Link from '@lucide/svelte/icons/link'
+import Link2Off from '@lucide/svelte/icons/link-2-off'
 import List from '@lucide/svelte/icons/list'
+import ListOrdered from '@lucide/svelte/icons/list-ordered'
 import Loader from '@lucide/svelte/icons/loader-circle'
 import Lock from '@lucide/svelte/icons/lock'
+import LockOpen from '@lucide/svelte/icons/lock-open'
 import LogOut from '@lucide/svelte/icons/log-out'
 import Mail from '@lucide/svelte/icons/mail'
+import Maximize2 from '@lucide/svelte/icons/maximize-2'
 import Menu from '@lucide/svelte/icons/menu'
 import MessageCircle from '@lucide/svelte/icons/message-circle'
 import MessageSquareText from '@lucide/svelte/icons/message-square-text'
 import Mic from '@lucide/svelte/icons/mic'
+import Minimize2 from '@lucide/svelte/icons/minimize-2'
+import Minus from '@lucide/svelte/icons/minus'
 import Monitor from '@lucide/svelte/icons/monitor'
 import Moon from '@lucide/svelte/icons/moon'
+import Move from '@lucide/svelte/icons/move'
 import Palette from '@lucide/svelte/icons/palette'
 import PanelRight from '@lucide/svelte/icons/panel-right'
 import Paperclip from '@lucide/svelte/icons/paperclip'
 import Pencil from '@lucide/svelte/icons/pencil'
+import Pin from '@lucide/svelte/icons/pin'
 import Play from '@lucide/svelte/icons/play'
 import Plug from '@lucide/svelte/icons/plug'
 import Plus from '@lucide/svelte/icons/plus'
 import Puzzle from '@lucide/svelte/icons/puzzle'
+import Quote from '@lucide/svelte/icons/quote'
+import Redo2 from '@lucide/svelte/icons/redo-2'
 import RefreshCw from '@lucide/svelte/icons/refresh-cw'
+import RotateCcw from '@lucide/svelte/icons/rotate-ccw'
 import ScrollText from '@lucide/svelte/icons/scroll-text'
 import Search from '@lucide/svelte/icons/search'
 import Settings from '@lucide/svelte/icons/settings'
@@ -83,13 +105,17 @@ import Smile from '@lucide/svelte/icons/smile'
 import Sparkles from '@lucide/svelte/icons/sparkles'
 import Square from '@lucide/svelte/icons/square'
 import SquareCheckBig from '@lucide/svelte/icons/square-check-big'
+import CodeBlock from '@lucide/svelte/icons/square-code'
 import SquarePen from '@lucide/svelte/icons/square-pen'
 import Star from '@lucide/svelte/icons/star'
+import Strikethrough from '@lucide/svelte/icons/strikethrough'
 import Sun from '@lucide/svelte/icons/sun'
 import Tag from '@lucide/svelte/icons/tag'
 import Target from '@lucide/svelte/icons/target'
+import Timer from '@lucide/svelte/icons/timer'
 import Trash2 from '@lucide/svelte/icons/trash-2'
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert'
+import Undo2 from '@lucide/svelte/icons/undo-2'
 import Upload from '@lucide/svelte/icons/upload'
 import User from '@lucide/svelte/icons/user'
 import UserPlus from '@lucide/svelte/icons/user-plus'
@@ -109,6 +135,31 @@ export type IconComponent = Component<LucideProps>
  * (`icon: 'target'`) so the app stays tree-shaken; call `registerIcons` to add more.
  */
 const registry: Record<string, IconComponent> = {
+  bold: Bold,
+  'chart-column': ChartColumn,
+  'chart-line': ChartLine,
+  gauge: Gauge,
+  'grip-vertical': GripVertical,
+  italic: Italic,
+  'layout-dashboard': LayoutDashboard,
+  'lock-open': LockOpen,
+  'maximize-2': Maximize2,
+  'minimize-2': Minimize2,
+  move: Move,
+  pin: Pin,
+  'rotate-ccw': RotateCcw,
+  strikethrough: Strikethrough,
+  code: Code,
+  'square-code': CodeBlock,
+  'heading-2': Heading2,
+  'heading-3': Heading3,
+  'list-ordered': ListOrdered,
+  quote: Quote,
+  'link-2-off': Link2Off,
+  minus: Minus,
+  'redo-2': Redo2,
+  timer: Timer,
+  'undo-2': Undo2,
   activity: Activity,
   archive: Archive,
   'arrow-left': ArrowLeft,
@@ -200,6 +251,7 @@ const registry: Record<string, IconComponent> = {
   'square-pen': SquarePen,
   star: Star,
   sun: Sun,
+  'credit-card': CreditCard,
   tag: Tag,
   target: Target,
   'trash-2': Trash2,

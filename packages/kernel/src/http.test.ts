@@ -83,6 +83,8 @@ function stubKernel(opts: { moduleEnabled: boolean }): Kernel {
     log: { info: noop, warn: noop, error: noop, debug: noop, fatal: noop, trace: noop },
     database: { pool: { query: async () => ({ rows: [] }) } },
     authz: { requireMember: noop },
+    // the request hook asks on every request whether the instance is closed for an upgrade
+    maintenance: { active: async () => null },
     isModuleEnabled: async () => opts.moduleEnabled,
   } as unknown as Kernel
 }
@@ -170,7 +172,9 @@ describe('the rest of the error mapping, over the same wire', () => {
   it('is still reachable at all: health does not go through a module', async () => {
     const res = await fetch(`${enabled.url}/api/health`)
     expect(res.status).toBe(200)
-    expect(((await res.json()) as { modules?: string[] }).modules).toEqual(['demo'])
+    expect(((await res.json()) as { modules?: Array<{ id: string }> }).modules).toEqual([
+      { id: 'demo', version: '0.0.0' },
+    ])
   })
 })
 

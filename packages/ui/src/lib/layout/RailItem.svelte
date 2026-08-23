@@ -11,7 +11,8 @@ interface Props {
   href?: string
   active?: boolean
   dot?: boolean
-  badge?: number | null
+  /** A string is rendered as given — the caller has already put it in the interface's digits. */
+  badge?: number | string | null
   muted?: boolean
   keys?: string[]
   class?: string
@@ -38,7 +39,7 @@ let {
     <svelte:element this={href ? 'a' : 'button'} {href} type={href ? undefined : 'button'} class={cn('krit', active && 'active', muted && 'muted', className)} aria-label={label} aria-current={active ? 'page' : undefined} {onclick} {...props}>
       {#if inner}{@render inner()}{:else if icon}<Icon name={icon} size={18} strokeWidth={1.5} />{/if}
       {#if dot}<span class="dot" aria-hidden="true"></span>{/if}
-      {#if badge}<span class="bd">{badge > 99 ? '99+' : badge}</span>{/if}
+      {#if badge}<span class="bd">{typeof badge === 'number' && badge > 99 ? '99+' : badge}</span>{/if}
     </svelte:element>
   {/snippet}
 </Tooltip>

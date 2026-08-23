@@ -4,10 +4,20 @@ import { ApiError, PageInput, page } from '../common.js'
 import { Id, UserId, WorkspaceId } from '../ids.js'
 import { ModuleManifest, WorkspaceModuleState } from '../module.js'
 import { ActivityEvent } from './activity.js'
+import {
+  DashboardItems,
+  DashboardLayout,
+  DashboardPolicy,
+  DashboardSettings,
+  DashboardSurface,
+  DashboardView,
+  PresetId,
+} from './dashboard.js'
 import { CreateUpload, FileObject, UploadTicket } from './files.js'
 import { Notification, NotificationSettings, NotificationTypeDef, PushSubscription } from './notifications.js'
 import { SearchHit, SearchInput } from './search.js'
 import { InstanceSettings } from './settings.js'
+import { UpdatePlan, UpdatePolicy, UpdateStatus } from './updates.js'
 import { UpdateMe, User, UserPublic } from './users.js'
 import {
   CreateInvitations,
@@ -39,11 +49,15 @@ export const base = oc.errors({
 const ws = z.object({ workspaceId: WorkspaceId })
 
 export const coreContract = {
-  health: oc
-    .route({ method: 'GET', path: '/health', tags: ['system'] })
-    .output(
-      z.object({ ok: z.boolean(), service: z.string(), version: z.string(), modules: z.array(z.string()) }),
-    ),
+  health: oc.route({ method: 'GET', path: '/health', tags: ['system'] }).output(
+    z.object({
+      ok: z.boolean(),
+      service: z.string(),
+      /** the release (`KERN_VERSION`) this process was built as */
+      version: z.string(),
+      modules: z.array(z.object({ id: z.string(), version: z.string() })),
+    }),
+  ),
 
   users: {
     me: base
@@ -241,6 +255,65 @@ export const coreContract = {
       .output(page(ActivityEvent)),
   },
 
+  /**
+   * The workspace dashboard.
+   *
+   * `get`, `save` and `reset` carry no permission key: they touch the caller's own row, and every
+   * widget drawn inside is gated by the procedure it calls, which is the check that matters. The
+   * `settings` group is `core.workspace.manage` — whoever sets the workspace logo sets its home
+   * page.
+   */
+  dashboard: {
+    get: base
+      .route({ method: 'GET', path: '/workspaces/{workspaceId}/dashboard', tags: ['dashboard'] })
+      .input(ws.extend({ surface: DashboardSurface.default('home') }))
+      .output(DashboardView),
+    /** Refused with CONFLICT `core.dashboard.locked` when the workspace locked the layout. */
+    save: base
+      .route({ method: 'PUT', path: '/workspaces/{workspaceId}/dashboard', tags: ['dashboard'] })
+      .input(
+        ws.extend({
+          surface: DashboardSurface.default('home'),
+          items: DashboardItems,
+          presetId: PresetId.nullable().default(null),
+        }),
+      )
+      .output(DashboardLayout),
+    /** Drops the caller's own layout so the workspace's, or the preset, applies again. */
+    reset: base
+      .route({ method: 'POST', path: '/workspaces/{workspaceId}/dashboard/reset', tags: ['dashboard'] })
+      .input(ws.extend({ surface: DashboardSurface.default('home') }))
+      .output(DashboardView),
+
+    settings: {
+      get: base
+        .route({ method: 'GET', path: '/workspaces/{workspaceId}/dashboard/settings', tags: ['dashboard'] })
+        .input(ws.extend({ surface: DashboardSurface.default('home') }))
+        .output(DashboardSettings),
+      set: base
+        .route({ method: 'PUT', path: '/workspaces/{workspaceId}/dashboard/settings', tags: ['dashboard'] })
+        .input(
+          ws.extend({
+            surface: DashboardSurface.default('home'),
+            policy: DashboardPolicy.optional(),
+            defaultPresetId: PresetId.optional(),
+          }),
+        )
+        .output(DashboardSettings),
+      /** The layout members start from. Edited on the real page, at its real size. */
+      saveWorkspace: base
+        .route({ method: 'PUT', path: '/workspaces/{workspaceId}/dashboard/workspace', tags: ['dashboard'] })
+        .input(
+          ws.extend({
+            surface: DashboardSurface.default('home'),
+            items: DashboardItems,
+            presetId: PresetId.nullable().default(null),
+          }),
+        )
+        .output(DashboardLayout),
+    },
+  },
+
   notifications: {
     list: base
       .route({ method: 'GET', path: '/notifications', tags: ['notifications'] })
@@ -355,6 +428,21 @@ export const coreContract = {
     modules: base
       .route({ method: 'GET', path: '/admin/modules', tags: ['admin'] })
       .output(z.array(ModuleManifest.extend({ host: z.string(), healthy: z.boolean() }))),
+
+    /** Platform updates: what this instance runs, what the newest stable release is, how to take it. */
+    updates: {
+      get: base.route({ method: 'GET', path: '/admin/updates', tags: ['admin'] }).output(UpdateStatus),
+      /** Re-read the release feed now instead of waiting for the scheduled check. */
+      check: base
+        .route({ method: 'POST', path: '/admin/updates/check', tags: ['admin'] })
+        .output(UpdateStatus),
+      setPolicy: base
+        .route({ method: 'PUT', path: '/admin/updates/policy', tags: ['admin'] })
+        .input(UpdatePolicy.partial())
+        .output(UpdateStatus),
+      /** What an automatic upgrade would do right now. The host's timer asks this before it acts. */
+      plan: base.route({ method: 'GET', path: '/admin/updates/plan', tags: ['admin'] }).output(UpdatePlan),
+    },
   },
 }
 export type CoreContract = typeof coreContract

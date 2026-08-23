@@ -80,3 +80,23 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   (`packages/ui/biome.json`).
 - An ESM-only package still needs a `default` condition in its `exports`, or tools that resolve
   without the `import` condition (drizzle-kit among them) cannot find it.
+- **`@kernhq/ui` ships `dist`, so editing `src` changes nothing until `pnpm --filter @kernhq/ui build`.**
+  The consumer is symlinked to the package directory, which makes it look live, but `exports` points
+  at `./dist/index.js` — the app keeps rendering the last built copy. Worse, `pnpm typecheck` runs
+  `svelte-check` over `src` and passes, so a broken or simply unbuilt change reports green. Verify a
+  UI change in a browser against the computed style, not by type-checking. (Contrast a module's
+  `./client`, which ships as source and *is* live once linked — the two behave oppositely.)
+- **A bits-ui part that reads a context must sit inside the part that provides it.** `Select`
+  rendered `Select.GroupHeading` without a `Select.Group` around it, so every grouped select threw
+  "Context ... not found" on open and simply never appeared — no compile error, and the ungrouped
+  path (everything that existed until then) kept working. When a headless primitive has a wrapper,
+  it is load-bearing.
+- **`create ... if not exists` is not atomic in Postgres.** Two sessions both see "not there", both
+  insert into the catalogue, and the loser gets a unique violation instead of the no-op it asked for.
+  Every service boots at once, so this is the normal case: `migrateModule` holds an advisory lock
+  across schema creation *and* migration, and `ignoringDuplicate` treats 23505/42P06/42P07 as
+  success. A test with four concurrent `migrateModule` calls found this — the lock alone was not
+  enough because `ensureSchema` ran outside it.
+- The kernel's version is `KERN_VERSION` from the image, not a constant a service passes in. A
+  service that passes `version:` to `createKernel` overrides the release and makes `/api/health` lie;
+  only tests should do it.

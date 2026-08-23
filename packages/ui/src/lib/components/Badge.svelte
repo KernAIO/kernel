@@ -5,7 +5,7 @@ import { cn } from '../utils.js'
 
 /**
  * chip   — 12px, pad 3/9, r6, tint/fg pairs (status/kind/state chips)
- * count  — DM Mono 10.5px, pad 1/6, r5 (nav badge)
+ * count  — DM Mono 10.5px, 16px tall pill, min-width 17 (nav badge)
  * glow   — like count, danger bg (unread/urgent)
  * dot    — 6–7px unread dot
  */
@@ -78,7 +78,12 @@ const t = $derived(toneMap[tone] ?? tone)
 <style>
   .kbadge { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; line-height: 1.3; vertical-align: middle; }
   .v-chip { font-size: 12px; padding: 3px 9px; border-radius: var(--kern-r-md); }
-  .v-count, .v-glow { font-family: var(--kern-font-mono); font-size: 10.5px; font-weight: 500; padding: 1px 6px; border-radius: var(--kern-r-sm); background: var(--kern-surface-active); color: var(--kern-ink-400); }
+  /*
+   * A count is read as one glance, so it is sized like a token rather than typeset like text: a fixed
+   * 16px height with `line-height: 1` puts the digit on the optical centre, and `min-width` keeps a
+   * single digit from collapsing into a square block. Two digits and "99+" grow the pill sideways.
+   */
+  .v-count, .v-glow { font-family: var(--kern-font-mono); font-size: 10.5px; font-weight: 500; height: 16px; min-width: 17px; padding: 0 5px; justify-content: center; line-height: 1; border-radius: var(--kern-r-full); background: var(--kern-surface-active); color: var(--kern-ink-400); flex: none; }
   .v-glow { background: var(--kern-danger) !important; color: var(--kern-ink-inverse) !important; }
   .kdot { display: inline-block; width: 7px; height: 7px; border-radius: 999px; background: var(--kern-danger); flex: none; }
   .kdot.t-success { background: var(--kern-success); }
