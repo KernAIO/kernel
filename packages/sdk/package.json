@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed client SDK for the Kern API and realtime WebSocket",
   "homepage": "https://kernaio.com",
   "license": "AGPL-3.0-only",
@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kernhq/contracts": "^0.1.0",
+    "@kernhq/contracts": "^0.2.0",
     "@orpc/client": "^1.15.0",
     "@orpc/contract": "^1.15.0",
     "zod": "^4.1.0"

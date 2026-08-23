@@ -1,17 +1,8 @@
-# @kernhq/kernel
+# @kernhq/contracts
 
 ## 0.2.0
 
 ### Minor Changes
-
-- 0a89f1b: Every service now sends a content security policy.
-
-  `createHttpServer` registered helmet with `contentSecurityPolicy: false`, so nothing constrained what
-  a response could load or who could frame it. A JSON API renders nothing, so it now says exactly
-  that — `default-src 'none'`, plus `frame-ancestors`, `base-uri` and `form-action` set to `'none'`.
-
-  This is a behaviour change for any service that serves HTML from a kernel-hosted route: it will be
-  blocked unless it sets its own header. Core's `/api/docs` is the one such route today and does.
 
 - 0a89f1b: A module can put a card on the workspace dashboard.
 
@@ -85,22 +76,12 @@
   - `core.admin.updates` contract: what this instance runs, the newest stable release, the per-module
     version diff, anything blocking the upgrade, and the command that applies it.
 
-### Patch Changes
+- 0a89f1b: An instance decides how it updates, in one place.
 
-- Updated dependencies [0a89f1b]
-- Updated dependencies [0a89f1b]
-- Updated dependencies [0a89f1b]
-- Updated dependencies [0a89f1b]
-  - @kernhq/contracts@0.2.0
+  `UpdateChannel` becomes `UpdatePolicy`: a mode (`off`, `notify`, `auto`), a window with a time zone,
+  and how long a release must have been out before the instance takes it on its own. There is one
+  policy for the platform rather than one per module, for the same reason there is one version.
 
-## 0.1.1
-
-### Patch Changes
-
-- 35079b2: Answer `MODULE_DISABLED` with HTTP 403 instead of 500.
-
-  `workspaceScoped()` threw `ORPCError('MODULE_DISABLED')` without a status. oRPC only knows its own
-  standard codes and falls back to 500 for everything else, so a workspace that had simply switched a
-  module off got an opaque "Internal error" over both the REST and the RPC surface. The middleware now
-  passes the status `httpStatusFor` defines, along with a message. Every module behind
-  `workspaceScoped` is affected, so consumers need this version to get the 403.
+  Adds `UpdatePlan` — what an automatic upgrade would do right now and why — so the thing on the host
+  that applies an upgrade asks the instance rather than deciding for itself, and `AutoUpdateAttempt`,
+  so a failed automatic upgrade is visible and is not retried until a person has looked.
