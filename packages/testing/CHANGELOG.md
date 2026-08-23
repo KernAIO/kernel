@@ -1,5 +1,12 @@
 # @kernhq/testing
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [df96baf]
+  - @kernhq/kernel@0.4.0
+
 ## 0.1.2
 
 ### Patch Changes

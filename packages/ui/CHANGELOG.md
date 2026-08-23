@@ -1,5 +1,12 @@
 # @kernhq/ui
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [df96baf]
+  - @kernhq/kernel@0.4.0
+
 ## 0.4.0
 
 ### Minor Changes
