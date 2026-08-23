@@ -2,6 +2,7 @@
   "name": "@kernhq/tsconfig",
   "version": "0.1.0",
   "description": "Shared TypeScript configuration for Kern services, modules and libraries",
+  "homepage": "https://kernaio.com",
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
