@@ -262,6 +262,10 @@ onMount(() => {
     editorProps: {
       attributes: {
         class: 'kern-prose kern-editor-doc',
+        // A contenteditable div has no implicit role, so without these it is a box a screen
+        // reader announces as nothing at all — and no test can ask for it by what it is.
+        role: 'textbox',
+        'aria-multiline': 'true',
         ...(label ? { 'aria-label': label } : {}),
         ...(testid ? { 'data-testid': testid } : {}),
       },
