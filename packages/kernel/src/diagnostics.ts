@@ -20,8 +20,7 @@ interface Leaf {
   }
 }
 
-const isLeaf = (node: unknown): node is Leaf =>
-  typeof node === 'object' && node !== null && '~orpc' in node
+const isLeaf = (node: unknown): node is Leaf => typeof node === 'object' && node !== null && '~orpc' in node
 
 /** `{ notes: { list, create } }` → `{ 'notes.list': leaf, 'notes.create': leaf }` */
 function leaves(node: unknown, path: string[] = []): Record<string, Leaf> {
@@ -111,8 +110,16 @@ export function describeModule(mod: ServerModule, service: string): ModuleReport
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const comparable = Boolean(mod.contract)
-  const missing = comparable ? Object.keys(declared).filter((n) => !(n in implemented)).sort() : []
-  const undeclared = comparable ? Object.keys(implemented).filter((n) => !(n in declared)).sort() : []
+  const missing = comparable
+    ? Object.keys(declared)
+        .filter((n) => !(n in implemented))
+        .sort()
+    : []
+  const undeclared = comparable
+    ? Object.keys(implemented)
+        .filter((n) => !(n in declared))
+        .sort()
+    : []
 
   const problems: string[] = []
   if (routerError) problems.push(`the router could not be inspected: ${routerError}`)
