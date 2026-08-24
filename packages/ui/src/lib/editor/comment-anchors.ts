@@ -116,7 +116,7 @@ export const CommentAnchors = Extension.create<CommentAnchorOptions>({
             }
             return DecorationSet.create(state.doc, decorations)
           },
-          handleClick(view, _pos, event) {
+          handleClick(_view, _pos, event) {
             const el = (event.target as HTMLElement)?.closest?.('[data-comment-id]')
             const id = el?.getAttribute('data-comment-id')
             if (id) {
