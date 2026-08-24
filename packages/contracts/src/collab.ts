@@ -76,6 +76,18 @@ export const collabProcedures = {
     input: doc.extend({ update: z.base64() }),
     output: z.object({ ok: z.literal(true), size: z.number().int().nonnegative() }),
   },
+  /**
+   * Make the document's content equal the given state.
+   *
+   * Not the same as `document.apply`, and the difference is the whole reason this exists: applying
+   * an update *merges* it, so feeding an old version back produces the union of old and new rather
+   * than the old one. Restoring a version means replacing, and replacing has to happen where the
+   * CRDT is understood rather than in every module that keeps history.
+   */
+  'document.replace': {
+    input: doc.extend({ state: z.base64() }),
+    output: z.object({ ok: z.literal(true), size: z.number().int().nonnegative() }),
+  },
   /** A `Y.snapshot` of the current state, for version history and diffs. */
   'document.snapshot': { input: doc, output: z.object({ snapshot: z.base64(), state: z.base64() }) },
   /** Forget a document whose object was deleted. Nothing else removes these rows. */
