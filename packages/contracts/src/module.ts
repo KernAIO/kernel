@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CapabilityDef } from './capabilities.js'
 import { ModuleId } from './ids.js'
 import { PermissionDef } from './permissions.js'
 
@@ -20,6 +21,11 @@ export const ModuleManifest = z.object({
    */
   minKernel: z.string().optional(),
   permissions: z.array(PermissionDef).default([]),
+  /**
+   * Sub-features a workspace can switch off inside this module. Defaulted rather than required:
+   * every module published before capabilities existed declares none, and must keep validating.
+   */
+  capabilities: z.array(CapabilityDef).default([]),
   /** event names this module emits */
   events: z.array(z.string()).default([]),
   /** object types this module owns (for mentions/links/object channels) */
@@ -47,5 +53,12 @@ export const WorkspaceModuleState = z.object({
   enabled: z.boolean(),
   settings: z.record(z.string(), z.unknown()).default({}),
   installedVersion: z.string().nullable(),
+  /**
+   * Capability ids currently on for this workspace, already resolved: defaults applied, `required`
+   * forced on, and anything whose dependency is off pruned. The client filters navigation, widgets
+   * and commands on this, so it must be the same answer the server enforces — which is why it is
+   * computed once here rather than derived again from `settings` by every consumer.
+   */
+  capabilities: z.array(z.string()).default([]),
 })
 export type WorkspaceModuleState = z.infer<typeof WorkspaceModuleState>

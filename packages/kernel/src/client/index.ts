@@ -1,6 +1,17 @@
 /**
  * Client-side module SDK (framework-agnostic types). `@kernhq/ui` re-exports these bound to Svelte components.
  * A client module contributes routes, navigation, command-palette actions, presenters and slots to the app shell.
+ *
+ * Most contributions carry two optional gates, and they answer different questions:
+ *
+ * - `permission` — may *this person* reach it. Someone else in the same workspace may well see it.
+ * - `capability` — does *this workspace* have the feature at all, named as this module's own
+ *   capability id (`'attendance'`, not `'hr.attendance'`). Nobody sees it when it is off, and the
+ *   API behind it answers 404 rather than 403, so the two halves agree.
+ *
+ * Both are filters, never a disabled state: a contribution that cannot be used is not rendered.
+ * A greyed-out row that explains it needs an upgrade is a product decision for the shell to make in
+ * one place, not something two dozen modules each invent.
  */
 export interface ClientNavItem {
   id: string
@@ -11,12 +22,16 @@ export interface ClientNavItem {
   order?: number
   section?: 'primary' | 'secondary'
   permission?: string
+  /** this module's capability id; the row is absent when the workspace has it off */
+  capability?: string
 }
 export interface ClientRoute<C = unknown> {
   path: string
   component: () => Promise<{ default: C }>
   title?: string
   permission?: string
+  /** this module's capability id; the route is not mounted when the workspace has it off */
+  capability?: string
 }
 export interface CommandAction {
   id: string
@@ -25,6 +40,8 @@ export interface CommandAction {
   shortcut?: string[]
   group?: string
   permission?: string
+  /** this module's capability id; absent from the palette when the workspace has it off */
+  capability?: string
   run: (ctx: ClientContext) => void | Promise<void>
   when?: (ctx: ClientContext) => boolean
 }
@@ -61,6 +78,8 @@ export interface SidebarContribution<C = unknown> {
   controls?: () => Promise<{ default: C }>
   component: () => Promise<{ default: C }>
   permission?: string
+  /** this module's capability id; the sidebar is not filled when the workspace has it off */
+  capability?: string
 }
 
 /** What the shell hands a sidebar contribution. */
@@ -94,6 +113,8 @@ export interface ClientSettingsPage<C = unknown> {
    */
   scope: 'workspace' | 'user' | 'instance'
   permission?: string
+  /** this module's capability id; the page is not offered when the workspace has it off */
+  capability?: string
   component: () => Promise<{ default: C }>
   order?: number
 }
@@ -160,6 +181,12 @@ export interface WidgetDefinition<C = unknown> {
   icon?: string
   /** absent from the picker, and skipped in a stored layout, for anyone without it */
   permission?: string
+  /**
+   * This module's capability id. A widget behind a capability the workspace has switched off leaves
+   * the picker *and* any layout that already placed it — same treatment as a permission, and the
+   * reason the dashboard needs no conditional of its own.
+   */
+  capability?: string
   /** the sizes this widget can be given, smallest first; must not be empty */
   sizes: WidgetSize[]
   defaultSize: WidgetSize
@@ -206,6 +233,11 @@ export interface ClientContext {
   workspaceSlug: string | null
   userId: string | null
   permissions: Set<string>
+  /**
+   * Capabilities on in this workspace, as `<moduleId>.<capabilityId>` — namespaced here because the
+   * context spans every module, while a contribution's own `capability` field is not.
+   */
+  capabilities: Set<string>
   navigate: (href: string) => void
   openPalette: (query?: string) => void
   toast: (msg: { title: string; description?: string; kind?: 'info' | 'success' | 'error' }) => void

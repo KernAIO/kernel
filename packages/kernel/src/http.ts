@@ -54,6 +54,31 @@ export const workspaceScoped = (moduleId?: string) =>
       })
     return next({ context: { ...context, workspaceId } })
   })
+/**
+ * Middleware factory: require that a capability of `moduleId` is on in `input.workspaceId`.
+ *
+ * The answer is **404, not 403**, and that is the whole point. A permission failure says "this
+ * exists and you may not have it", which is right for a person without a role and wrong for a
+ * workspace that never bought the feature — it leaks a surface, and it turns a menu the shell
+ * already hid into a promise the API breaks. A disabled capability is simply not part of this
+ * workspace's API, so it answers like anything else that is not there.
+ *
+ * Goes on every procedure belonging to a capability, beside `workspaceScoped` and `requires`. Input
+ * is typed `unknown` for the same reason `workspaceScoped` is: it may be applied at router level.
+ */
+export const requiresCapability = (moduleId: string, capability: string) =>
+  o.middleware(async ({ context, next }, input) => {
+    const { workspaceId } = input as { workspaceId: string }
+    if (typeof workspaceId !== 'string')
+      throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
+    const on = await context.kernel.capabilities(workspaceId, moduleId)
+    if (!on.has(capability))
+      throw new ORPCError('NOT_FOUND', {
+        message: `${moduleId}.${capability} is not enabled in this workspace`,
+      })
+    return next()
+  })
+
 /** Middleware factory: require a permission at workspace scope. */
 export const requires = (permission: string) =>
   o.middleware(async ({ context, next }, input: { workspaceId: string }) => {

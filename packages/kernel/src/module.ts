@@ -1,7 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { core, EventDef, ModuleManifest, PermissionDef, Principal } from '@kernhq/contracts'
+import type {
+  CapabilityDef,
+  core,
+  EventDef,
+  ModuleManifest,
+  PermissionDef,
+  Principal,
+} from '@kernhq/contracts'
 import type { ContractRouter } from '@orpc/contract'
 import type { Router } from '@orpc/server'
 import type { PgSchema } from 'drizzle-orm/pg-core'
@@ -96,6 +103,15 @@ export interface ModuleDefinition<TSettings extends z.ZodTypeAny = z.ZodTypeAny>
   defaultHost?: 'core' | 'chat' | 'mail' | 'collab' | string
   apiPrefix?: string
   permissions?: readonly PermissionDef[]
+  /**
+   * Sub-features a workspace may switch off inside this module, declared with `defineCapabilities`.
+   *
+   * A capability is not a second permission system: a permission asks whether *this person* may do
+   * something, a capability asks whether *this workspace* has the feature at all. A procedure behind
+   * a disabled capability answers `notFound`, not `forbidden`, and the shell drops its navigation,
+   * widgets and commands — so a workspace that does not use a feature never meets it.
+   */
+  capabilities?: readonly CapabilityDef[]
   events?: Record<string, EventDef>
   notificationTypes?: core.NotificationTypeDef[]
   objectTypes?: Array<{ type: string; label: string; icon?: string; channelable?: boolean }>
@@ -192,6 +208,7 @@ export function toManifest(def: ModuleDefinition): ModuleManifest {
       defaultRoles: p.defaultRoles ?? [],
       dangerous: p.dangerous ?? false,
     })),
+    capabilities: [...(def.capabilities ?? [])],
     events: Object.values(def.events ?? {}).map((e) => e.name),
     objectTypes: (def.objectTypes ?? []).map((o) => ({ ...o, channelable: o.channelable ?? false })),
     settingsSchema: def.settings ? (z_toJSONSchema(def.settings) as Record<string, unknown>) : undefined,

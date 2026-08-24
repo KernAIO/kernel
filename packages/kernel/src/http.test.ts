@@ -16,7 +16,7 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { httpStatusFor, KernError } from './errors.js'
-import { createHttpServer, kernErrorToORPC, o, workspaceScoped } from './http.js'
+import { createHttpServer, kernErrorToORPC, o, requiresCapability, workspaceScoped } from './http.js'
 import type { Kernel } from './kernel.js'
 import { defineModule, defineServerModule } from './module.js'
 import { ModuleRegistry } from './registry.js'
@@ -62,6 +62,14 @@ const router = () => ({
       .handler(async () => {
         throw KernError.notFound('Widget')
       }),
+    // behind a capability the workspace can switch off on its own
+    gadget: o
+      .use(workspaceScoped('demo'))
+      .use(requiresCapability('demo', 'gadgets'))
+      .route({ method: 'POST', path: '/widgets/gadget' })
+      .input(Input)
+      .output(Output)
+      .handler(async () => ({ ok: true })),
   },
 })
 
@@ -74,7 +82,7 @@ const demoModule = defineServerModule({
  * Only the handful of kernel surfaces `createHttpServer` touches. A real kernel would need Postgres,
  * which this package's tests deliberately do without.
  */
-function stubKernel(opts: { moduleEnabled: boolean }): Kernel {
+function stubKernel(opts: { moduleEnabled: boolean; capabilities?: string[] }): Kernel {
   const noop = () => {}
   return {
     service: 'test',
@@ -86,6 +94,7 @@ function stubKernel(opts: { moduleEnabled: boolean }): Kernel {
     // the request hook asks on every request whether the instance is closed for an upgrade
     maintenance: { active: async () => null },
     isModuleEnabled: async () => opts.moduleEnabled,
+    capabilities: async () => new Set(opts.capabilities ?? []),
   } as unknown as Kernel
 }
 
@@ -123,14 +132,63 @@ const rpc = (server: Server, procedure: string) =>
 let enabled: Server
 let disabled: Server
 let anonymous: Server
+/** module on, capability off — the case the whole middleware exists for */
+let capabilityOff: Server
 
 beforeAll(async () => {
-  enabled = await listen(stubKernel({ moduleEnabled: true }), member)
+  enabled = await listen(stubKernel({ moduleEnabled: true, capabilities: ['gadgets'] }), member)
   disabled = await listen(stubKernel({ moduleEnabled: false }), member)
-  anonymous = await listen(stubKernel({ moduleEnabled: true }), ANONYMOUS)
+  anonymous = await listen(stubKernel({ moduleEnabled: true, capabilities: ['gadgets'] }), ANONYMOUS)
+  capabilityOff = await listen(stubKernel({ moduleEnabled: true, capabilities: [] }), member)
 })
 afterAll(async () => {
-  await Promise.all([enabled?.app.close(), disabled?.app.close(), anonymous?.app.close()])
+  await Promise.all([
+    enabled?.app.close(),
+    disabled?.app.close(),
+    anonymous?.app.close(),
+    capabilityOff?.app.close(),
+  ])
+})
+
+/**
+ * A capability the workspace has switched off is **not found**, not forbidden.
+ *
+ * 403 would tell the caller the feature exists and they are merely not allowed it — true for a
+ * missing permission, wrong for a workspace that does not have the feature at all. It also
+ * contradicts the shell, which has already dropped the navigation, and turns a hidden menu into an
+ * API that answers as though something were being withheld.
+ */
+describe('a capability disabled in the workspace', () => {
+  it('answers 404 over the REST surface', async () => {
+    const res = await rest(capabilityOff, '/widgets/gadget')
+    expect(res.status).toBe(404)
+  })
+
+  it('answers 404 over the RPC surface too', async () => {
+    const res = await rpc(capabilityOff, 'widgets/gadget')
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as { json?: { code?: string } }
+    expect(body.json?.code).toBe('NOT_FOUND')
+  })
+
+  it('lets the call through when the capability is on', async () => {
+    const res = await rest(enabled, '/widgets/gadget')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true })
+  })
+
+  it('leaves procedures that are not behind a capability alone', async () => {
+    const res = await rest(capabilityOff, '/widgets/get')
+    expect(res.status).toBe(200)
+  })
+
+  it('still refuses the whole module first when the module itself is off', async () => {
+    // Order matters: a disabled module must not leak which capabilities it would have had.
+    const res = await rest(disabled, '/widgets/gadget')
+    expect(res.status).toBe(403)
+    const body = (await res.json()) as { code?: string }
+    expect(body.code).toBe('MODULE_DISABLED')
+  })
 })
 
 describe('a module disabled in the workspace', () => {

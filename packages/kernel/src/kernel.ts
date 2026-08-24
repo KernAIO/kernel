@@ -1,4 +1,4 @@
-import type { EventDef, EventEnvelope, EventPayload, Principal } from '@kernhq/contracts'
+import type { CapabilityId, EventDef, EventEnvelope, EventPayload, Principal } from '@kernhq/contracts'
 import { Redis } from 'ioredis'
 import type { NatsConnection } from 'nats'
 import { type AuthVerifier, createAuthVerifier, systemPrincipal } from './auth.js'
@@ -63,6 +63,12 @@ export interface Kernel {
   /** call `<module>.<procedure>` wherever it's hosted */
   call<T = unknown>(name: string, input: unknown, principal?: Principal): Promise<T>
   isModuleEnabled(workspaceId: string, moduleId: string): Promise<boolean>
+  /**
+   * Which of a module's capabilities are on in this workspace, resolved (defaults applied, required
+   * forced on, dependencies pruned). Empty for a module that declares none, which is every module
+   * that predates capabilities.
+   */
+  capabilities(workspaceId: string, moduleId: string): Promise<Set<CapabilityId>>
   manifests(): ReturnType<typeof toManifest>[]
   start(): Promise<void>
   stop(): Promise<void>
@@ -150,6 +156,8 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
       if (mod?.definition.core) return true
       return settings.isModuleEnabled(workspaceId, moduleId)
     },
+    capabilities: (workspaceId, moduleId) =>
+      settings.capabilities(workspaceId, moduleId, registry.capabilities(moduleId)),
     manifests: () => registry.all().map((m) => toManifest(m.definition)),
     async start() {
       // authz store: core passes a DB-backed one; others resolve over the broker

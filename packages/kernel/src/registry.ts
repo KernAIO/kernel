@@ -43,6 +43,10 @@ export class ModuleRegistry {
       (m.definition.permissions ?? []).map((p) => ({ ...p, module: m.definition.id })),
     )
   }
+  /** A module's declared capabilities, or none — an unknown module and one that declares none look alike on purpose. */
+  capabilities(moduleId: string) {
+    return this.modules.get(moduleId)?.definition.capabilities ?? []
+  }
   notificationTypes() {
     return this.all().flatMap((m) =>
       (m.definition.notificationTypes ?? []).map((t) => ({ ...t, module: m.definition.id })),
