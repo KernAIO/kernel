@@ -21,6 +21,12 @@ export interface Database {
   ): Promise<T>
   /** Apply the migrations folder of a module into its own schema (`drizzle` bookkeeping table lives in that schema too). */
   migrateModule(moduleId: string, migrationsFolder: string): Promise<void>
+  /**
+   * The same, for a schema that is not a module's. A service that owns tables of its own — `collab`
+   * and its Yjs documents — needs migrations for the same reasons a module does, and gets them
+   * without pretending to be a module.
+   */
+  migrateSchema(schema: string, migrationsFolder: string, lockKey?: string): Promise<void>
   ensureSchema(name: string): Promise<void>
   close(): Promise<void>
 }
@@ -64,24 +70,30 @@ export function createDatabase(opts: { url: string; max?: number; log: Logger })
       await ignoringDuplicate(() => db.execute(sql.raw(`create schema if not exists "${name}"`)))
     },
     async migrateModule(moduleId, migrationsFolder) {
-      const schema = moduleSchemaName(moduleId)
-      // Every process migrates the modules it hosts on boot, and Compose starts `core` and
+      // The lock key stays the bare module id, not the schema name: during a rolling deploy an
+      // older image is still taking `kern:migrate:<id>`, and a key that no longer matches would let
+      // both apply the same folder at once.
+      await this.migrateSchema(moduleSchemaName(moduleId), migrationsFolder, moduleId)
+    },
+    async migrateSchema(schema, migrationsFolder, lockKey) {
+      // Every process migrates the schemas it owns on boot, and Compose starts `core` and
       // `core-worker` together, so two of them apply the same folder at the same moment as a matter
       // of course. Without the lock they interleave and one fails on a relation the other has just
       // created. The lock is held on its own connection across the whole run — schema included,
       // because `create schema if not exists` races too — and the loser then finds nothing to apply.
       const lock = await pool.connect()
       try {
-        await lock.query('select pg_advisory_lock(hashtext($1))', [`kern:migrate:${moduleId}`])
+        const key = `kern:migrate:${lockKey ?? schema}`
+        await lock.query('select pg_advisory_lock(hashtext($1))', [key])
         await this.ensureSchema(schema)
         await migrate(db, {
           migrationsFolder: path.resolve(migrationsFolder),
           migrationsSchema: schema,
           migrationsTable: '__migrations',
         })
-        opts.log.info({ module: moduleId, schema }, 'migrations applied')
+        opts.log.info({ schema }, 'migrations applied')
       } finally {
-        await lock.query('select pg_advisory_unlock(hashtext($1))', [`kern:migrate:${moduleId}`])
+        await lock.query('select pg_advisory_unlock(hashtext($1))', [`kern:migrate:${lockKey ?? schema}`])
         lock.release()
       }
     },

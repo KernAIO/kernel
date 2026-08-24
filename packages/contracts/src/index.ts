@@ -1,5 +1,6 @@
 export * from './auth.js'
 export * from './capabilities.js'
+export * from './collab.js'
 export * from './common.js'
 export * as core from './core/index.js'
 export type { CoreContract } from './core/router.js'
