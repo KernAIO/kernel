@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/contracts",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Shared Zod schemas, oRPC contracts, events and permissions for Kern",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
