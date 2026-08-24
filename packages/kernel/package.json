@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/kernel",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Kern module runtime (defineModule, registry, events, call, authz, jobs, settings, storage, http)",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
@@ -45,7 +45,7 @@
     "@fastify/cors": "^11.0.0",
     "@fastify/helmet": "^13.0.0",
     "@fastify/rate-limit": "^10.0.0",
-    "@kernhq/contracts": "^0.4.0",
+    "@kernhq/contracts": "^0.5.0",
     "@orpc/contract": "^1.15.0",
     "@orpc/openapi": "^1.15.0",
     "@orpc/server": "^1.15.0",

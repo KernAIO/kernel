@@ -1,5 +1,12 @@
 # @kernhq/ui
 
+## 0.4.4
+
+### Patch Changes
+
+- Updated dependencies [b90f848]
+  - @kernhq/kernel@0.6.0
+
 ## 0.4.3
 
 ### Patch Changes

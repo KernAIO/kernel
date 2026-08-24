@@ -67,7 +67,7 @@ importers:
         specifier: ^10.0.0
         version: 10.3.0
       '@kernhq/contracts':
-        specifier: ^0.4.0
+        specifier: ^0.5.0
         version: link:../contracts
       '@orpc/contract':
         specifier: ^1.15.0
@@ -137,7 +137,7 @@ importers:
   packages/sdk:
     dependencies:
       '@kernhq/contracts':
-        specifier: ^0.4.0
+        specifier: ^0.5.0
         version: link:../contracts
       '@orpc/client':
         specifier: ^1.15.0
@@ -165,7 +165,7 @@ importers:
   packages/testing:
     dependencies:
       '@kernhq/kernel':
-        specifier: ^0.5.0
+        specifier: ^0.6.0
         version: link:../kernel
       '@testcontainers/postgresql':
         specifier: ^12.1.0
@@ -198,7 +198,7 @@ importers:
   packages/ui:
     dependencies:
       '@kernhq/kernel':
-        specifier: ^0.5.0
+        specifier: ^0.6.0
         version: link:../kernel
       '@lucide/svelte':
         specifier: ^1.33.0
