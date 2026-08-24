@@ -54,6 +54,12 @@ export {
 // ---- icons ----
 export { default as CollaborativeEditor } from './editor/CollaborativeEditor.svelte'
 export {
+  CommentAnchors,
+  type CommentRange,
+  anchorToRange,
+  selectionToAnchor,
+} from './editor/comment-anchors.js'
+export {
   type CollabOptions,
   type CollabPeer,
   type CollabSession,

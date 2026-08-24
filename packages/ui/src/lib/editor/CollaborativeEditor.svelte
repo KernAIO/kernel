@@ -10,6 +10,7 @@ import {
   caretColour,
   createCollabSession,
 } from './collab.js'
+import { CommentAnchors, type CommentRange, selectionToAnchor } from './comment-anchors.js'
 import { buildExtensions, type MentionCandidate } from './schema.js'
 
 /**
@@ -38,6 +39,13 @@ interface Props {
   /** Peers, so a page header can draw them next to the title rather than only here. */
   onpeers?: (peers: CollabPeer[]) => void
   onstatus?: (status: CollabStatus) => void
+  /** Comment anchors to highlight. Read on every redraw, so pass whatever is loaded. */
+  commentRanges?: CommentRange[]
+  /** Which thread is open, drawn differently from the rest. */
+  activeComment?: string | null
+  onCommentClick?: (id: string) => void
+  /** Fired when somebody selects text and asks to comment on it. */
+  oncomment?: (anchor: { from: string; to: string }, quotedText: string) => void
   class?: string
 }
 
@@ -50,6 +58,10 @@ const {
   mentionSource,
   onpeers,
   onstatus,
+  commentRanges = [],
+  activeComment = null,
+  onCommentClick,
+  oncomment,
   class: className,
 }: Props = $props()
 
@@ -58,6 +70,23 @@ let editor = $state<Editor>()
 let status = $state<CollabStatus>('connecting')
 let peers = $state<CollabPeer[]>([])
 let authError = $state<string | null>(null)
+/** Bumped on every transaction, so the comment button knows whether anything is selected. */
+let tick = $state(0)
+let ydoc = $state<import('yjs').Doc | null>(null)
+
+const hasSelection = $derived.by(() => {
+  void tick
+  const sel = editor?.state.selection
+  return Boolean(sel && sel.from !== sel.to)
+})
+
+function comment() {
+  if (!editor) return
+  const anchor = selectionToAnchor(editor.state as never)
+  if (!anchor) return
+  const { from, to } = editor.state.selection
+  oncomment?.(anchor, editor.state.doc.textBetween(from, to, ' ').slice(0, 2000))
+}
 
 const editable = $derived(status !== 'readonly')
 
@@ -81,6 +110,7 @@ onMount(() => {
     },
   })
 
+  ydoc = session.doc
   editor = new Editor({
     element: host,
     extensions: [
@@ -90,7 +120,16 @@ onMount(() => {
         (e) => (e as { name?: string })?.name !== 'history',
       ),
       ...(session.extensions as never[]),
+      CommentAnchors.configure({
+        doc: session.doc,
+        ranges: () => commentRanges,
+        active: () => activeComment,
+        onClick: (id: string) => onCommentClick?.(id),
+      }),
     ],
+    onTransaction: () => {
+      tick += 1
+    },
     editable: true,
     editorProps: { attributes: { class: 'kern-prose', role: 'textbox', 'aria-multiline': 'true' } },
   })
@@ -140,6 +179,19 @@ const statusLabel: Record<CollabStatus, string> = {
     </p>
   {/if}
 
+  {#if oncomment && hasSelection && editable}
+    <!--
+      A single control rather than a floating bubble menu: the bubble would need its own
+      positioning, RTL handling and dismissal, and the one action it would carry is this one.
+    -->
+    <div class="selection-actions">
+      <button type="button" onmousedown={(e) => e.preventDefault()} onclick={comment}>
+        <Icon name="message-circle" size={14} />
+        <span>Comment on selection</span>
+      </button>
+    </div>
+  {/if}
+
   <div bind:this={host} class="surface" class:locked={!editable}></div>
 </div>
 
@@ -174,6 +226,44 @@ const statusLabel: Record<CollabStatus, string> = {
 }
 .note.danger {
   color: var(--kern-danger);
+}
+.selection-actions {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+  margin-block-end: 8px;
+}
+.selection-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--kern-r-lg);
+  border: 1px solid var(--kern-border);
+  background: var(--kern-surface-raised);
+  color: var(--kern-ink-700);
+  font-size: 12.5px;
+  cursor: pointer;
+  box-shadow: var(--kern-shadow-popover);
+}
+.selection-actions button:hover {
+  background: var(--kern-surface-hover);
+}
+/*
+ * Decorations, not marks. A comment is not part of the document, and a mark would put one person's
+ * annotation into everybody's content and into every export.
+ */
+.surface :global(.kern-comment-mark) {
+  background: var(--kern-warning-tint);
+  border-block-end: 2px solid var(--kern-warning);
+  cursor: pointer;
+}
+.surface :global(.kern-comment-mark.active) {
+  background: var(--kern-accent-tint);
+  border-block-end-color: var(--kern-accent);
 }
 .surface :global(.kern-prose) {
   outline: none;
