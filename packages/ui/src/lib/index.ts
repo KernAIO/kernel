@@ -52,6 +52,16 @@ export {
   toastStore,
 } from './components/toast.svelte.js'
 // ---- icons ----
+export { default as CollaborativeEditor } from './editor/CollaborativeEditor.svelte'
+export {
+  type CollabOptions,
+  type CollabPeer,
+  type CollabSession,
+  type CollabStatus,
+  type CollabUser,
+  caretColour,
+  createCollabSession,
+} from './editor/collab.js'
 export { default as Icon } from './icons/Icon.svelte'
 export { getIcon, iconNames, registerIcons } from './icons/registry.js'
 // ---- app-shell layout ----
