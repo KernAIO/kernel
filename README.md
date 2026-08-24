@@ -7,7 +7,7 @@
 **The libraries every Kern service and module is built on.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/KernAIO/kernel/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/KernAIO/kernel/actions/workflows/ci.yml)
-[![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue?style=flat-square)](LICENSE)
+[![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--1.0-orange?style=flat-square)](https://github.com/KernAIO/kern#what-works-today)
 [![Last commit](https://img.shields.io/github/last-commit/KernAIO/kernel?style=flat-square)](https://github.com/KernAIO/kernel/commits/main)
 [![Website](https://img.shields.io/badge/kernaio.com-1f2328?style=flat-square)](https://kernaio.com)
@@ -86,7 +86,15 @@ packages to npm, and pushes the version commit back.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md). Licence: [AGPL-3.0](LICENSE).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).
+
+## Licence
+
+[Apache-2.0](LICENSE) — all of it. This repository is the Kern **framework**, and it is permissive
+on purpose: a module you write is yours, and you may keep it closed and sell it.
+
+The Kern **product** — `app`, `core`, `chat`, `mail`, `collab`, `docs` and the first-party modules —
+is AGPL-3.0-only. See [LICENSING.md](https://github.com/KernAIO/kern/blob/main/LICENSING.md).
 
 ---
 

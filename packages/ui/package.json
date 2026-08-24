@@ -3,7 +3,7 @@
   "version": "0.4.1",
   "description": "Kern design system — Svelte 5 components, tokens and app-shell layout (Ink/paper)",
   "homepage": "https://kernaio.com",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "sideEffects": [
     "**/*.css"
