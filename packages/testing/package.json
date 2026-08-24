@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/testing",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Test helpers for Kern services and modules",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
@@ -29,13 +29,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kernhq/kernel": "^0.4.0",
+    "@kernhq/kernel": "^0.4.1",
     "@testcontainers/postgresql": "^12.1.0",
     "pg": "^8.16.0",
     "testcontainers": "^12.1.0"
   },
   "devDependencies": {
-    "@kernhq/tsconfig": "^0.1.0",
+    "@kernhq/tsconfig": "^0.1.1",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.15.0",
     "typescript": "~5.9.3",

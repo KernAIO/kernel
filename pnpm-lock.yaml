@@ -37,7 +37,7 @@ importers:
         version: 4.4.3
     devDependencies:
       '@kernhq/tsconfig':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
@@ -67,7 +67,7 @@ importers:
         specifier: ^10.0.0
         version: 10.3.0
       '@kernhq/contracts':
-        specifier: ^0.3.0
+        specifier: ^0.3.1
         version: link:../contracts
       '@orpc/contract':
         specifier: ^1.15.0
@@ -116,7 +116,7 @@ importers:
         version: 4.4.3
     devDependencies:
       '@kernhq/tsconfig':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
@@ -137,7 +137,7 @@ importers:
   packages/sdk:
     dependencies:
       '@kernhq/contracts':
-        specifier: ^0.3.0
+        specifier: ^0.3.1
         version: link:../contracts
       '@orpc/client':
         specifier: ^1.15.0
@@ -150,7 +150,7 @@ importers:
         version: 4.4.3
     devDependencies:
       '@kernhq/tsconfig':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
@@ -165,7 +165,7 @@ importers:
   packages/testing:
     dependencies:
       '@kernhq/kernel':
-        specifier: ^0.4.0
+        specifier: ^0.4.1
         version: link:../kernel
       '@testcontainers/postgresql':
         specifier: ^12.1.0
@@ -178,7 +178,7 @@ importers:
         version: 12.1.0
     devDependencies:
       '@kernhq/tsconfig':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../tsconfig
       '@types/node':
         specifier: ^24.0.0
@@ -198,7 +198,7 @@ importers:
   packages/ui:
     dependencies:
       '@kernhq/kernel':
-        specifier: ^0.4.0
+        specifier: ^0.4.1
         version: link:../kernel
       '@lucide/svelte':
         specifier: ^1.33.0
@@ -235,7 +235,7 @@ importers:
         version: 3.6.0
     devDependencies:
       '@kernhq/tsconfig':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../tsconfig
       '@sveltejs/package':
         specifier: ^2.5.8
