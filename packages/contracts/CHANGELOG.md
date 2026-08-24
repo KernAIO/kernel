@@ -1,5 +1,16 @@
 # @kernhq/contracts
 
+## 0.5.1
+
+### Patch Changes
+
+- 90ce41a: Declare `collab.document.replace`.
+
+  Restoring a version cannot be done with `document.apply`: `Y.applyUpdate` _merges_, so feeding an
+  older state back produces the union of old and new — every deleted paragraph returning alongside the
+  ones that replaced it. Replacing is a different operation and belongs where the CRDT is understood,
+  rather than being reimplemented by every module that keeps history.
+
 ## 0.5.0
 
 ### Minor Changes
