@@ -39,6 +39,7 @@ const ar = {
   'common.setting_show': 'إظهار',
   'common.emoji': 'إيموجي',
   'common.mention': 'الإشارة إلى شخص',
+  'common.chart_max': 'حتى {value}',
 }
 
 const de = {
@@ -66,6 +67,7 @@ const de = {
   'common.setting_show': 'Anzeigen',
   'common.emoji': 'Emoji',
   'common.mention': 'Jemanden erwähnen',
+  'common.chart_max': 'bis {value}',
 }
 
 const en = {
@@ -93,6 +95,7 @@ const en = {
   'common.setting_show': 'Show',
   'common.emoji': 'Emoji',
   'common.mention': 'Mention someone',
+  'common.chart_max': 'up to {value}',
 }
 
 const fa = {
@@ -120,6 +123,7 @@ const fa = {
   'common.setting_show': 'نمایش',
   'common.emoji': 'ایموجی',
   'common.mention': 'اشاره به کسی',
+  'common.chart_max': 'تا {value}',
 }
 
 const tr = {
@@ -147,6 +151,7 @@ const tr = {
   'common.setting_show': 'Göster',
   'common.emoji': 'Emoji',
   'common.mention': 'Birinden bahset',
+  'common.chart_max': '{value} değerine kadar',
 }
 export const commonMessages: Record<string, Record<string, string>> = {
   ar,

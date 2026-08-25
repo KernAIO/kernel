@@ -1,6 +1,18 @@
 // @kernhq/ui — Kern "Ink / paper" design system (Svelte 5).
 // Styles are shipped separately: import '@kernhq/ui/styles/index.css' (or fonts/tokens/theme individually).
 
+export { default as BarChart } from './charts/BarChart.svelte'
+export {
+  areaPath,
+  barLayout,
+  gridLines,
+  linePath,
+  niceMax,
+  type Series,
+  stackSeries,
+} from './charts/chart.js'
+export { default as LineChart } from './charts/LineChart.svelte'
+export { default as StackedAreaChart } from './charts/StackedAreaChart.svelte'
 // side-effecting: registers the shared vocabulary before any module bundle is merged
 export { commonMessages } from './common-messages.js'
 // ---- primitives ----
@@ -73,6 +85,7 @@ export {
   selectionToAnchor,
 } from './editor/comment-anchors.js'
 export {
+  formatBytes,
   formatCount,
   formatDate,
   formatDateRange,

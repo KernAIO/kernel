@@ -80,3 +80,23 @@ export function formatCount(n: number, max = 99): string {
   const nf = new Intl.NumberFormat(messageLocale())
   return n > max ? `${nf.format(max)}+` : nf.format(n)
 }
+
+const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const
+
+/**
+ * A byte count as a short human string.
+ *
+ * 1024, not 1000, and `KB` rather than `Intl`'s `kB`: this number sits beside the one the operating
+ * system's file browser shows, and a size that disagrees with Finder reads as a bug. `Intl`'s `unit`
+ * style is SI — it would render 1024 bytes as "1 kB" — so the unit is spelled out here on purpose.
+ *
+ * `locale` is a parameter only so a test can pin it; everything real uses the interface language.
+ */
+export function formatBytes(bytes: number, locale = messageLocale()): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1)
+  const value = bytes / 1024 ** exponent
+  // Whole numbers for bytes, one decimal above that: "1.4 MB" reads better than "1.44 MB".
+  const digits = exponent === 0 ? 0 : value >= 10 ? 0 : 1
+  return `${value.toLocaleString(locale, { maximumFractionDigits: digits })} ${BYTE_UNITS[exponent]}`
+}
