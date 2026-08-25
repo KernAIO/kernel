@@ -75,22 +75,22 @@
   --kern-danger: #a63d26;
   --kern-danger-tint: #f7deda;
   --kern-success: #4f7a55;
-  --kern-success-chip: #2e754b;  /* white-on-tint chip text; was #3d9a63 at 2.89:1 on --kern-success-tint */
+  --kern-success-chip: #2e754b; /* white-on-tint chip text; was #3d9a63 at 2.89:1 on --kern-success-tint */
   --kern-success-group: #3d8a5f;
   --kern-success-tint: #deede4;
   --kern-success-tint-2: #e8efe8;
   --kern-success-ink: #3e6144;
-  --kern-info: #3764b0;  /* was #3a69b8, 4.29:1 on --kern-info-tint */
+  --kern-info: #3764b0; /* was #3a69b8, 4.29:1 on --kern-info-tint */
   --kern-info-bar: #4474c4;
   --kern-info-tint: #dce6f5;
   --kern-slate: #4a5c6a;
   --kern-slate-tint: #eaeef1;
-  --kern-purple: #754eb2;  /* was #7a55b5, 4.24:1 on --kern-purple-tint */
+  --kern-purple: #754eb2; /* was #7a55b5, 4.24:1 on --kern-purple-tint */
   --kern-purple-status: #6e5a8c;
   --kern-purple-tint: #e7ddf7;
   --kern-purple-tint-2: #ede9f3;
   --kern-purple-ink: #584571;
-  --kern-warning: #925e22;  /* was #b5742a, 3.20:1 on --kern-warning-tint */
+  --kern-warning: #925e22; /* was #b5742a, 3.20:1 on --kern-warning-tint */
   --kern-warning-tint: #f7e9d8;
   --kern-neutral-flag: #8a8a8f;
   /* overlays */
@@ -212,7 +212,7 @@
   --kern-accent-tint: #3a2a18;
   --kern-accent-tint-2: #3e2d1a;
   --kern-ring: rgba(201, 122, 46, 0.28);
-  --kern-danger: #da735c;  /* was #d2553a, 3.58:1 on --kern-danger-tint */
+  --kern-danger: #da735c; /* was #d2553a, 3.58:1 on --kern-danger-tint */
   --kern-danger-tint: #3c211c;
   --kern-success: #6fa076;
   --kern-success-chip: #5db47f;
