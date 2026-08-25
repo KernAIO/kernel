@@ -38,19 +38,36 @@
   --kern-ink-550: #575247;
   --kern-ink-520: #5b564b;
   --kern-ink-500: #615b4f;
-  --kern-ink-450: #6b6459;
-  --kern-ink-400: #7a7365;
-  --kern-ink-350: #8a8375;
-  --kern-ink-330: #8e8779;
-  --kern-ink-300: #97907f;
-  --kern-ink-280: #9a9285;
-  --kern-ink-250: #a79f8e;
+  /*
+   * The floor of the scale is set by contrast, not by taste. Everything from 450 down is used for
+   * text — counts, hints, placeholders, section labels, table metadata — and the original values
+   * ran to 2.5:1 against the canvas, which is unreadable rather than quiet. Each step below 450 is
+   * the darkest colour of the same hue that still clears 4.5:1 on `--kern-canvas`, the palest
+   * surface any of them sits on, so the steps stay ordered and every one of them is legible on all
+   * of them. They are close together on purpose: "muted" has a floor, and there is not room for
+   * seven distinguishable greys above it.
+   */
+  --kern-ink-450: #5f584f;
+  --kern-ink-400: #635d52;
+  --kern-ink-350: #676157;
+  --kern-ink-330: #696358;
+  --kern-ink-300: #6b6557;
+  --kern-ink-280: #6d665a;
+  --kern-ink-250: #6f6756;
   --kern-ink-hover: #38332b;
   --kern-ink-inverse: #fbfaf7;
   /* accent */
   --kern-accent: #b4661c;
   --kern-accent-text: #a85a18;
   --kern-accent-deep: #8a4512;
+  /*
+   * A count badge sits *on* the accent, and white on `--kern-accent` is 4.32:1 in light and 3.33:1
+   * in dark — a number nobody can read at 10px. The pair below is the one combination that carries
+   * text on the accent, and the two themes solve it differently: light deepens the ground, dark
+   * keeps the bright ground and puts dark ink on it.
+   */
+  --kern-accent-badge-bg: #8a4512;
+  --kern-accent-badge-fg: #fbfaf7;
   --kern-accent-tint: #f3e9da;
   --kern-accent-tint-2: #f5eada;
   --kern-ring: rgba(180, 102, 28, 0.16);
@@ -58,22 +75,22 @@
   --kern-danger: #a63d26;
   --kern-danger-tint: #f7deda;
   --kern-success: #4f7a55;
-  --kern-success-chip: #3d9a63;
+  --kern-success-chip: #2e754b;  /* white-on-tint chip text; was #3d9a63 at 2.89:1 on --kern-success-tint */
   --kern-success-group: #3d8a5f;
   --kern-success-tint: #deede4;
   --kern-success-tint-2: #e8efe8;
   --kern-success-ink: #3e6144;
-  --kern-info: #3a69b8;
+  --kern-info: #3764b0;  /* was #3a69b8, 4.29:1 on --kern-info-tint */
   --kern-info-bar: #4474c4;
   --kern-info-tint: #dce6f5;
   --kern-slate: #4a5c6a;
   --kern-slate-tint: #eaeef1;
-  --kern-purple: #7a55b5;
+  --kern-purple: #754eb2;  /* was #7a55b5, 4.24:1 on --kern-purple-tint */
   --kern-purple-status: #6e5a8c;
   --kern-purple-tint: #e7ddf7;
   --kern-purple-tint-2: #ede9f3;
   --kern-purple-ink: #584571;
-  --kern-warning: #b5742a;
+  --kern-warning: #925e22;  /* was #b5742a, 3.20:1 on --kern-warning-tint */
   --kern-warning-tint: #f7e9d8;
   --kern-neutral-flag: #8a8a8f;
   /* overlays */
@@ -83,15 +100,21 @@
   --kern-ghost-hover-dark: rgba(0, 0, 0, 0.08);
   --kern-desk-hover-border: rgba(0, 0, 0, 0.2);
   /* identity (avatars / projects) */
+  /*
+   * An avatar carries the person's initials in `--kern-av-fg`, so each ground has to hold white
+   * text at 4.5:1. Six of these nine did not — #b49a5f was 2.6:1, and a name rendered on it was
+   * decoration rather than information. Each is now the same hue and saturation, deepened until
+   * the initials clear the bar. Any colour added here goes through the same check.
+   */
   --kern-av-1: #7e6a93;
   --kern-av-2: #5f7383;
-  --kern-av-3: #b7714e;
-  --kern-av-4: #6e8b62;
-  --kern-av-5: #85947a;
-  --kern-av-6: #b4661c;
+  --kern-av-3: #a26242;
+  --kern-av-4: #607955;
+  --kern-av-5: #69765f;
+  --kern-av-6: #a9601a;
   --kern-av-7: #a05a48;
-  --kern-av-8: #b49a5f;
-  --kern-av-0: #8e8779;
+  --kern-av-8: #85703e;
+  --kern-av-0: #787265;
   --kern-av-fg: #fbfaf7;
   /* type */
   --kern-font-sans: "Instrument Sans", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -171,22 +194,25 @@
   --kern-ink-550: #b5ad9b;
   --kern-ink-520: #a79f8e;
   --kern-ink-500: #a79f8e;
-  --kern-ink-450: #9a9285;
-  --kern-ink-400: #8e8779;
-  --kern-ink-350: #8a8375;
-  --kern-ink-330: #7a7365;
-  --kern-ink-300: #7a7365;
-  --kern-ink-280: #6b6459;
-  --kern-ink-250: #615b4f;
+  /* the same floor, measured against `--kern-surface-active` — the darkest ground muted text sits on */
+  --kern-ink-450: #aca59a;
+  --kern-ink-400: #a59f94;
+  --kern-ink-350: #a09a8f;
+  --kern-ink-330: #9e988a;
+  --kern-ink-300: #9d9688;
+  --kern-ink-280: #9c9488;
+  --kern-ink-250: #9b9384;
   --kern-ink-hover: #e4e0d6;
   --kern-ink-inverse: #1c1a17;
   --kern-accent: #c97a2e;
   --kern-accent-text: #d98a3d;
   --kern-accent-deep: #e59a52;
+  --kern-accent-badge-bg: #c97a2e;
+  --kern-accent-badge-fg: #1c1a17;
   --kern-accent-tint: #3a2a18;
   --kern-accent-tint-2: #3e2d1a;
   --kern-ring: rgba(201, 122, 46, 0.28);
-  --kern-danger: #d2553a;
+  --kern-danger: #da735c;  /* was #d2553a, 3.58:1 on --kern-danger-tint */
   --kern-danger-tint: #3c211c;
   --kern-success: #6fa076;
   --kern-success-chip: #5db47f;
@@ -277,6 +303,26 @@
     font: inherit;
     color: inherit;
   }
+  /*
+   * The inputs that open something rather than take typing. The browser gives these the default
+   * arrow, which reads as inert next to a `button` that points — and none of them accepts free
+   * text, so there is no caret to prefer. `checkbox` and `radio` are here for the same reason.
+   */
+  input[type="file"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  input[type="color"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+  input:disabled {
+    cursor: not-allowed;
+  }
+
   button {
     cursor: pointer;
     background: none;

@@ -64,7 +64,7 @@ const isz = $derived(iconSize ?? (size >= 32 ? 16 : size >= 28 ? 15 : 14))
     flex: none;
     transition: background-color var(--kern-dur-fast);
   }
-  .kib:disabled { opacity: 0.45; cursor: not-allowed; }
+  .kib:disabled { opacity: 0.7; cursor: not-allowed; }
   .v-ghost:hover:not(:disabled) { background: var(--kern-surface-hover); color: var(--kern-ink-900); }
   .v-sidebar:hover:not(:disabled) { background: var(--kern-border); color: var(--kern-ink-700); }
   .v-outline { border-color: var(--kern-border-strong); }

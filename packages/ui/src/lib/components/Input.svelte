@@ -32,12 +32,31 @@ let {
   id,
   ...rest
 }: Props = $props()
+
+/**
+ * A bare input with only a placeholder announces itself as "edit text" and nothing else — and the
+ * placeholder is gone the moment somebody types, so it is not a name.
+ *
+ * Wrapped in a `Field` there is a real `<label for>` and adding `aria-label` here would *override*
+ * it, which is worse than the gap: a screen reader would then read a different sentence from the
+ * one on screen. So the fallback is decided from the DOM after mount, where whether a label exists
+ * is a fact rather than a guess, and it applies only when nothing else names the field.
+ */
+let fallbackLabel = $state<string | undefined>(undefined)
+$effect(() => {
+  const el = ref
+  if (!el) return
+  // read the *props* for an explicit name, never the rendered attribute: this effect writes that
+  // attribute, so reading it back would make the fallback switch itself off on the next run
+  const named = el.labels?.length || rest['aria-label'] || rest['aria-labelledby']
+  fallbackLabel = named ? undefined : typeof rest.placeholder === 'string' ? rest.placeholder : undefined
+})
 </script>
 
 <div class={cn('kin-wrap', wrapperClass)}>
   <div class={cn('kin', `s-${size}`, error && 'error', icon && 'has-icon', mono && 'mono', className)}>
     {#if icon}<Icon name={icon} size={14} strokeWidth={1.7} class="kin-icon" />{/if}
-    <input bind:this={ref} bind:value {id} aria-invalid={error ? 'true' : undefined} aria-describedby={error || hint ? `${id ?? 'in'}-desc` : undefined} {...rest} />
+    <input bind:this={ref} bind:value {id} aria-label={fallbackLabel} aria-invalid={error ? 'true' : undefined} aria-describedby={error || hint ? `${id ?? 'in'}-desc` : undefined} {...rest} />
   </div>
   {#if error}<p class="kin-msg err" id="{id ?? 'in'}-desc">{error}</p>{:else if hint}<p class="kin-msg" id="{id ?? 'in'}-desc">{hint}</p>{/if}
 </div>

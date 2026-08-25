@@ -110,9 +110,21 @@ let {
   .dot { width: 5px; height: 5px; border-radius: 999px; background: var(--kern-danger); flex: none; }
   .cl {
     display: grid; place-items: center; flex: none;
+    position: relative;
     width: 15px; height: 15px; margin-inline-start: -1px;
     border-radius: var(--kern-r-xs); color: var(--kern-ink-350);
     opacity: 0; cursor: pointer;
+  }
+  /*
+   * 15px is what is drawn; 24px is what you have to hit. A tab sits directly beside its own close
+   * button, so the pointer target and the tab target are inside each other's 24px reach — which is
+   * the crowding half of WCAG 2.5.8, and it is worst in RTL, where the close button lands on the
+   * side the thumb comes from. The overlay grows the target without moving anything on screen.
+   */
+  .cl::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
   }
   .ktab:hover .cl, .ktab.active .cl, .cl:focus-visible { opacity: 1; }
   .cl:hover { background: var(--kern-ghost-hover-dark); color: var(--kern-ink-900); }

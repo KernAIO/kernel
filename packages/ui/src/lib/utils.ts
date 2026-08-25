@@ -6,17 +6,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Identity colours from DESIGN.md §1.1 — index 0 is the default. */
+/**
+ * Identity colours from DESIGN.md §1.1 — index 0 is the default.
+ *
+ * These name the `--kern-av-*` tokens rather than repeating their values. They used to be literal
+ * hexes, which meant the palette existed twice: once here and once in `tokens.css`. Darkening the
+ * tokens so white initials clear 4.5:1 changed nothing on screen, because every avatar takes its
+ * ground from this list — the tokens were being read by nothing at all. A colour used in a `style`
+ * attribute can be a `var()`, so there is no reason for the second copy.
+ */
 export const IDENTITY_COLORS = [
-  '#8E8779',
-  '#7E6A93',
-  '#5F7383',
-  '#B7714E',
-  '#6E8B62',
-  '#85947A',
-  '#B4661C',
-  '#A05A48',
-  '#B49A5F',
+  'var(--kern-av-0)',
+  'var(--kern-av-1)',
+  'var(--kern-av-2)',
+  'var(--kern-av-3)',
+  'var(--kern-av-4)',
+  'var(--kern-av-5)',
+  'var(--kern-av-6)',
+  'var(--kern-av-7)',
+  'var(--kern-av-8)',
 ] as const
 
 /** Deterministic identity colour for a user/project id (hash → 1..8; 0 is reserved for "default"). */

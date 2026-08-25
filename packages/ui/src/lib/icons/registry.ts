@@ -14,9 +14,11 @@ import Briefcase from '@lucide/svelte/icons/briefcase'
 import Bug from '@lucide/svelte/icons/bug'
 import Building2 from '@lucide/svelte/icons/building-2'
 import Calendar from '@lucide/svelte/icons/calendar'
+import CalendarDays from '@lucide/svelte/icons/calendar-days'
 import ChartColumn from '@lucide/svelte/icons/chart-column'
 import ChartLine from '@lucide/svelte/icons/chart-line'
 import Check from '@lucide/svelte/icons/check'
+import CheckCheck from '@lucide/svelte/icons/check-check'
 import ChevronDown from '@lucide/svelte/icons/chevron-down'
 import ChevronLeft from '@lucide/svelte/icons/chevron-left'
 import ChevronRight from '@lucide/svelte/icons/chevron-right'
@@ -113,7 +115,9 @@ import Sun from '@lucide/svelte/icons/sun'
 import Tag from '@lucide/svelte/icons/tag'
 import Target from '@lucide/svelte/icons/target'
 import Timer from '@lucide/svelte/icons/timer'
+import ToggleLeft from '@lucide/svelte/icons/toggle-left'
 import Trash2 from '@lucide/svelte/icons/trash-2'
+import TreePalm from '@lucide/svelte/icons/tree-palm'
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert'
 import Undo2 from '@lucide/svelte/icons/undo-2'
 import Upload from '@lucide/svelte/icons/upload'
@@ -175,6 +179,10 @@ const registry: Record<string, IconComponent> = {
   'building-2': Building2,
   building: Building2,
   calendar: Calendar,
+  'tree-palm': TreePalm,
+  'toggle-left': ToggleLeft,
+  'check-check': CheckCheck,
+  'calendar-days': CalendarDays,
   check: Check,
   'chevron-down': ChevronDown,
   'chevron-left': ChevronLeft,

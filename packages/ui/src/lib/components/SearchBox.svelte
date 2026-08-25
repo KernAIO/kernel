@@ -14,6 +14,12 @@ interface Props extends HTMLInputAttributes {
   ref?: HTMLInputElement | null
   onEnter?: (v: string) => void
   loading?: boolean
+  /**
+   * What this box searches, for a screen reader. Defaults to the placeholder, which is the same
+   * sentence — but a placeholder is not a name: it is not announced by every reader, and it is gone
+   * the moment somebody types. Pass this when the placeholder is a hint rather than a label.
+   */
+  label?: string
 }
 let {
   value = $bindable(''),
@@ -24,13 +30,14 @@ let {
   ref = $bindable(null),
   onEnter,
   loading = false,
+  label,
   ...rest
 }: Props = $props()
 </script>
 
 <div class={cn('ksb', className)} style:height="{height}px" style:width={width}>
   <Icon name={loading ? 'loader' : 'search'} size={14} strokeWidth={1.7} class={loading ? 'ksb-ic spin' : 'ksb-ic'} />
-  <input bind:this={ref} bind:value type="search" autocomplete="off" spellcheck="false" onkeydown={(e) => { if (e.key === 'Enter') onEnter?.(value); if (e.key === 'Escape') { value = ''; (e.currentTarget as HTMLInputElement).blur() } }} {...rest} />
+  <input bind:this={ref} bind:value type="search" aria-label={label ?? (typeof rest.placeholder === 'string' ? rest.placeholder : 'Search')} autocomplete="off" spellcheck="false" onkeydown={(e) => { if (e.key === 'Enter') onEnter?.(value); if (e.key === 'Escape') { value = ''; (e.currentTarget as HTMLInputElement).blur() } }} {...rest} />
   {#if value}<button type="button" class="clr" aria-label="Clear" onclick={() => { value = ''; ref?.focus() }}><Icon name="x" size={12} strokeWidth={2} /></button>
   {:else if kbd}<Kbd keys={kbd} chip />{/if}
 </div>

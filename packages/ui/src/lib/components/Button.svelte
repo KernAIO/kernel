@@ -83,7 +83,8 @@ const cls = $derived(
   }
   .kbtn:disabled,
   .kbtn[aria-disabled='true'] {
-    opacity: 0.5;
+    /* see Switch: exempt from the contrast rule is not the same as unreadable */
+    opacity: 0.7;
     cursor: not-allowed;
   }
   .block { width: 100%; }
@@ -101,7 +102,13 @@ const cls = $derived(
   .v-white:hover:not(:disabled) { background: var(--kern-surface-hover); }
   .v-ghost { color: var(--kern-ink-550); }
   .v-ghost:hover:not(:disabled) { background: var(--kern-surface-hover); color: var(--kern-ink-900); }
-  .v-danger { background: var(--kern-danger); color: #fff; }
+  /*
+   * `--kern-ink-inverse`, not `#fff`. In dark mode `--kern-danger` is a light red, so white on it is
+   * 3.19:1 — and this is the button that archives a workspace or deletes a project, which is the
+   * last one anybody should have to squint at. The inverse ink is near-white in light and near-black
+   * in dark, which is exactly the pair a solid ground needs; `t-danger-solid` already used it.
+   */
+  .v-danger { background: var(--kern-danger); color: var(--kern-ink-inverse); }
   .v-danger:hover:not(:disabled) { filter: brightness(0.92); }
   .v-link { color: var(--kern-accent-text); padding: 0; height: auto; font-weight: 400; font-size: 13px; }
   .v-link:hover:not(:disabled) { color: var(--kern-accent-deep); text-decoration: underline; }

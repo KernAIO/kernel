@@ -17,6 +17,8 @@ interface Props {
   actions?: Snippet
   titleActions?: Snippet
   compact?: boolean
+  /** set the browser tab from `title`; turn it off where the page names its own tab */
+  documentTitle?: boolean
   class?: string
   children?: Snippet
 }
@@ -31,8 +33,17 @@ let {
   compact = false,
   class: className,
   children,
+  documentTitle = true,
 }: Props = $props()
 </script>
+
+<!--
+  The header carries the page's name, so it names the browser tab as well. Without this a module's
+  screens all showed an empty tab — no history entry worth reading, no usable bookmark — and every
+  page would have had to remember a `<svelte:head>` of its own. A screen that needs a different tab
+  name (a record's own title, say) passes `documentTitle={false}` and writes its own.
+-->
+<svelte:head>{#if documentTitle}<title>{title} · Kern</title>{/if}</svelte:head>
 
 <header class={cn('kph', compact && 'compact', className)}>
   {#if crumbs.length || search || actions}
