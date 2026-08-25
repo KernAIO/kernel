@@ -14,6 +14,16 @@
 export interface Host {
   /** core's API client, configured and authenticated by the shell */
   api: unknown
+  /**
+   * Origin every module's API client should call.
+   *
+   * Same-origin in every real deployment — the dev server proxies `/api/<module>` to whichever port
+   * hosts it, and the reverse proxy does the same in production — so a module never needs to know
+   * that mail listens on 4200. Nine files used to carry their own
+   * `env.PUBLIC_API_URL || 'http://localhost:4200'`, which is nine chances for one to be wrong and
+   * fail as a connection refused with no clue which module owned it.
+   */
+  apiBaseUrl: string
   /** true when the shell is serving the in-memory API (`PUBLIC_API_MOCK=1`) */
   isMock: boolean
   /** stores bytes in mock mode; the real path presigns straight to object storage */

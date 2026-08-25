@@ -1,6 +1,10 @@
 // @kernhq/ui — Kern "Ink / paper" design system (Svelte 5).
 // Styles are shipped separately: import '@kernhq/ui/styles/index.css' (or fonts/tokens/theme individually).
 
+// side-effecting: registers the shared vocabulary before any module bundle is merged
+export { commonMessages } from './common-messages.js'
+export { default as WidgetState } from './widget/WidgetState.svelte'
+export { defaultsOf, resolveSettings, settingsScope } from './widget/settings.js'
 // ---- primitives ----
 export { default as Avatar } from './components/Avatar.svelte'
 export { default as AvatarStack } from './components/AvatarStack.svelte'
