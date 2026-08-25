@@ -68,6 +68,17 @@ export {
   type CommentRange,
   selectionToAnchor,
 } from './editor/comment-anchors.js'
+export {
+  formatCount,
+  formatDate,
+  formatDateRange,
+  formatDateTime,
+  localTime,
+  relativeTime,
+  today,
+} from './format.js'
+export { coreApi, getHost, type Host, setHost } from './host.js'
+export { messageLocale, registerMessages, scopedT, setMessageLocale, t } from './i18n.svelte.js'
 export { default as Icon } from './icons/Icon.svelte'
 export { getIcon, iconNames, registerIcons } from './icons/registry.js'
 // ---- app-shell layout ----
@@ -112,14 +123,16 @@ export {
   type WidgetSettingsContext,
   type WidgetSize,
 } from './module.js'
+export { createQueryClient, keys } from './query.js'
+export { type ConnectionStatus, realtime } from './realtime.svelte.js'
 // ---- host contract ----
 // What a module's own screens may reach for. A module cannot import the app, so anything its UI
 // needs from the shell is either exported here (stateless: keys, defaults) or read from the
 // singleton the shell fills (stateful: the session). Nothing else crosses that line.
 export { session } from './session.svelte.js'
-export { createQueryClient, keys } from './query.js'
 export { default as SettingsPage } from './settings/SettingsPage.svelte'
 export { default as SettingsSection } from './settings/SettingsSection.svelte'
+export { UploadError, type UploadOptions, type UploadProgress, uploadFile } from './upload.js'
 
 // ---- utilities ----
 export {
