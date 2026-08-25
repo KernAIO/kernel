@@ -112,6 +112,15 @@ export {
   type WidgetSettingsContext,
   type WidgetSize,
 } from './module.js'
+// ---- host contract ----
+// What a module's own screens may reach for. A module cannot import the app, so anything its UI
+// needs from the shell is either exported here (stateless: keys, defaults) or read from the
+// singleton the shell fills (stateful: the session). Nothing else crosses that line.
+export { session } from './session.svelte.js'
+export { createQueryClient, keys } from './query.js'
+export { default as SettingsPage } from './settings/SettingsPage.svelte'
+export { default as SettingsSection } from './settings/SettingsSection.svelte'
+
 // ---- utilities ----
 export {
   avatarFontSize,
