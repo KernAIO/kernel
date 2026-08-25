@@ -24,6 +24,14 @@ export interface Host {
    * fail as a connection refused with no clue which module owned it.
    */
   apiBaseUrl: string
+  /**
+   * WebSocket endpoint of the collab service, for modules with a collaborative editor.
+   *
+   * Separate from `apiBaseUrl` because it is not the API: it is a socket, on its own path, and an
+   * instance may put the collab service somewhere else entirely. Optional — an instance without
+   * collaborative editing does not run it, and a module must degrade rather than fail.
+   */
+  collabUrl?: string
   /** true when the shell is serving the in-memory API (`PUBLIC_API_MOCK=1`) */
   isMock: boolean
   /** stores bytes in mock mode; the real path presigns straight to object storage */

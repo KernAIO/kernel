@@ -125,6 +125,7 @@ export {
   type WidgetSettingsContext,
   type WidgetSize,
 } from './module.js'
+export { navigation, setNavigation } from './navigation.svelte.js'
 export { createQueryClient, keys } from './query.js'
 export { type ConnectionStatus, realtime } from './realtime.svelte.js'
 // ---- host contract ----
