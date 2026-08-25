@@ -37,6 +37,8 @@ const ar = {
   'common.setting_rows': 'عدد الصفوف',
   'common.setting_status': 'الحالة',
   'common.setting_show': 'إظهار',
+  'common.emoji': 'إيموجي',
+  'common.mention': 'الإشارة إلى شخص',
 }
 
 const de = {
@@ -62,6 +64,8 @@ const de = {
   'common.setting_rows': 'Zeilen',
   'common.setting_status': 'Status',
   'common.setting_show': 'Anzeigen',
+  'common.emoji': 'Emoji',
+  'common.mention': 'Jemanden erwähnen',
 }
 
 const en = {
@@ -87,6 +91,8 @@ const en = {
   'common.setting_rows': 'Rows',
   'common.setting_status': 'Status',
   'common.setting_show': 'Show',
+  'common.emoji': 'Emoji',
+  'common.mention': 'Mention someone',
 }
 
 const fa = {
@@ -112,6 +118,8 @@ const fa = {
   'common.setting_rows': 'تعداد ردیف',
   'common.setting_status': 'وضعیت',
   'common.setting_show': 'نمایش',
+  'common.emoji': 'ایموجی',
+  'common.mention': 'اشاره به کسی',
 }
 
 const tr = {
@@ -137,6 +145,8 @@ const tr = {
   'common.setting_rows': 'Satır',
   'common.setting_status': 'Durum',
   'common.setting_show': 'Göster',
+  'common.emoji': 'Emoji',
+  'common.mention': 'Birinden bahset',
 }
 export const commonMessages: Record<string, Record<string, string>> = {
   ar,

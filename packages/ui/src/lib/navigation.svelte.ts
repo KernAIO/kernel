@@ -31,7 +31,14 @@ export interface NavigateOptions {
   invalidateAll?: boolean
 }
 
+/** What a module says the current view is called; the shell decides where that shows. */
+export interface ViewDescription {
+  label?: string
+  icon?: string
+}
+
 let go: ((href: string, opts?: NavigateOptions) => void) | null = null
+let describe: ((view: ViewDescription) => void) | null = null
 
 export const navigation = {
   get pathname() {
@@ -54,6 +61,19 @@ export const navigation = {
    * Falls back to assigning `location.href` when no shell has registered one — a module rendered in
    * isolation (a test, a storybook) should still navigate rather than silently do nothing.
    */
+  /**
+   * Name the view the module is currently showing.
+   *
+   * The shell can only name a screen from its URL — "Chat" — while the module knows it is
+   * `eng-core`. It used to reach into the app's tab-strip state to say so, which a package cannot
+   * do; now it states the fact and the shell decides what to do with it. An instance with the tab
+   * strip turned off simply does nothing with it, which is the right outcome: a module should not
+   * know whether tabs exist.
+   */
+  describe(view: ViewDescription) {
+    describe?.(view)
+  },
+
   go(href: string, opts?: NavigateOptions) {
     if (go) return go(href, opts)
     if (typeof location === 'undefined') return
@@ -70,9 +90,11 @@ export function setNavigation(next: {
   params: Record<string, string>
   search: URLSearchParams | Record<string, string>
   go?: (href: string, opts?: NavigateOptions) => void
+  describe?: (view: ViewDescription) => void
 }) {
   pathname = next.pathname
   params = next.params
   search = next.search instanceof URLSearchParams ? Object.fromEntries(next.search) : next.search
   if (next.go) go = next.go
+  if (next.describe) describe = next.describe
 }

@@ -15,6 +15,7 @@ export { type CommandItem, default as Command } from './components/Command.svelt
 export { default as ContextMenu } from './components/ContextMenu.svelte'
 export { default as Dialog } from './components/Dialog.svelte'
 export { default as DropdownMenu } from './components/DropdownMenu.svelte'
+export { default as EmojiPicker } from './components/EmojiPicker.svelte'
 export { default as EmptyState } from './components/EmptyState.svelte'
 export { default as Field } from './components/Field.svelte'
 export { default as IconButton } from './components/IconButton.svelte'
@@ -22,6 +23,7 @@ export { default as Input } from './components/Input.svelte'
 export { default as Kbd } from './components/Kbd.svelte'
 export { default as Label } from './components/Label.svelte'
 export { default as ListRow } from './components/ListRow.svelte'
+export { default as MentionMenu } from './components/MentionMenu.svelte'
 export type { MenuAvatar, MenuItem } from './components/menu-types.js'
 export { default as Popover } from './components/Popover.svelte'
 export { default as ProgressBar } from './components/ProgressBar.svelte'
@@ -128,6 +130,20 @@ export {
 export { type NavigateOptions, navigation, setNavigation } from './navigation.svelte.js'
 export { createQueryClient, keys } from './query.js'
 export { type ConnectionStatus, realtime } from './realtime.svelte.js'
+export { formatDuration, MediaRecording, type RecorderKind, type Recording } from './recorder.svelte.js'
+export type { RichDoc } from './rich/doc.js'
+export { EMOJI_GROUPS, QUICK_REACTIONS, searchEmoji } from './rich/emoji.js'
+export {
+  EVERYONE_TOKENS,
+  literalFor,
+  type MentionCandidate,
+  type MentionQuery,
+  mentionQueryAt,
+  mentionsIn,
+  type PickedMention,
+  rankCandidates,
+  textToDoc,
+} from './rich/mentions.js'
 // ---- host contract ----
 // What a module's own screens may reach for. A module cannot import the app, so anything its UI
 // needs from the shell is either exported here (stateless: keys, defaults) or read from the
