@@ -10,7 +10,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "biome check .",
+    "lint": "biome check . && node scripts/check-ranges.mjs packages/*/package.json",
     "format": "biome format --write .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

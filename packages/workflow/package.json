@@ -2,13 +2,13 @@
   "name": "@kernhq/workflow",
   "version": "0.1.1",
   "description": "Generic workflow / state-machine engine for Kern (statuses, transitions, conditions, validators, post-functions, approvals)",
-  "homepage": "https://kernaio.com",
+  "homepage": "https://github.com/KernAIO/kernel/tree/main/packages/workflow#readme",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/KernAIO/modules",
+    "url": "git+https://github.com/KernAIO/kernel.git",
     "directory": "packages/workflow"
   },
   "publishConfig": {
