@@ -228,6 +228,15 @@ export interface WidgetProps {
   configure: () => void
 }
 
+/**
+ * One translated message: a plain string, or a counted one keyed by CLDR plural category.
+ *
+ * A counted message is not a string with `{count}` in it. English has two forms and Arabic has six,
+ * and which applies is `Intl.PluralRules`' answer rather than the author's — `{n} days` with a
+ * number substituted is how a Persian screen ends up reading "۱ روزها".
+ */
+export type Message = string | Partial<Record<Intl.LDMLPluralRule, string>>
+
 export interface ClientContext {
   workspaceId: string | null
   workspaceSlug: string | null
@@ -259,7 +268,7 @@ export interface ClientModule<C = unknown> {
   /** Cards this module offers on the workspace dashboard. */
   widgets?: WidgetDefinition<C>[]
   /** i18n message bundles by locale, merged into the app's */
-  messages?: Record<string, () => Promise<Record<string, string>>>
+  messages?: Record<string, () => Promise<Record<string, Message>>>
   onActivate?: (ctx: ClientContext) => void | Promise<void>
 }
 export function defineClientModule<C = unknown>(mod: ClientModule<C>): ClientModule<C> {

@@ -14,8 +14,12 @@
  * they claim each other's prefix.
  */
 
+import type { Message } from '@kernhq/kernel/client'
+
+export type { Message }
+
 /** Merged messages per locale: `{ en: { 'chat.nav': 'Chat' } }`. */
-const bundles: Record<string, Record<string, string>> = {}
+const bundles: Record<string, Record<string, Message>> = {}
 
 /**
  * Reactive on purpose. Every module string on screen is a `t()` call, and `t()` reads this — so
@@ -38,7 +42,7 @@ export function messageLocale(): string {
  * again when a locale is loaded lazily — later calls win for the keys they name, so a module can
  * ship English eagerly and the rest on demand.
  */
-export function registerMessages(locale: string, messages: Record<string, string>) {
+export function registerMessages(locale: string, messages: Record<string, Message>) {
   bundles[locale] = { ...bundles[locale], ...messages }
 }
 
@@ -54,13 +58,32 @@ export function registerMessages(locale: string, messages: Record<string, string
  * nobody reports.
  */
 export function t(key: string, params?: Record<string, string | number>): string {
-  const raw = bundles[current]?.[key] ?? bundles.en?.[key] ?? key
+  const found = bundles[current]?.[key] ?? bundles.en?.[key]
+  if (found === undefined) return key
+  const raw = typeof found === 'string' ? found : selectPlural(found, params)
+  if (raw === undefined) return key
   if (!params) return raw
   return raw.replace(/\{(\w+)\}/g, (_, name: string) => {
     const value = params[name]
     if (value === undefined) return `{${name}}`
     return typeof value === 'number' ? new Intl.NumberFormat(current).format(value) : String(value)
   })
+}
+
+/**
+ * Pick the form for the count, falling back to `other` — the one category every locale has.
+ *
+ * The count is whichever of `count` or `n` the caller passed; those are the two names the
+ * catalogues use. A counted message called without one is a bug at the call site, and falling back
+ * to `other` renders something sensible rather than the key.
+ */
+function selectPlural(
+  forms: Partial<Record<Intl.LDMLPluralRule, string>>,
+  params?: Record<string, string | number>,
+): string | undefined {
+  const count = params?.count ?? params?.n
+  if (typeof count !== 'number') return forms.other
+  return forms[new Intl.PluralRules(current).select(count)] ?? forms.other
 }
 
 /**

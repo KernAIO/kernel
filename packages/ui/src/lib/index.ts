@@ -3,8 +3,6 @@
 
 // side-effecting: registers the shared vocabulary before any module bundle is merged
 export { commonMessages } from './common-messages.js'
-export { default as WidgetState } from './widget/WidgetState.svelte'
-export { defaultsOf, resolveSettings, settingsScope } from './widget/settings.js'
 // ---- primitives ----
 export { default as Avatar } from './components/Avatar.svelte'
 export { default as AvatarStack } from './components/AvatarStack.svelte'
@@ -82,7 +80,7 @@ export {
   today,
 } from './format.js'
 export { coreApi, getHost, type Host, setHost } from './host.js'
-export { messageLocale, registerMessages, scopedT, setMessageLocale, t } from './i18n.svelte.js'
+export { type Message, messageLocale, registerMessages, scopedT, setMessageLocale, t } from './i18n.svelte.js'
 export { default as Icon } from './icons/Icon.svelte'
 export { getIcon, iconNames, registerIcons } from './icons/registry.js'
 // ---- app-shell layout ----
@@ -137,7 +135,6 @@ export { session } from './session.svelte.js'
 export { default as SettingsPage } from './settings/SettingsPage.svelte'
 export { default as SettingsSection } from './settings/SettingsSection.svelte'
 export { UploadError, type UploadOptions, type UploadProgress, uploadFile } from './upload.js'
-
 // ---- utilities ----
 export {
   avatarFontSize,
@@ -151,3 +148,5 @@ export {
   timeAgo,
   uid,
 } from './utils.js'
+export { defaultsOf, resolveSettings, settingsScope } from './widget/settings.js'
+export { default as WidgetState } from './widget/WidgetState.svelte'
