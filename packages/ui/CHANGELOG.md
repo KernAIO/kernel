@@ -1,5 +1,129 @@
 # @kernhq/ui
 
+## 0.8.0
+
+### Minor Changes
+
+- 3bd7675: Module messages can be counted.
+
+  `ClientModule.messages` accepted `Record<string, string>`, so a module could not express a plural at
+  all — and a counted message is not a string with `{count}` in it. English has two forms and Arabic
+  has six, and which one applies is `Intl.PluralRules`' answer rather than the author's. A message is
+  now a string _or_ a map of CLDR plural category to string, and `t(key, { count })` picks the form,
+  falling back to `other` — the one category every locale has.
+
+  This is additive for anything already constructing a bundle: a plain string is still a `Message`.
+
+- 0d6c31e: `session` carries the workspace's resolved capabilities, and `navigation.go` takes router options.
+
+  A module's screens branch on their own capabilities — HR hides the offices column when a workspace
+  does not use offices — and they were doing it by importing `capabilitiesOf` from the _app's_ module
+  registry and running their own copy of the modules query. A module package cannot import the app,
+  and two components asking the same question of the same cache is waste besides.
+
+  `session.hasCapability('hr', 'attendance')` answers it now, from the set the **server** resolved:
+  defaults applied, `required` forced on, anything whose dependency is off already pruned. Deriving it
+  again on the client would be a second implementation of that closure, and two implementations
+  eventually disagree — the way that shows up is a menu item whose API answers 404.
+
+  `navigation.go(href, opts)` accepts `replaceState`, `keepFocus`, `noScroll` and `invalidateAll`.
+  Dropping them was a real regression: an edit that should not add a history entry did, and a
+  navigation that must not steal focus from what somebody is typing in, did.
+
+- 7b19391: Charts and `formatBytes` join the framework.
+
+  Only tracker draws a chart today, but a chart is a design-system component: the next module that
+  wants a trend on its dashboard card should find one rather than build a second. `formatBytes` had
+  two copies — attachments and storage limits — which is one too many for a function whose whole job
+  is to agree with itself everywhere.
+
+  It keeps 1024 and `KB` rather than `Intl`'s SI `kB`, deliberately: the number sits beside the one the
+  operating system's file browser shows, and a size that disagrees with Finder reads as a bug.
+
+- cdf5eab: Complete the host contract: `format`, `i18n`, `realtime`, `uploadFile` and the `Host` seam.
+
+  A module's screens are full of dates, counts, translated strings, presence dots and file
+  attachments, and a module cannot import the app — so all of it moves here, keeping the dependency
+  pointing one way.
+
+  - **`i18n`** — one message runtime, not one per module. The first draft of this lived in
+    `@kernhq/module-chat` with its own `t()` and its own `let locale = 'en'`, which was not reactive:
+    switching language left every chat string in the previous one. Keys are namespaced by module, so
+    a single merged map per locale is collision-free, and numeric placeholders go through
+    `Intl.NumberFormat` so a count on a Persian screen reads ۱۲.
+  - **`format`** — everything except `localPlace`, which needs the app's generated CLDR city data.
+  - **`realtime`** — `connect()` now takes `{ url, queryClient, getToken }`. It used to read
+    `$app/environment` and `$env/dynamic/public` directly, which tied the framework to one
+    application's env var names.
+  - **`uploadFile`** — still exactly one uploader, three steps, and the third is not optional.
+  - **`Host`** — the seam for the few things only the application can build (a configured API client,
+    whether it is running against the mock). Deliberately small: every field is something a
+    third-party module may depend on for ever.
+
+  `@tanstack/svelte-query` becomes a peer at `^6.1.0` — matching the app rather than guessing, because
+  two copies of `query-core` in one tree make `QueryClient` structurally incompatible with itself.
+
+- d85a6a8: Add the host contract a module's own screens need: `session`, `keys`, `createQueryClient`, and the
+  `SettingsPage` / `SettingsSection` frames.
+
+  A module cannot import the app, so anything its UI needs from the shell has to live here. The line
+  is: **stateless things are exported, stateful things are read from a singleton the shell fills.**
+  `keys` and the query defaults are the first kind — a module builds queries and the shell invalidates
+  them from realtime `change` messages, so both halves must agree on the `[module, entity, …scope]`
+  shape. `session` is the second: `can()` is what decides whether a row, an action or a settings page
+  is offered at all.
+
+  One instance of this package in the tree is now load-bearing rather than merely tidy — two copies
+  would mean the shell and a module disagreeing about who the user is. `pnpm.overrides` already
+  pins it.
+
+  `@kernhq/contracts` becomes a declared dependency: it was imported for types without being named,
+  which resolves inside the umbrella and can vanish in a standalone install.
+
+- 190de29: Add the `navigation` singleton and `collabUrl` on the host.
+
+  A module cannot import `$app/navigation` or `$app/state`: those are SvelteKit aliases, and a module
+  package is compiled and type-checked on its own, where they do not exist. They _appear_ to work
+  while the module is edited inside the app — which is exactly how the dependency gets added without
+  anyone noticing, and why it only fails once the package is built standalone. The shell publishes the
+  current location here on every navigation, and modules read it.
+
+  A route component rarely needs it — the shell passes `params` and `workspaceSlug` as props. It is
+  for the parts that sit outside a route: a sidebar highlighting the open page, a presenter rendering
+  inside somebody else's screen.
+
+- 8d02430: Move the shared rich-text pieces into the framework: mentions, emoji, the pickers, voice recording,
+  and `navigation.describe`.
+
+  These sat in the app and were used by **two** modules, so they belonged to neither. `mentions.ts` in
+  particular typed against `@kernhq/module-chat`'s `RichDoc` while tracker declares an identical one of
+  its own — a shared helper picking a winner arbitrarily. `RichDoc` is named structurally here instead;
+  if a third module grows rich text, the honest move is to lift it into `@kernhq/contracts` and have
+  all of them import it.
+
+  `navigation.describe({ label, icon })` is how a module says what the view it is showing is called.
+  The shell can only name a screen from its URL — "Chat" — while the module knows it is `eng-core`.
+  Chat used to reach into the app's tab-strip state to say so; now it states the fact and the shell
+  decides what to do with it, so an instance with tabs turned off simply does nothing with it. A module
+  should not know whether tabs exist.
+
+- aee0c3f: Add `WidgetState`, the widget settings helpers, a shared `common` message bundle, and `apiBaseUrl`
+  on the host.
+
+  The common bundle is the handful of words every module needs and none of them owns — Save, Cancel,
+  Retry, Loading. Without it each module carries its own translation of "Save": six copies of the same
+  word, drifting apart, six chances for a locale to be missed. They are lifted from the shell's own
+  catalogues rather than written fresh, so they read exactly as they do everywhere else.
+
+  `apiBaseUrl` retires the per-module `env.PUBLIC_API_URL || 'http://localhost:4200'`. Nine files
+  carried their own copy of that line, which is nine chances for one to be wrong and fail as a
+  connection refused with no clue which module owned it.
+
+### Patch Changes
+
+- Updated dependencies [3bd7675]
+  - @kernhq/kernel@0.7.0
+
 ## 0.7.0
 
 ### Minor Changes
