@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/ui",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Kern design system — Svelte 5 components, tokens and app-shell layout (Ink/paper)",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
