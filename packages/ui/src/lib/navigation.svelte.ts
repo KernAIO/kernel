@@ -18,7 +18,20 @@
 let pathname = $state('/')
 let params = $state<Record<string, string>>({})
 let search = $state<Record<string, string>>({})
-let go: ((href: string) => void) | null = null
+/**
+ * Options the shell's router understands. Named here rather than imported from `@sveltejs/kit`,
+ * which the framework must not depend on — but a module genuinely needs `replaceState` (an edit
+ * that should not add a history entry) and `keepFocus` (a navigation that must not steal focus from
+ * what somebody is typing in).
+ */
+export interface NavigateOptions {
+  replaceState?: boolean
+  keepFocus?: boolean
+  noScroll?: boolean
+  invalidateAll?: boolean
+}
+
+let go: ((href: string, opts?: NavigateOptions) => void) | null = null
 
 export const navigation = {
   get pathname() {
@@ -41,9 +54,13 @@ export const navigation = {
    * Falls back to assigning `location.href` when no shell has registered one — a module rendered in
    * isolation (a test, a storybook) should still navigate rather than silently do nothing.
    */
-  go(href: string) {
-    if (go) return go(href)
-    if (typeof location !== 'undefined') location.href = href
+  go(href: string, opts?: NavigateOptions) {
+    if (go) return go(href, opts)
+    if (typeof location === 'undefined') return
+    // No shell router, so the options cannot be honoured — but `replaceState` at least has a
+    // faithful equivalent, and losing it would put a history entry where the caller said not to.
+    if (opts?.replaceState) return history.replaceState(null, '', href)
+    location.href = href
   },
 }
 
@@ -52,7 +69,7 @@ export function setNavigation(next: {
   pathname: string
   params: Record<string, string>
   search: URLSearchParams | Record<string, string>
-  go?: (href: string) => void
+  go?: (href: string, opts?: NavigateOptions) => void
 }) {
   pathname = next.pathname
   params = next.params
