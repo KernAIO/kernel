@@ -16,6 +16,9 @@ beforeEach(() => {
     'x.days': { one: '{count} day', other: '{count} days' },
     'x.range': { one: '{count} day, {range}', other: '{count} days, {range}' },
     'x.short': { other: '{count} things' },
+    // The shipped catalogues write `{n}`, not `{count}` — every module's, in their hundreds.
+    'x.peers': { one: '{n} other person here', other: '{n} others here' },
+    'x.rows': { one: '{n} row', other: '{n} rows' },
   })
   registerMessages('ar', {
     'x.days': {
@@ -83,6 +86,44 @@ describe('t', () => {
     it('keeps the other placeholders in whichever form is chosen', () => {
       expect(t('x.range', { count: 1, range: 'Mon–Fri' })).toBe('1 day, Mon–Fri')
       expect(t('x.range', { count: 4, range: 'Mon–Fri' })).toBe('4 days, Mon–Fri')
+    })
+  })
+
+  /*
+   * The count is whichever of `count` or `n` the caller passed — `selectPlural` has always said so
+   * and has always honoured it. Interpolation did not, so a `{n}` message called with `count` chose
+   * the right form and then printed the placeholder: "{n} other person here", on the page byline of
+   * a document two people were editing. Every test here used a `{count}` catalogue with a `count`
+   * argument, which is the one combination that could not fail.
+   */
+  describe('the count is named either way', () => {
+    it.each([
+      ['x.peers', { count: 1 }, '1 other person here'],
+      ['x.peers', { n: 1 }, '1 other person here'],
+      ['x.peers', { count: 3 }, '3 others here'],
+      ['x.peers', { n: 3 }, '3 others here'],
+      ['x.days', { n: 1 }, '1 day'],
+      ['x.days', { count: 1 }, '1 day'],
+      ['x.days', { n: 4 }, '4 days'],
+    ])('%s with %o', (key, params, expected) => {
+      expect(t(key, params as Record<string, number>)).toBe(expected)
+    })
+
+    it('never leaves a placeholder on the screen', () => {
+      const cases: Record<string, number>[] = [{ count: 2 }, { n: 2 }]
+      for (const params of cases)
+        for (const key of ['x.peers', 'x.rows', 'x.days'])
+          expect(t(key, params), `${key} ${JSON.stringify(params)}`).not.toMatch(/\{[a-z]+\}/)
+    })
+
+    it('still formats that count in the reader’s digits', () => {
+      setMessageLocale('fa')
+      expect(t('x.days', { n: 3 })).toBe('۳ روز')
+    })
+
+    /* A placeholder the caller genuinely did not supply must stay visible, not read as zero. */
+    it('leaves an unrelated missing placeholder alone', () => {
+      expect(t('x.range', { count: 2 })).toBe('2 days, {range}')
     })
   })
 

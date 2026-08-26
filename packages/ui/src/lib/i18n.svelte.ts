@@ -64,10 +64,27 @@ export function t(key: string, params?: Record<string, string | number>): string
   if (raw === undefined) return key
   if (!params) return raw
   return raw.replace(/\{(\w+)\}/g, (_, name: string) => {
-    const value = params[name]
+    const value = params[name] ?? countAlias(name, params)
+    // A placeholder nobody supplied stays visible. Rendering it as empty, or as zero, turns a bug
+    // at the call site into a sentence that reads as though it meant something.
     if (value === undefined) return `{${name}}`
     return typeof value === 'number' ? new Intl.NumberFormat(current).format(value) : String(value)
   })
+}
+
+/**
+ * `{n}` and `{count}` are the same placeholder, because `count` and `n` are the same argument.
+ *
+ * `selectPlural` has always accepted either name, and every shipped catalogue writes `{n}` while
+ * most call sites pass `count`. Interpolation matched on the exact name, so those messages chose
+ * the right plural form and then printed the placeholder — "{n} other person here", on the byline
+ * of a document two people were editing. It survived because every test used a `{count}` catalogue
+ * with a `count` argument, which is the one pairing of the four that cannot fail.
+ */
+function countAlias(name: string, params: Record<string, string | number>): string | number | undefined {
+  if (name === 'n') return params.count
+  if (name === 'count') return params.n
+  return undefined
 }
 
 /**
@@ -89,7 +106,14 @@ function selectPlural(
 /**
  * A `t()` bound to one module's prefix, so its components write `t('nav')` rather than repeating
  * their own id in every call.
+ *
+ * **An already-namespaced key is passed through untouched.** `t('common.save')` has to reach the
+ * shared bundle, and blindly prefixing turned it into `tracker.common.save` — which nothing defines,
+ * so `t()` fell back to returning the key and 164 call sites across six modules rendered
+ * `tracker.common.widget_issues_title` on screen. A key with a dot in it already says which
+ * namespace it belongs to; only a bare one is this module's.
  */
 export function scopedT(moduleId: string) {
-  return (key: string, params?: Record<string, string | number>) => t(`${moduleId}.${key}`, params)
+  return (key: string, params?: Record<string, string | number>) =>
+    t(key.includes('.') ? key : `${moduleId}.${key}`, params)
 }
