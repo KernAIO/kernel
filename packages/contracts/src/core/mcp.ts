@@ -13,9 +13,7 @@ import { Id, UserId, WorkspaceId } from '../ids.js'
  */
 
 /** `<module>:read` or `<module>:write` — coarse, derived from each operation's HTTP method. */
-export const McpScope = z
-  .string()
-  .regex(/^[a-z][a-z0-9_]*:(read|write)$/)
+export const McpScope = z.string().regex(/^[a-z][a-z0-9_]*:(read|write)$/)
 export type McpScope = z.infer<typeof McpScope>
 
 /** An OAuth client that may ask to connect. Created by dynamic client registration. */
