@@ -29,14 +29,29 @@
   margin: 0 0 0.5em;
 }
 
+.kern-prose h1,
 .kern-prose h2,
 .kern-prose h3,
-.kern-prose h4 {
+.kern-prose h4,
+.kern-prose h5,
+.kern-prose h6 {
   margin: 1.15em 0 0.4em;
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.015em;
   color: var(--kern-ink-900);
+}
+/*
+ * A body h1 is smaller than the page title above it, deliberately.
+ *
+ * The wiki schema allows h1 because documents imported from Markdown or Confluence are full of
+ * them and dropping them loses content. But the page already renders its title as an h1, so a
+ * second one at title size reads as a second title. Sized below it, the outline stays honest for a
+ * screen reader while the eye still sees one heading at the top of the page.
+ */
+.kern-prose h1 {
+  font-size: 1.5em;
+  margin-block-start: 1.2em;
 }
 .kern-prose h2 {
   font-size: 1.3em;
@@ -46,6 +61,17 @@
 }
 .kern-prose h4 {
   font-size: 1.03em;
+}
+.kern-prose h5 {
+  font-size: 0.97em;
+}
+/*
+ * h6 is muted with a colour rather than with `opacity`. Opacity fades the text against whatever is
+ * behind it, so a heading at 0.6 is unreadable on a tinted surface however good its token looks.
+ */
+.kern-prose h6 {
+  font-size: 0.92em;
+  color: var(--kern-ink-500);
 }
 
 /* `padding-inline-start` rather than `padding-left`: the markers belong on the side the script
@@ -148,4 +174,301 @@
   max-width: 100%;
   height: auto;
   border-radius: var(--kern-r-lg);
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * The wiki block set.
+ *
+ * Everything below is produced by `buildPageExtensions` and by `renderPageDoc` in
+ * @kernhq/module-quire, which emit the same markup so a page does not move between being written
+ * and being read. Nothing here is scoped to the editor: a published page has no editor.
+ *
+ * Logical properties throughout — a table's first column and a callout's stripe belong on the side
+ * the script starts on, which in Persian and Arabic is the right.
+ * ------------------------------------------------------------------------------------------- */
+
+/*
+ * A table is the one block that cannot be made to fit, so it gets its own scroller. Without this
+ * a wide table pushes the whole page sideways, which is the defect the e2e sweep exists to catch.
+ */
+.kern-prose .kern-table-wrap {
+  margin: 0.8em 0;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.kern-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  /* Otherwise a single long cell collapses every other column to nothing. */
+  table-layout: fixed;
+  font-size: 0.95em;
+}
+.kern-prose th,
+.kern-prose td {
+  border: 1px solid var(--kern-border);
+  padding: 6px 10px;
+  vertical-align: top;
+  text-align: start;
+  min-width: 3em;
+}
+.kern-prose th {
+  background: var(--kern-surface-hover);
+  font-weight: 600;
+  color: var(--kern-ink-900);
+}
+.kern-prose td[data-align="center"],
+.kern-prose th[data-align="center"] {
+  text-align: center;
+}
+.kern-prose td[data-align="end"],
+.kern-prose th[data-align="end"] {
+  text-align: end;
+}
+.kern-prose th > p,
+.kern-prose td > p {
+  margin: 0;
+}
+/* The column-resize grip the editor draws; harmless and invisible on a published page. */
+.kern-prose .column-resize-handle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: -2px;
+  width: 4px;
+  background: var(--kern-accent);
+  pointer-events: none;
+}
+
+/* Task lists carry their own marker, so the list marker has to go. */
+.kern-prose .kern-tasks {
+  list-style: none;
+  padding-inline-start: 0;
+  margin: 0.5em 0;
+}
+.kern-prose .kern-tasks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.kern-prose .kern-tasks li > label {
+  display: flex;
+  align-items: center;
+  /* The box sits on the line the text starts on, not on the middle of a wrapped paragraph. */
+  height: 1.55em;
+  flex: 0 0 auto;
+  user-select: none;
+}
+.kern-prose .kern-tasks li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kern-prose .kern-tasks input[type="checkbox"] {
+  /* 16px is below the 24px hit target, so the padding around it does the work. */
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--kern-accent);
+  cursor: pointer;
+}
+.kern-prose .kern-tasks input[type="checkbox"]:disabled {
+  cursor: default;
+}
+/*
+ * A finished item is muted with a colour and a line, never with `opacity` — a row at 0.5 fades its
+ * text against the page and stops being readable whatever its colour token says.
+ */
+.kern-prose .kern-tasks li[data-checked="true"] > div {
+  color: var(--kern-ink-450);
+  text-decoration: line-through;
+}
+
+/* The toggle. `list-style` on the summary is what removes the browser's default triangle. */
+.kern-prose .kern-toggle {
+  margin: 0.6em 0;
+  padding: 2px 0;
+  border-inline-start: 2px solid var(--kern-border);
+  padding-inline-start: 0.9em;
+}
+.kern-prose .kern-toggle > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--kern-ink-800);
+  list-style: none;
+  /* A summary is focusable, so it needs a visible ring like every other focusable thing. */
+  border-radius: var(--kern-r-xs);
+}
+.kern-prose .kern-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+.kern-prose .kern-toggle > summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-inline-end: 6px;
+  color: var(--kern-ink-400);
+  /* Rotating rather than swapping the glyph, so it turns the correct way in RTL too. */
+  transition: transform var(--kern-dur-fast) var(--kern-ease-out);
+}
+.kern-prose .kern-toggle[open] > summary::before {
+  transform: rotate(90deg);
+}
+/*
+ * A closed disclosure points the way the text runs, so in Persian and Arabic it points left. The
+ * glyph itself cannot be mirrored by a logical property, so it is rotated.
+ */
+[dir="rtl"] .kern-prose .kern-toggle > summary::before {
+  transform: rotate(180deg);
+}
+[dir="rtl"] .kern-prose .kern-toggle[open] > summary::before {
+  transform: rotate(90deg);
+}
+.kern-prose .kern-toggle > summary:focus-visible {
+  outline: 2px solid var(--kern-ring);
+  outline-offset: 2px;
+}
+.kern-prose .kern-toggle > div {
+  margin-block-start: 0.35em;
+}
+
+/*
+ * The callout. `border-inline-start` plus a tint, rather than a full border: the stripe is what
+ * makes the tone legible at a glance, and a four-sided border on a coloured box reads as heavier
+ * than anything a page needs.
+ */
+.kern-prose .kern-callout {
+  margin: 0.8em 0;
+  padding: 10px 12px;
+  border-radius: var(--kern-r-lg);
+  border-inline-start: 3px solid var(--kern-border-strong);
+  background: var(--kern-surface-hover);
+  color: var(--kern-ink-700);
+}
+.kern-prose .kern-callout > :first-child {
+  margin-top: 0;
+}
+.kern-prose .kern-callout > :last-child {
+  margin-bottom: 0;
+}
+.kern-prose .kern-callout[data-callout="info"] {
+  border-inline-start-color: var(--kern-info);
+  background: var(--kern-info-tint);
+}
+.kern-prose .kern-callout[data-callout="success"] {
+  border-inline-start-color: var(--kern-success);
+  background: var(--kern-success-tint);
+}
+.kern-prose .kern-callout[data-callout="warning"] {
+  border-inline-start-color: var(--kern-warning);
+  background: var(--kern-warning-tint);
+}
+.kern-prose .kern-callout[data-callout="danger"] {
+  border-inline-start-color: var(--kern-danger);
+  background: var(--kern-danger-tint);
+}
+
+/*
+ * A link to another page, drawn differently from a link off the site: the wiki is full of both,
+ * and knowing which one you are about to follow is the point.
+ */
+.kern-prose .kern-page-mention {
+  padding: 0 3px;
+  border-radius: var(--kern-r-xs);
+  background: var(--kern-purple-tint);
+  color: var(--kern-purple-ink);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.kern-prose a.kern-page-mention:hover {
+  border-bottom-color: currentColor;
+}
+
+/* The marker pen. A tint rather than a saturated yellow, so the text on it stays readable. */
+.kern-prose .kern-highlight,
+.kern-prose mark {
+  padding: 0.05em 0.15em;
+  border-radius: var(--kern-r-xs);
+  background: var(--kern-warning-tint);
+  color: var(--kern-ink-900);
+}
+
+.kern-prose u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* A picture's caption comes from its alt text, so a missing one is visible rather than silent. */
+.kern-prose figure {
+  margin: 0.9em 0;
+}
+.kern-prose figure > figcaption {
+  margin-block-start: 6px;
+  font-size: 0.88em;
+  color: var(--kern-ink-500);
+  text-align: center;
+}
+
+/*
+ * highlight.js token colours, from the ink and accent scales rather than a downloaded theme, so a
+ * code block stays legible in dark mode and does not import a second palette into the product.
+ */
+.kern-prose .hljs-comment,
+.kern-prose .hljs-quote {
+  color: var(--kern-ink-450);
+  font-style: italic;
+}
+.kern-prose .hljs-keyword,
+.kern-prose .hljs-selector-tag,
+.kern-prose .hljs-literal,
+.kern-prose .hljs-doctag {
+  color: var(--kern-purple-ink);
+}
+.kern-prose .hljs-string,
+.kern-prose .hljs-regexp,
+.kern-prose .hljs-addition {
+  color: var(--kern-success-ink);
+}
+.kern-prose .hljs-number,
+.kern-prose .hljs-variable,
+.kern-prose .hljs-template-variable,
+.kern-prose .hljs-attr,
+.kern-prose .hljs-attribute {
+  color: var(--kern-accent-deep);
+}
+.kern-prose .hljs-title,
+.kern-prose .hljs-section,
+.kern-prose .hljs-name,
+.kern-prose .hljs-type {
+  color: var(--kern-accent);
+  font-weight: 600;
+}
+.kern-prose .hljs-deletion {
+  color: var(--kern-danger);
+}
+.kern-prose .hljs-meta,
+.kern-prose .hljs-symbol,
+.kern-prose .hljs-bullet {
+  color: var(--kern-ink-500);
+}
+.kern-prose .hljs-emphasis {
+  font-style: italic;
+}
+.kern-prose .hljs-strong {
+  font-weight: 700;
+}
+
+/*
+ * On paper a collapsed toggle is content that simply vanished, so every one of them is opened.
+ * The marker goes with it: a triangle that cannot be clicked is noise on a printout.
+ */
+@media print {
+  .kern-prose .kern-toggle > div {
+    display: block !important;
+    content-visibility: visible !important;
+  }
+  .kern-prose .kern-toggle > summary::before {
+    content: none;
+  }
+  .kern-prose .kern-table-wrap {
+    overflow-x: visible;
+  }
 }

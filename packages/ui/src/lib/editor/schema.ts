@@ -39,6 +39,15 @@ export interface SchemaOptions {
   onSuggest?: (state: SuggestionState) => void
   /** Consulted while the menu is open; return true to swallow the key. */
   onSuggestKey?: (event: KeyboardEvent) => boolean
+  /**
+   * Set when a Yjs binding will supply history.
+   *
+   * Undo cannot be left to both. Two stacks race, and the one that wins a keystroke is whichever
+   * plugin registered last — which is how ⌘Z in a shared document undoes the wrong thing. There is
+   * no way to filter StarterKit's undo out afterwards, because StarterKit is a single extension
+   * from the outside, so the decision has to be made here.
+   */
+  collaborative?: boolean
 }
 
 export function buildExtensions(options: SchemaOptions = {}) {
@@ -50,6 +59,7 @@ export function buildExtensions(options: SchemaOptions = {}) {
       // Off because the renderer has no case for them — see the note above.
       link: false,
       underline: false,
+      ...(options.collaborative ? { undoRedo: false as const } : {}),
     }),
     Link.configure({
       openOnClick: false,

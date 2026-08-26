@@ -11,6 +11,7 @@ import {
   createCollabSession,
 } from './collab.js'
 import { CommentAnchors, type CommentRange, selectionToAnchor } from './comment-anchors.js'
+import { buildPageExtensions, type PageCandidate, type PageOutlineEntry } from './page-schema.js'
 import { buildExtensions, type MentionCandidate } from './schema.js'
 
 /**
@@ -36,6 +37,19 @@ interface Props {
   placeholder?: string
   /** Enables `@` mentions when supplied. */
   mentionSource?: (query: string) => MentionCandidate[] | Promise<MentionCandidate[]>
+  /**
+   * Write in the wide wiki schema — tables, images, task lists, callouts, toggles, highlighted
+   * code, six heading levels and page mentions — instead of the narrow one.
+   *
+   * Opt-in, so every surface that already uses this component keeps exactly the schema it had. It
+   * is not a display option: it decides what the document can contain, and only a reader that can
+   * draw all of it should ask for it. `renderPageDoc` in @kernhq/module-quire is that reader.
+   */
+  page?: boolean
+  /** Enables `+` mentions of other pages. Only meaningful with `page`. */
+  pageSource?: (query: string) => PageCandidate[] | Promise<PageCandidate[]>
+  /** The heading outline, as it changes. Only fires with `page`. */
+  onOutline?: (entries: PageOutlineEntry[]) => void
   /** Peers, so a page header can draw them next to the title rather than only here. */
   onpeers?: (peers: CollabPeer[]) => void
   onstatus?: (status: CollabStatus) => void
@@ -56,6 +70,9 @@ const {
   token,
   placeholder = '',
   mentionSource,
+  page = false,
+  pageSource,
+  onOutline,
   onpeers,
   onstatus,
   commentRanges = [],
@@ -73,6 +90,8 @@ let authError = $state<string | null>(null)
 /** Bumped on every transaction, so the comment button knows whether anything is selected. */
 let tick = $state(0)
 let ydoc = $state<import('yjs').Doc | null>(null)
+/** The grip the drag-handle extension positions. Only rendered, and only used, in `page` mode. */
+let dragHandle = $state<HTMLDivElement>()
 
 const hasSelection = $derived.by(() => {
   void tick
@@ -91,52 +110,86 @@ function comment() {
 const editable = $derived(status !== 'readonly')
 
 onMount(() => {
-  const session = createCollabSession({
-    url,
-    name,
-    token,
-    user: { ...user, colour: user.colour ?? caretColour(user.id) },
-    onStatus: (s) => {
-      status = s
-      onstatus?.(s)
-    },
-    onPeers: (p) => {
-      peers = p
-      onpeers?.(p)
-    },
-    onAuthFailed: (reason) => {
-      authError = reason
-      status = 'offline'
-    },
-  })
+  let session: ReturnType<typeof createCollabSession> | undefined
+  let torn = false
 
-  ydoc = session.doc
-  editor = new Editor({
-    element: host,
-    extensions: [
-      // History is Yjs' job here. Leaving StarterKit's undo in place gives the document two
-      // competing undo stacks, and the one that wins is whichever plugin registered last.
-      ...buildExtensions({ placeholder, mentionSource }).filter(
-        (e) => (e as { name?: string })?.name !== 'history',
-      ),
-      ...(session.extensions as never[]),
-      CommentAnchors.configure({
-        doc: session.doc,
-        ranges: () => commentRanges,
-        active: () => activeComment,
-        onClick: (id: string) => onCommentClick?.(id),
-      }),
-    ],
-    onTransaction: () => {
-      tick += 1
-    },
-    editable: true,
-    editorProps: { attributes: { class: 'kern-prose', role: 'textbox', 'aria-multiline': 'true' } },
-  })
+  /*
+   * Nothing is created synchronously because the wide schema wants syntax highlighting, and the
+   * grammars are worth about eighty kilobytes that a comment box must never download. So they are
+   * fetched on demand and the editor is built after they land — which means the teardown has to
+   * cope with unmounting during the gap.
+   */
+  void (async () => {
+    const lowlight = page ? await import('./highlight.js').then((m) => m.createPageLowlight()) : undefined
+    if (torn) return
+
+    session = createCollabSession({
+      url,
+      name,
+      token,
+      user: { ...user, colour: user.colour ?? caretColour(user.id) },
+      onStatus: (s) => {
+        status = s
+        onstatus?.(s)
+      },
+      onPeers: (p) => {
+        peers = p
+        onpeers?.(p)
+      },
+      onAuthFailed: (reason) => {
+        authError = reason
+        status = 'offline'
+      },
+    })
+    if (torn) {
+      session.destroy()
+      return
+    }
+
+    ydoc = session.doc
+    /*
+     * Undo belongs to Yjs on both schemas, and both builders are told so rather than being
+     * filtered afterwards. Filtering is what used to happen here — `name !== 'history'` — and it
+     * never removed anything: v3 calls the extension `undoRedo`, and it lives *inside* StarterKit,
+     * which is a single entry in this list. So the document ran two competing undo stacks, and
+     * @tiptap/extension-collaboration only warns about that.
+     */
+    const schema = page
+      ? buildPageExtensions({
+          placeholder,
+          mentionSource,
+          pageSource,
+          lowlight,
+          onOutline,
+          document: session.doc,
+          dragHandleElement: dragHandle,
+        })
+      : buildExtensions({ placeholder, mentionSource, collaborative: true })
+
+    editor = new Editor({
+      element: host,
+      extensions: [
+        ...schema,
+        ...(session.extensions as never[]),
+        CommentAnchors.configure({
+          doc: session.doc,
+          ranges: () => commentRanges,
+          active: () => activeComment,
+          onClick: (id: string) => onCommentClick?.(id),
+        }),
+      ],
+      onTransaction: () => {
+        tick += 1
+      },
+      editable: true,
+      editorProps: { attributes: { class: 'kern-prose', role: 'textbox', 'aria-multiline': 'true' } },
+    })
+  })()
 
   return () => {
+    torn = true
     editor?.destroy()
-    session.destroy()
+    session?.destroy()
   }
 })
 
@@ -159,7 +212,8 @@ const statusLabel: Record<CollabStatus, string> = {
 }
 </script>
 
-<div class={className}>
+<!-- `position: relative` on this wrapper is what the drag handle is positioned against. -->
+<div class="editor {className ?? ''}">
   {#if peers.length > 0}
     <div class="peers" aria-label="People in this document">
       {#each peers as peer (peer.id)}
@@ -192,10 +246,25 @@ const statusLabel: Record<CollabStatus, string> = {
     </div>
   {/if}
 
+  {#if page}
+    <!--
+      The grip the drag-handle plugin positions beside whichever block the pointer is over. It is
+      `aria-hidden` and not a button on purpose: dragging is the only thing it does, there is no
+      keyboard equivalent behind it yet, and a focusable control that does nothing on Enter is a
+      worse answer for a screen reader than no control at all.
+    -->
+    <div bind:this={dragHandle} class="drag-handle" aria-hidden="true">
+      <Icon name="grip-vertical" size={16} />
+    </div>
+  {/if}
+
   <div bind:this={host} class="surface" class:locked={!editable}></div>
 </div>
 
 <style>
+.editor {
+  position: relative;
+}
 .peers {
   display: flex;
   align-items: center;
@@ -264,6 +333,38 @@ const statusLabel: Record<CollabStatus, string> = {
 .surface :global(.kern-comment-mark.active) {
   background: var(--kern-accent-tint);
   border-block-end-color: var(--kern-accent);
+}
+/*
+ * Positioned by floating-ui, so only the look belongs here. Hidden until the plugin places it —
+ * without that it sits at the top-left corner of the page on first paint.
+ */
+.drag-handle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  border-radius: var(--kern-r-sm);
+  color: var(--kern-ink-400);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--kern-dur-fast) var(--kern-ease-out);
+}
+.drag-handle:hover {
+  background: var(--kern-surface-hover);
+  color: var(--kern-ink-700);
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+/* The plugin adds this once it has a block to sit beside. */
+.drag-handle:not(.hide) {
+  opacity: 1;
+}
+.drag-handle.hide {
+  opacity: 0;
+  pointer-events: none;
 }
 .surface :global(.kern-prose) {
   outline: none;
