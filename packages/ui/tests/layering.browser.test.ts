@@ -44,10 +44,14 @@ beforeAll(async () => {
   }
 }, 180_000)
 
+// Given a timeout for the same reason `beforeAll` has one: shutting a Chromium and a Vite dev
+// server down is slow on a loaded machine, and vitest's default for a hook is 10s. Every test in
+// here passed and the file still reported FAIL, which is the kind of red that teaches people to
+// stop reading it.
 afterAll(async () => {
   await browser?.close()
   await server?.close()
-})
+}, 60_000)
 
 describe('a popup opened from a modal surface', () => {
   it('lets the pointer reach an option in a Select inside a Dialog', async (ctx) => {
