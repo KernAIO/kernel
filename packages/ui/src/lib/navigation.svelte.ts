@@ -17,6 +17,14 @@
 /** Reactive so a component highlighting the current route re-renders when it changes. */
 let pathname = $state('/')
 let params = $state<Record<string, string>>({})
+/*
+ * `params` is the merge of two halves, and each is kept so that either can be republished without
+ * dropping — or resurrecting — the other. Merging into `params` directly cannot express "the module
+ * route now matches nothing", which is what leaving a page looks like: the page you left would
+ * outlive it.
+ */
+let shellParams: Record<string, string> = {}
+let routeParams: Record<string, string> = {}
 let search = $state<Record<string, string>>({})
 /**
  * Options the shell's router understands. Named here rather than imported from `@sveltejs/kit`,
@@ -44,7 +52,19 @@ export const navigation = {
   get pathname() {
     return pathname
   },
-  /** Route parameters the shell matched, including `ws` — the workspace slug. */
+  /**
+   * Route parameters the shell matched, including `ws` — the workspace slug — and the ones the
+   * *module's own* route declared, such as `:space` and `:page`.
+   *
+   * Both halves matter and for a while only the first arrived. The shell's layout publishes
+   * SvelteKit's params, which for a module URL are `{ws, module}` — `module` being the whole
+   * unparsed rest of the path — while the `:space`/`:page` a module declares are matched separately
+   * by `resolveModuleRoute` and handed to the page component as props. Anything outside the route
+   * therefore read `undefined`, and Quire's sidebar, which picks the space to draw from
+   * `params.space`, fell back to the first space in the list: standing in any space but the first,
+   * it listed a different space's pages and every row navigated you out of the one you were
+   * reading. A sidebar confidently showing the wrong thing is worse than one showing nothing.
+   */
   get params() {
     return params
   },
@@ -93,8 +113,25 @@ export function setNavigation(next: {
   describe?: (view: ViewDescription) => void
 }) {
   pathname = next.pathname
-  params = next.params
+  // Route params arrive in two halves; keep whichever the module route published for this path.
+  shellParams = next.params
+  params = { ...shellParams, ...routeParams }
   search = next.search instanceof URLSearchParams ? Object.fromEntries(next.search) : next.search
   if (next.go) go = next.go
   if (next.describe) describe = next.describe
+}
+
+/**
+ * The parameters a *module's own* route declaration matched, merged over the shell's.
+ *
+ * `setNavigation` is called from the shell's layout, which cannot know them: `:space` and `:page`
+ * are matched by the module router one level below it, at a point where re-publishing the whole
+ * navigation object would clobber the fields the layout owns. So the module route mount publishes
+ * only its half, and this merges.
+ *
+ * Call it with `{}` when leaving a module route, or the last page's parameters outlive the page.
+ */
+export function setRouteParams(next: Record<string, string>) {
+  routeParams = next
+  params = { ...shellParams, ...routeParams }
 }

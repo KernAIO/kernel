@@ -179,7 +179,12 @@ export {
   type WidgetSettingsContext,
   type WidgetSize,
 } from './module.js'
-export { type NavigateOptions, navigation, setNavigation } from './navigation.svelte.js'
+export {
+  type NavigateOptions,
+  navigation,
+  setNavigation,
+  setRouteParams,
+} from './navigation.svelte.js'
 export { createQueryClient, keys } from './query.js'
 export { type ConnectionStatus, realtime } from './realtime.svelte.js'
 export { formatDuration, MediaRecording, type RecorderKind, type Recording } from './recorder.svelte.js'
