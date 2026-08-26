@@ -1,5 +1,12 @@
 # @kernhq/sdk
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies
+  - @kernhq/contracts@0.7.0
+
 ## 0.1.8
 
 ### Patch Changes

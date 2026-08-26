@@ -1,5 +1,12 @@
 # @kernhq/kernel
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @kernhq/contracts@0.7.0
+
 ## 0.7.2
 
 ### Patch Changes

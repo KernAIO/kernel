@@ -1,5 +1,11 @@
 # @kernhq/contracts
 
+## 0.7.0
+
+### Minor Changes
+
+- feat(contracts): personal API keys, and a scope on Principal
+
 ## 0.6.1
 
 ### Patch Changes
