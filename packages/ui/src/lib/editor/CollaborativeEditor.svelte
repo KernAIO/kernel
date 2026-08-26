@@ -64,6 +64,15 @@ interface Props {
   pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
   /** The heading outline, as it changes. Only fires with `page`. */
   onOutline?: (entries: PageOutlineEntry[]) => void
+  /**
+   * What a screen reader calls this editing surface.
+   *
+   * A contenteditable div has no implicit role, so this component gives it `role="textbox"` — and a
+   * textbox with no accessible name is announced as nothing at all. `RichTextEditor` has carried
+   * this prop since it was written; this one did not, which meant the wiki's *main* editing surface
+   * was the one nameless control in the product. Not optional in practice: name it.
+   */
+  label?: string
   /** Peers, so a page header can draw them next to the title rather than only here. */
   onpeers?: (peers: CollabPeer[]) => void
   onstatus?: (status: CollabStatus) => void
@@ -83,6 +92,7 @@ const {
   user,
   token,
   placeholder = '',
+  label,
   mentionSource,
   page = false,
   pageSource,
@@ -321,7 +331,14 @@ onMount(() => {
         tick += 1
       },
       editable: true,
-      editorProps: { attributes: { class: 'kern-prose', role: 'textbox', 'aria-multiline': 'true' } },
+      editorProps: {
+        attributes: {
+          class: 'kern-prose',
+          role: 'textbox',
+          'aria-multiline': 'true',
+          ...(label ? { 'aria-label': label } : {}),
+        },
+      },
     })
   })()
 
