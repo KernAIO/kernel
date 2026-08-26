@@ -1,5 +1,11 @@
 # @kernhq/ui
 
+## 0.12.3
+
+### Patch Changes
+
+- test(ui): give the layering teardown a timeout
+
 ## 0.12.2
 
 ### Patch Changes
