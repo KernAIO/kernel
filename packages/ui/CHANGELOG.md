@@ -1,5 +1,17 @@
 # @kernhq/ui
 
+## 0.11.0
+
+### Minor Changes
+
+- 5ff8525: `CollaborativeEditor` takes a `label`, so the surface people write on has a name.
+
+  A contenteditable div has no implicit role, so the component gives it `role="textbox"` — and a
+  textbox with no accessible name is announced as nothing at all. `RichTextEditor` has carried this
+  prop since it was written; this one never did, which made the wiki's _main_ writing surface the one
+  nameless control in the product. It is optional for source compatibility and should always be
+  passed.
+
 ## 0.10.1
 
 ### Patch Changes
