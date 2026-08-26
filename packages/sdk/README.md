@@ -2,4 +2,4 @@
 
 Typed client SDK for the Kern API (oRPC over fetch) and realtime WebSocket.
 
-Part of [Kern](https://github.com/KernAIO/kern). License: AGPL-3.0.
+Part of [Kern](https://github.com/KernAIO/app). License: AGPL-3.0.

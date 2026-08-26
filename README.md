@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/KernAIO/kern/main/assets/kern-mark.svg" width="56" alt="">
+<img src="https://raw.githubusercontent.com/KernAIO/app/main/assets/kern-mark.svg" width="56" alt="">
 </p>
 
 # kernel
@@ -8,11 +8,11 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/KernAIO/kernel/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/KernAIO/kernel/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/status-pre--1.0-orange?style=flat-square)](https://github.com/KernAIO/kern#what-works-today)
+[![Status](https://img.shields.io/badge/status-pre--1.0-orange?style=flat-square)](https://github.com/KernAIO/app#what-works-today)
 [![Last commit](https://img.shields.io/github/last-commit/KernAIO/kernel?style=flat-square)](https://github.com/KernAIO/kernel/commits/main)
 [![Website](https://img.shields.io/badge/kernaio.com-1f2328?style=flat-square)](https://kernaio.com)
 
-A [Kern](https://github.com/KernAIO/kern) module declares what it is: its data, its API, its
+A [Kern](https://github.com/KernAIO/app) module declares what it is: its data, its API, its
 permissions and its screens. The runtime in here does the rest. It creates the module's database
 schema, mounts its routes, registers its permissions, runs its jobs and delivers its events.
 
@@ -93,8 +93,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).
 [Apache-2.0](LICENSE) — all of it. This repository is the Kern **framework**, and it is permissive
 on purpose: a module you write is yours, and you may keep it closed and sell it.
 
-The Kern **product** — `app`, `core`, `chat`, `mail`, `collab`, `docs` and the first-party modules —
-is AGPL-3.0-only. See [LICENSING.md](https://github.com/KernAIO/kern/blob/main/LICENSING.md).
+The Kern **product** — `shell`, `core`, `chat`, `mail`, `collab`, `docs` and the first-party modules —
+is AGPL-3.0-only. See [LICENSING.md](https://github.com/KernAIO/app/blob/main/LICENSING.md).
 
 ---
 
