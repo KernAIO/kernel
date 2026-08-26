@@ -1,5 +1,11 @@
 # @kernhq/ui
 
+## 0.12.1
+
+### Patch Changes
+
+- fix(ui): darken ink-250 so the muted scale clears 4.5:1 where it sits
+
 ## 0.12.0
 
 ### Minor Changes
