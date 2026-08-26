@@ -90,11 +90,29 @@ export const requires = (permission: string) =>
     return next()
   })
 
+/**
+ * A `KernError` as the client will see it — including its `reason`, which used to stop here.
+ *
+ * `KernError` has carried a `reason` since it was written, and `conflict`, `notFound` and the
+ * entitlement errors all take one: `core.invitation.expired`, `core.members.already_member`,
+ * `billing.seats.limit_reached`. Only `details` was ever serialised, so every one of those was
+ * dropped at the wire and no client could ever branch on one. Two years of call sites believed a
+ * parameter that did nothing.
+ *
+ * It matters because a `reason` is the only thing a client can translate. The `message` is a
+ * sentence the server wrote, in English, and a screen that renders it is showing English to a
+ * Persian reader at exactly the moment they need the explanation; a screen that matches on it is
+ * keeping a list of sentences in sync with a server it does not ship with. The reason is neither.
+ *
+ * Folded into `data` rather than sent beside it, because `data` is what oRPC already carries to the
+ * client. `details` wins on a key collision — a caller that put its own `reason` in `details` meant
+ * that one.
+ */
 export function kernErrorToORPC(err: unknown): unknown {
   if (err instanceof KernError)
     return new ORPCError(err.code, {
       message: err.message,
-      data: err.details,
+      data: err.reason ? { reason: err.reason, ...err.details } : err.details,
       status: httpStatusFor(err.code),
       cause: err,
     })

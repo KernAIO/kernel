@@ -244,3 +244,40 @@ describe('every Kern error code carries its own status', () => {
     expect(orpc.status).toBe(httpStatusFor(code))
   })
 })
+
+describe('kernErrorToORPC', () => {
+  /**
+   * `reason` used to stop at the server. Every `KernError.conflict(message, reason)` in core —
+   * `core.invitation.expired`, `core.members.already_member`, `core.workspace.slug_taken` — passed
+   * one that no client could ever see, and so did the entitlement errors. A client that wants to
+   * say why in the reader's own language has nothing else to key on: the message is English prose
+   * the server wrote, and matching on it is keeping a list of sentences in sync with a server you
+   * do not ship with.
+   */
+  it('carries the reason to the client, which is the only part a client can translate', () => {
+    const orpc = kernErrorToORPC(KernError.conflict('You are not clocked in.', 'not_clocked_in')) as {
+      code: string
+      message: string
+      data: unknown
+    }
+    expect(orpc.code).toBe('CONFLICT')
+    expect(orpc.message).toBe('You are not clocked in.')
+    expect(orpc.data).toEqual({ reason: 'not_clocked_in' })
+  })
+
+  it('keeps details beside the reason rather than replacing them', () => {
+    const err = new KernError('CONFLICT', 'Seat limit reached', { limit: 25 }, 'billing.seats.limit_reached')
+    const orpc = kernErrorToORPC(err) as { data: unknown }
+    expect(orpc.data).toEqual({ reason: 'billing.seats.limit_reached', limit: 25 })
+  })
+
+  it('leaves data undefined when there is neither, rather than sending an empty object', () => {
+    const orpc = kernErrorToORPC(KernError.conflict('Just a sentence.')) as { data: unknown }
+    expect(orpc.data).toBeUndefined()
+  })
+
+  it('passes anything that is not a KernError straight through', () => {
+    const plain = new Error('boom')
+    expect(kernErrorToORPC(plain)).toBe(plain)
+  })
+})
