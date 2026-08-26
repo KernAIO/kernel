@@ -23,6 +23,15 @@ document.documentElement.lang = dir === 'rtl' ? 'fa' : 'en'
 setMessageLocale(dir === 'rtl' ? 'fa' : 'en')
 if (params.get('theme') === 'dark') document.documentElement.dataset.theme = 'dark'
 
+/*
+ * A fresh document per case, named from the query string.
+ *
+ * `createCollabSession` keeps a copy in IndexedDB unless it is told not to, and IndexedDB survives
+ * a reload — so without this every case in a run appends to the one the case before it left behind,
+ * which looks exactly like a suggestion trigger misfiring.
+ */
+const doc = params.get('doc') ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
 const people = [
   { id: 'u2', label: 'Ada Lovelace' },
   { id: 'u3', label: 'Alan Turing' },
@@ -31,7 +40,7 @@ const people = [
 
 <CollaborativeEditor
   {url}
-  name="ws:test:quire:page:1"
+  name="ws:test:quire:page:{doc}"
   user={{ id: 'u1', name: 'Test' }}
   page
   placeholder="Write something"

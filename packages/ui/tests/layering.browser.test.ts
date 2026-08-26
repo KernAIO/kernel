@@ -170,6 +170,39 @@ describe('the slash menu', () => {
     await page.close()
   }, 60_000)
 
+  /**
+   * Where a slash is a slash. The URL case is the destructive one: the menu would open on the two
+   * slashes in `https://`, and Enter — which is what somebody types next — would replace the line
+   * with a heading.
+   */
+  it('stays out of the way where a slash is not a command', async (ctx) => {
+    if (!browser) return ctx.skip(noBrowser)
+    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
+    const menu = page.locator('.kmenu.ksug')
+
+    const type = async (...chunks: string[]) => {
+      await page.goto(`${base}editor.html`)
+      const surface = page.locator('.kern-prose')
+      await surface.waitFor()
+      await surface.click()
+      for (const chunk of chunks) {
+        await page.keyboard.type(chunk)
+        // A chunk boundary is a pause: the fence is a markdown input rule, and everything after it
+        // means something different once the rule has turned the line into a code block.
+        await page.waitForTimeout(150)
+      }
+      await page.waitForTimeout(250)
+      return menu.count()
+    }
+
+    expect(await type('see https://example.com/x')).toBe(0)
+    expect(await type('```\n', 'const ratio = a /b')).toBe(0)
+    expect(await page.locator('.kern-prose pre').count()).toBe(1)
+    // …but a slash that follows a space is a command, wherever it is in the line.
+    expect(await type('note /tab')).toBe(1)
+    await page.close()
+  }, 60_000)
+
   it('stays on screen and in the right language in Persian', async (ctx) => {
     if (!browser) return ctx.skip(noBrowser)
     const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
