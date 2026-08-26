@@ -13,11 +13,13 @@ interface Props {
   children: Snippet
   dense?: boolean
   role?: string
+  /** accessible name — a `role="table"` with none is announced as just "table" */
+  ariaLabel?: string
 }
-let { columns, class: className, children, dense = false, role = 'table' }: Props = $props()
+let { columns, class: className, children, dense = false, role = 'table', ariaLabel }: Props = $props()
 </script>
 
-<div class={cn('ktbl', dense && 'dense', className)} style:--cols={columns} {role}>{@render children()}</div>
+<div class={cn('ktbl', dense && 'dense', className)} style:--cols={columns} {role} aria-label={ariaLabel}>{@render children()}</div>
 
 <style>
   .ktbl { display: flex; flex-direction: column; min-width: 0; width: 100%; }

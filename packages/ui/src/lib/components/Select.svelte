@@ -25,6 +25,14 @@ interface Props {
   contentClass?: string
   onValueChange?: (v: string) => void
   allowDeselect?: boolean
+  /**
+   * Accessible name, when the placeholder is not one.
+   *
+   * The trigger falls back to `placeholder`, which names an *empty* select well and a filled one
+   * badly: a status filter showing "Assigned" still announces itself as "All statuses". Pass what
+   * the control is for — "Status" — and the value is read after it.
+   */
+  ariaLabel?: string
 }
 let {
   value = $bindable(''),
@@ -40,6 +48,7 @@ let {
   contentClass,
   onValueChange,
   allowDeselect = false,
+  ariaLabel,
 }: Props = $props()
 const selected = $derived(options.find((o) => o.value === value))
 const groups = $derived.by(() => {
@@ -54,7 +63,7 @@ const groups = $derived.by(() => {
 </script>
 
 <P.Root type="single" bind:value {disabled} {name} {onValueChange} {allowDeselect} items={options.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}>
-  <P.Trigger class={cn('ksel', `s-${size}`, ghost && 'ghost', !selected && 'placeholder', className)} style={width ? `width:${width}` : undefined} {id} aria-label={placeholder}>
+  <P.Trigger class={cn('ksel', `s-${size}`, ghost && 'ghost', !selected && 'placeholder', className)} style={width ? `width:${width}` : undefined} {id} aria-label={ariaLabel ?? placeholder}>
     {#if selected?.icon}<Icon name={selected.icon} size={14} strokeWidth={1.7} class="ksel-ic" />{/if}
     <span class="ksel-l">{selected?.label ?? placeholder}</span>
     <Icon name="chevrons-up-down" size={13} strokeWidth={1.6} class="ksel-chev" />
