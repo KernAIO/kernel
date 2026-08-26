@@ -1,0 +1,80 @@
+name: Release notes
+# Batches whatever package versions published since the last one into a single GitHub Release.
+#
+# publish.yml publishes to npm on every push to main, immediately — contracts-first means the
+# repositories that depend on this one need a new version the same day, not once a night. But a
+# GitHub Release per push is the same problem release.yml already solved for the platform: a version
+# a minute tells a watcher nothing. So publishing and announcing run on different schedules:
+# publish.yml ships the package the moment it is ready, this batches the day's shipping into one
+# entry so "Watch -> Releases" is worth turning on.
+#
+# This repository publishes several independently-versioned packages (kernel, contracts, sdk, ui,
+# testing, tsconfig, workflow), so there is no single version to tag the way the platform has
+# KERN_VERSION — an entry here lists whichever packages moved, each at its own version.
+on:
+  schedule:
+    - cron: '0 3 * * *' # after the platform's nightly release, so it never looks like the cause of one
+  workflow_dispatch: {}
+
+permissions: { contents: write }
+concurrency:
+  group: release-notes
+  cancel-in-progress: false
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Find what shipped since the last notes release
+        id: gather
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          LAST=$(gh release list --repo "${{ github.repository }}" --limit 50 --json tagName,createdAt,isDraft \
+                 --jq '[.[] | select(.tagName | startswith("notes-"))] | sort_by(.createdAt) | last | .createdAt // empty')
+
+          # Every package release is its own tag (`@kernhq/kernel@0.7.0`), pushed by publish.yml.
+          # New means created after the last notes release — or every tag, the first time this runs.
+          if [ -n "$LAST" ]; then
+            NEW_TAGS=$(git for-each-ref --sort=creatordate --format='%(creatordate:iso-strict) %(refname:short)' refs/tags/@kernhq/ \
+                       | awk -v since="$LAST" '$1 > since {print $2}')
+          else
+            NEW_TAGS=$(git for-each-ref --sort=creatordate --format='%(refname:short)' refs/tags/@kernhq/)
+          fi
+
+          if [ -z "$NEW_TAGS" ]; then
+            echo "Nothing published since the last notes release."
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_new=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<NOTES_EOF"
+            echo "Published since the last notes release:"
+            echo
+            echo "$NEW_TAGS" | sed 's/^/- /'
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish the notes release
+        if: steps.gather.outputs.has_new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="notes-$(date -u +%Y-%m-%d)"
+          # A second run on the same day (workflow_dispatch after the scheduled one already fired)
+          # would collide on the tag; move on rather than fail the workflow over it.
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "A notes release for $(date -u +%Y-%m-%d) already exists — nothing to do."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
+            --title "Packages published — $(date -u +%Y-%m-%d)" \
+            --notes "${{ steps.gather.outputs.body }}"
