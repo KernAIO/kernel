@@ -42,10 +42,16 @@
    * The floor of the scale is set by contrast, not by taste. Everything from 450 down is used for
    * text — counts, hints, placeholders, section labels, table metadata — and the original values
    * ran to 2.5:1 against the canvas, which is unreadable rather than quiet. Each step below 450 is
-   * the darkest colour of the same hue that still clears 4.5:1 on `--kern-canvas`, the palest
-   * surface any of them sits on, so the steps stay ordered and every one of them is legible on all
-   * of them. They are close together on purpose: "muted" has a floor, and there is not room for
-   * seven distinguishable greys above it.
+   * the lightest colour of the same hue that still clears 4.5:1 on `--kern-surface-active`, the
+   * most tinted surface any of them sits on, so the steps stay ordered and every one of them is
+   * legible on all of them. They are close together on purpose: "muted" has a floor, and there is
+   * not room for seven distinguishable greys above it.
+   *
+   * The ground used to be `--kern-canvas`, and that was the wrong one: a pill tab's count and a
+   * chip both sit on `--kern-surface-active`, which is a shade more tinted, and the bottom of the
+   * scale was tuned to a surface it does not sit on. `250` measured 4.45:1 there — and 4.49:1 on
+   * canvas, so it missed against its own stated ground too, by an amount no eye would find and
+   * arithmetic reports immediately. Recompute against the most tinted surface, not the commonest.
    */
   --kern-ink-450: #5f584f;
   --kern-ink-400: #635d52;
@@ -53,7 +59,7 @@
   --kern-ink-330: #696358;
   --kern-ink-300: #6b6557;
   --kern-ink-280: #6d665a;
-  --kern-ink-250: #6f6756;
+  --kern-ink-250: #6e6655;
   --kern-ink-hover: #38332b;
   --kern-ink-inverse: #fbfaf7;
   /* accent */
