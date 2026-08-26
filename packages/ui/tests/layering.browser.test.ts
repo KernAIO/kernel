@@ -93,8 +93,29 @@ describe('a popup opened from a modal surface', () => {
     await page.goto(`${base}editor.html`)
 
     const grip = page.locator('.drag-handle')
+    const visibility = () => grip.evaluate((el) => getComputedStyle(el).visibility)
     await grip.waitFor({ state: 'attached' })
-    expect(await grip.evaluate((el) => getComputedStyle(el).visibility)).toBe('hidden')
+    expect(await visibility()).toBe('hidden')
+
+    /*
+     * And the other half, which the first assertion cannot see on its own: the plugin shows the
+     * grip by *clearing* an inline `visibility`, so a stylesheet that declares the property leaves
+     * the first assertion passing and the grip hidden for good.
+     */
+    const surface = page.locator('.kern-prose')
+    await surface.waitFor()
+    await surface.click()
+    await page.keyboard.type('A paragraph to hover over')
+    const line = (await page.locator('.kern-prose p').first().boundingBox()) as {
+      x: number
+      y: number
+      height: number
+    }
+    await page.mouse.move(line.x + 40, line.y + line.height / 2)
+    await expect.poll(visibility).toBe('visible')
+
+    await page.mouse.move(600, 780)
+    await expect.poll(visibility).toBe('hidden')
 
     await page.close()
   }, 60_000)
