@@ -36,7 +36,8 @@ beforeAll(async () => {
   base = server.resolvedUrls?.local[0] ?? ''
 
   try {
-    browser = await chromium.launch()
+    // /dev/shm is 64 MB in a CI container and Chromium will crash rather than say so.
+    browser = await chromium.launch({ args: ['--disable-dev-shm-usage'] })
   } catch (error) {
     if (process.env.CI) throw error
     noBrowser = `no Chromium: ${error instanceof Error ? error.message.split('\n')[0] : error}`
@@ -95,6 +96,96 @@ describe('a popup opened from a modal surface', () => {
     await grip.waitFor({ state: 'attached' })
     expect(await grip.evaluate((el) => getComputedStyle(el).visibility)).toBe('hidden')
 
+    await page.close()
+  }, 60_000)
+})
+
+describe('the slash menu', () => {
+  it('inserts a block nothing else in the editor can reach', async (ctx) => {
+    if (!browser) return ctx.skip(noBrowser)
+    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
+    await page.goto(`${base}editor.html`)
+
+    const surface = page.locator('.kern-prose')
+    await surface.waitFor()
+    await surface.click()
+
+    // A callout has no shortcut, no toolbar and no markdown input rule: this is the only way in.
+    await page.keyboard.type('/callout')
+    const menu = page.locator('.kmenu.ksug')
+    await menu.waitFor()
+    const labels = await menu.locator('.kmenu-item .kmenu-l').allInnerTexts()
+    expect(labels).toContain('Warning callout')
+    expect(labels.every((l) => l.toLowerCase().includes('callout'))).toBe(true)
+
+    // Keyboard only — the caret has to stay in the document the whole time.
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
+
+    await page.locator('.kern-prose aside.kern-callout').waitFor()
+    expect(await page.locator('.kern-prose aside.kern-callout').getAttribute('data-callout')).toBe('success')
+    // The `/callout` that opened the menu must not be left in the document.
+    expect(await surface.innerText()).not.toContain('/callout')
+    await page.close()
+  }, 60_000)
+
+  it('closes on Escape and leaves what was typed alone', async (ctx) => {
+    if (!browser) return ctx.skip(noBrowser)
+    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
+    await page.goto(`${base}editor.html`)
+
+    const surface = page.locator('.kern-prose')
+    await surface.waitFor()
+    await surface.click()
+    await page.keyboard.type('/table')
+    await page.locator('.kmenu.ksug').waitFor()
+    await page.keyboard.press('Escape')
+    await page.locator('.kmenu.ksug').waitFor({ state: 'detached' })
+    expect(await surface.innerText()).toContain('/table')
+    await page.close()
+  }, 60_000)
+
+  /**
+   * The same wiring, and it was missing too: `buildPageExtensions` has asked for `onSuggest` since
+   * it was written, and `CollaborativeEditor` never passed it — so `@` in a wiki page opened
+   * nothing at all, on a schema whose mention node was always there.
+   */
+  it('opens the people menu on @ in a page, which it never did', async (ctx) => {
+    if (!browser) return ctx.skip(noBrowser)
+    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
+    await page.goto(`${base}editor.html`)
+
+    const surface = page.locator('.kern-prose')
+    await surface.waitFor()
+    await surface.click()
+    await page.keyboard.type('Hello @ada')
+    const menu = page.locator('.kmenu.ksug')
+    await menu.waitFor()
+    expect(await menu.locator('.kmenu-l').allInnerTexts()).toEqual(['Ada Lovelace'])
+
+    await page.keyboard.press('Enter')
+    await page.locator('.kern-prose .kern-mention').waitFor()
+    expect(await surface.innerText()).toContain('Ada Lovelace')
+    await page.close()
+  }, 60_000)
+
+  it('stays on screen and in the right language in Persian', async (ctx) => {
+    if (!browser) return ctx.skip(noBrowser)
+    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } })
+    await page.goto(`${base}editor.html?dir=rtl`)
+
+    const surface = page.locator('.kern-prose')
+    await surface.waitFor()
+    await surface.click()
+    await page.keyboard.type('/')
+    const menu = page.locator('.kmenu.ksug')
+    await menu.waitFor()
+
+    expect(await menu.locator('.kmenu-item .kmenu-l').first().innerText()).toBe('متن')
+    const box = (await menu.boundingBox()) as { x: number; width: number }
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(1024)
     await page.close()
   }, 60_000)
 })

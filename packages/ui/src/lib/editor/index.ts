@@ -1,3 +1,4 @@
+export { editorMessages } from './messages.js'
 export {
   CALLOUT_TONES,
   Callout,
@@ -26,4 +27,14 @@ export {
   type TableAlignment,
 } from './page-schema.js'
 export { default as RichTextEditor } from './RichTextEditor.svelte'
+export { default as SuggestionMenu, type SuggestionMenuItem } from './SuggestionMenu.svelte'
 export { buildExtensions, type MentionCandidate, type SchemaOptions } from './schema.js'
+export {
+  filterSlashItems,
+  SLASH_STRUCTURAL_NODES,
+  type SlashItem,
+  type SlashOptions,
+  type SlashSuggestionState,
+  slashInsertableNodes,
+  slashItems,
+} from './slash.js'

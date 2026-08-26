@@ -51,8 +51,12 @@ import GitBranch from '@lucide/svelte/icons/git-branch'
 import Globe from '@lucide/svelte/icons/globe'
 import GripVertical from '@lucide/svelte/icons/grip-vertical'
 import Hash from '@lucide/svelte/icons/hash'
+import Heading1 from '@lucide/svelte/icons/heading-1'
 import Heading2 from '@lucide/svelte/icons/heading-2'
 import Heading3 from '@lucide/svelte/icons/heading-3'
+import Heading4 from '@lucide/svelte/icons/heading-4'
+import Heading5 from '@lucide/svelte/icons/heading-5'
+import Heading6 from '@lucide/svelte/icons/heading-6'
 import House from '@lucide/svelte/icons/house'
 import Image from '@lucide/svelte/icons/image'
 import Inbox from '@lucide/svelte/icons/inbox'
@@ -66,6 +70,8 @@ import LayoutGrid from '@lucide/svelte/icons/layout-grid'
 import Link from '@lucide/svelte/icons/link'
 import Link2Off from '@lucide/svelte/icons/link-2-off'
 import List from '@lucide/svelte/icons/list'
+import ListChecks from '@lucide/svelte/icons/list-checks'
+import ListCollapse from '@lucide/svelte/icons/list-collapse'
 import ListOrdered from '@lucide/svelte/icons/list-ordered'
 import Loader from '@lucide/svelte/icons/loader-circle'
 import Lock from '@lucide/svelte/icons/lock'
@@ -86,6 +92,7 @@ import Palette from '@lucide/svelte/icons/palette'
 import PanelRight from '@lucide/svelte/icons/panel-right'
 import Paperclip from '@lucide/svelte/icons/paperclip'
 import Pencil from '@lucide/svelte/icons/pencil'
+import Pilcrow from '@lucide/svelte/icons/pilcrow'
 import Pin from '@lucide/svelte/icons/pin'
 import Play from '@lucide/svelte/icons/play'
 import Plug from '@lucide/svelte/icons/plug'
@@ -110,8 +117,10 @@ import SquareCheckBig from '@lucide/svelte/icons/square-check-big'
 import CodeBlock from '@lucide/svelte/icons/square-code'
 import SquarePen from '@lucide/svelte/icons/square-pen'
 import Star from '@lucide/svelte/icons/star'
+import StickyNote from '@lucide/svelte/icons/sticky-note'
 import Strikethrough from '@lucide/svelte/icons/strikethrough'
 import Sun from '@lucide/svelte/icons/sun'
+import Table from '@lucide/svelte/icons/table'
 import Tag from '@lucide/svelte/icons/tag'
 import Target from '@lucide/svelte/icons/target'
 import Timer from '@lucide/svelte/icons/timer'
@@ -275,6 +284,15 @@ const registry: Record<string, IconComponent> = {
   wrench: Wrench,
   x: X,
   zap: Zap,
+  'heading-1': Heading1,
+  'heading-4': Heading4,
+  'heading-5': Heading5,
+  'heading-6': Heading6,
+  'list-checks': ListChecks,
+  'list-collapse': ListCollapse,
+  pilcrow: Pilcrow,
+  'sticky-note': StickyNote,
+  table: Table,
 }
 
 export function registerIcons(more: Record<string, IconComponent>) {

@@ -20,6 +20,7 @@ import type { Doc as YDoc } from 'yjs'
 import { Callout } from './nodes/callout.js'
 import { PAGE_DOC_NODES, PAGE_HEADING_LEVELS } from './page-doc.js'
 import type { MentionCandidate, SuggestionState } from './schema.js'
+import { SlashMenu, type SlashSuggestionState } from './slash.js'
 
 /**
  * The wiki page schema — a superset of the narrow one in `schema.ts`.
@@ -64,6 +65,17 @@ export interface PageSchemaOptions {
   /** Called by the suggestion plugin so the host component can draw the menu in Svelte. */
   onSuggest?: (state: SuggestionState) => void
   onPageSuggest?: (state: PageSuggestionState) => void
+  /**
+   * Called by the `/` menu, which is the only way a person can reach most of this schema — tables,
+   * callouts and toggles have no other entry point. The extension is installed either way, so the
+   * document a surface without a menu produces is still the same document.
+   */
+  onSlashSuggest?: (state: SlashSuggestionState) => void
+  /**
+   * Supply to make the `/` menu's Image entry reachable. It opens the host's own file picker: this
+   * package has no upload surface, and an image node without a `fileId` is a gap on both sides.
+   */
+  pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
   /** Consulted while either menu is open; return true to swallow the key. */
   onSuggestKey?: (event: KeyboardEvent) => boolean
   /** `createLowlight(common)`, when the caller is willing to pay for syntax highlighting. */
@@ -272,6 +284,17 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
       placeholder: options.placeholder ?? '',
       showOnlyWhenEditable: true,
     }),
+    /*
+     * Unconditional, like every other extension here — it carries no nodes and no marks, so a
+     * surface that draws no menu still writes exactly the same document as one that does.
+     */
+    SlashMenu.configure({
+      onSuggest: options.onSlashSuggest,
+      onKey: options.onSuggestKey,
+      pickImage: options.pickImage,
+      // The `+` entry types a `+`, which is only useful where something answers it.
+      pageMentions: Boolean(options.pageSource),
+    }),
   ]
 
   /*
@@ -300,3 +323,12 @@ export {
   type PageDocNode,
   type PageDocNodeType,
 } from './page-doc.js'
+export {
+  filterSlashItems,
+  SLASH_STRUCTURAL_NODES,
+  type SlashItem,
+  type SlashOptions,
+  type SlashSuggestionState,
+  slashInsertableNodes,
+  slashItems,
+} from './slash.js'

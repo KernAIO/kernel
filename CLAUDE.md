@@ -146,3 +146,15 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   server, `playwright-core`, Chromium). Whether a pointer aimed at a menu item reaches it has no
   answer in a DOM without layout, which is why the defect above survived every other check. CI
   installs Chromium before `pnpm test`; a laptop without one skips, CI does not.
+- **A block in the schema with no way to type it is a schema, not a feature.** Callouts, tables and
+  toggles were in `PAGE_DOC_NODES` and in the renderer for as long as they existed and no menu
+  offered them; `@` and `+` in a page were worse, because the builder had asked for `onSuggest`
+  since it was written and the component never passed it. `slash.test.ts` now checks the `/` list
+  against `PAGE_DOC_NODES`, so a node with no entry point has to be named in
+  `SLASH_STRUCTURAL_NODES` with a reason.
+- **A `--lockfile-only` regeneration silently unlinks the workspace packages** once the registry has
+  a version newer than the local one. `link-workspace-packages=true` links only when the workspace
+  copy is the *highest* satisfying version — contracts is 0.6.0 here and 0.6.1 is published, so the
+  refreshed lockfile pointed three packages at npm instead of at `../contracts`. Add
+  `prefer-workspace-packages=true` to the clone's `.npmrc` for the regeneration and the diff is your
+  dependency and nothing else.

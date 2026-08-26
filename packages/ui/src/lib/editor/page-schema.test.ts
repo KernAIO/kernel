@@ -27,6 +27,9 @@ const everything = () =>
     pageSource: () => [],
     onSuggest: () => {},
     onPageSuggest: () => {},
+    onSlashSuggest: () => {},
+    onSuggestKey: () => false,
+    pickImage: async () => null,
     lowlight: createLowlight(common),
     document: new Y.Doc(),
     // Never called: `render` runs when the plugin gets a view, and this test never makes one.

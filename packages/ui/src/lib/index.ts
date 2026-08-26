@@ -113,6 +113,16 @@ export {
   TABLE_ALIGNMENTS,
   type TableAlignment,
 } from './editor/page-schema.js'
+export { default as SuggestionMenu, type SuggestionMenuItem } from './editor/SuggestionMenu.svelte'
+export {
+  filterSlashItems,
+  SLASH_STRUCTURAL_NODES,
+  type SlashItem,
+  type SlashOptions,
+  type SlashSuggestionState,
+  slashInsertableNodes,
+  slashItems,
+} from './editor/slash.js'
 export {
   formatBytes,
   formatCount,

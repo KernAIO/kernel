@@ -2,6 +2,7 @@
 import { Editor } from '@tiptap/core'
 import { onDestroy, onMount } from 'svelte'
 import Avatar from '../components/Avatar.svelte'
+import { t } from '../i18n.svelte.js'
 import Icon from '../icons/Icon.svelte'
 import {
   type CollabPeer,
@@ -11,8 +12,15 @@ import {
   createCollabSession,
 } from './collab.js'
 import { CommentAnchors, type CommentRange, selectionToAnchor } from './comment-anchors.js'
-import { buildPageExtensions, type PageCandidate, type PageOutlineEntry } from './page-schema.js'
-import { buildExtensions, type MentionCandidate } from './schema.js'
+import {
+  buildPageExtensions,
+  type PageCandidate,
+  type PageOutlineEntry,
+  type PageSuggestionState,
+} from './page-schema.js'
+import SuggestionMenu, { type SuggestionMenuItem } from './SuggestionMenu.svelte'
+import { buildExtensions, type MentionCandidate, type SuggestionState } from './schema.js'
+import type { SlashItem, SlashSuggestionState } from './slash.js'
 
 /**
  * A document several people write at the same time.
@@ -48,6 +56,12 @@ interface Props {
   page?: boolean
   /** Enables `+` mentions of other pages. Only meaningful with `page`. */
   pageSource?: (query: string) => PageCandidate[] | Promise<PageCandidate[]>
+  /**
+   * Opens the host's file picker for the `/` menu's Image entry, and resolves with what was
+   * chosen — or `null` if nothing was. Without it the entry is not offered, because this package
+   * has no upload surface and a picture is stored by file id rather than by URL.
+   */
+  pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
   /** The heading outline, as it changes. Only fires with `page`. */
   onOutline?: (entries: PageOutlineEntry[]) => void
   /** Peers, so a page header can draw them next to the title rather than only here. */
@@ -72,6 +86,7 @@ const {
   mentionSource,
   page = false,
   pageSource,
+  pickImage,
   onOutline,
   onpeers,
   onstatus,
@@ -92,6 +107,119 @@ let tick = $state(0)
 let ydoc = $state<import('yjs').Doc | null>(null)
 /** The grip the drag-handle extension positions. Only rendered, and only used, in `page` mode. */
 let dragHandle = $state<HTMLDivElement>()
+
+/*
+ * The three suggestion menus — `/` for blocks, `@` for people, `+` for pages.
+ *
+ * One state rather than three: only one trigger can match at a time, so a second open menu would
+ * be a bug rather than a case to handle. Each trigger maps its own candidates onto the same row
+ * shape and hands over what to do when a row is picked.
+ *
+ * Without this the page schema was unreachable — every callout, table and toggle it can hold had
+ * no way in, and even `@` and `+` opened nothing, because the component never passed the callbacks
+ * `buildPageExtensions` was already asking for.
+ */
+type MenuKind = 'blocks' | 'people' | 'pages'
+interface OpenMenu {
+  kind: MenuKind
+  label: string
+  items: SuggestionMenuItem[]
+  rect: DOMRect | null
+  pick: (index: number) => void
+}
+let menu = $state<OpenMenu | null>(null)
+let active = $state(0)
+
+function closeMenu(kind: MenuKind) {
+  if (menu?.kind === kind) menu = null
+}
+
+/** A fresh list means the row that was highlighted may not be there any more. */
+function openMenu(next: OpenMenu) {
+  if (menu?.kind !== next.kind || menu.items.length !== next.items.length) active = 0
+  else active = Math.min(active, Math.max(0, next.items.length - 1))
+  menu = next
+}
+
+function onBlockSuggest(state: SlashSuggestionState) {
+  if (!state.open) return closeMenu('blocks')
+  openMenu({
+    kind: 'blocks',
+    label: t('editor.menu_blocks'),
+    items: state.items.map((item: SlashItem) => ({
+      id: item.id,
+      label: item.label,
+      icon: item.icon,
+      group: item.group,
+    })),
+    rect: state.rect,
+    pick: (i) => {
+      const item = state.items[i]
+      if (item) state.command?.(item)
+    },
+  })
+}
+
+function onPersonSuggest(state: SuggestionState) {
+  if (!state.open) return closeMenu('people')
+  openMenu({
+    kind: 'people',
+    label: t('editor.menu_people'),
+    items: state.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      avatar: { id: item.id, name: item.label, src: item.avatarUrl },
+    })),
+    rect: state.rect,
+    pick: (i) => {
+      const item = state.items[i]
+      if (item) state.command?.(item)
+    },
+  })
+}
+
+function onPageSuggest(state: PageSuggestionState) {
+  if (!state.open) return closeMenu('pages')
+  openMenu({
+    kind: 'pages',
+    label: t('editor.menu_pages'),
+    items: state.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      hint: item.hint,
+      icon: item.icon ?? 'file-text',
+    })),
+    rect: state.rect,
+    pick: (i) => {
+      const item = state.items[i]
+      if (item) state.command?.(item)
+    },
+  })
+}
+
+/**
+ * Returns true when the key belonged to the menu, so the document never sees it.
+ *
+ * Escape is deliberately absent: the suggestion plugin handles it itself and then calls `onExit`,
+ * which is what closes this. Swallowing it here would leave the plugin believing it is still open.
+ */
+function onSuggestKey(event: KeyboardEvent): boolean {
+  const open = menu
+  if (!open || open.items.length === 0) return false
+  if (event.key === 'ArrowDown') {
+    active = (active + 1) % open.items.length
+    return true
+  }
+  if (event.key === 'ArrowUp') {
+    active = (active - 1 + open.items.length) % open.items.length
+    return true
+  }
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    open.pick(active)
+    return true
+  }
+  return false
+}
 
 const hasSelection = $derived.by(() => {
   void tick
@@ -159,12 +287,23 @@ onMount(() => {
           placeholder,
           mentionSource,
           pageSource,
+          pickImage,
           lowlight,
           onOutline,
+          onSuggest: onPersonSuggest,
+          onPageSuggest,
+          onSlashSuggest: onBlockSuggest,
+          onSuggestKey,
           document: session.doc,
           dragHandleElement: dragHandle,
         })
-      : buildExtensions({ placeholder, mentionSource, collaborative: true })
+      : buildExtensions({
+          placeholder,
+          mentionSource,
+          collaborative: true,
+          onSuggest: onPersonSuggest,
+          onSuggestKey,
+        })
 
     editor = new Editor({
       element: host,
@@ -262,6 +401,18 @@ const statusLabel: Record<CollabStatus, string> = {
   {/if}
 
   <div bind:this={host} class="surface" class:locked={!editable}></div>
+
+  {#if menu}
+    <SuggestionMenu
+      open
+      items={menu.items}
+      rect={menu.rect}
+      {active}
+      label={menu.label}
+      onpick={(i) => menu?.pick(i)}
+      onhover={(i) => (active = i)}
+    />
+  {/if}
 </div>
 
 <style>
