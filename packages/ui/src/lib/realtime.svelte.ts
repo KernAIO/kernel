@@ -22,6 +22,8 @@ class Realtime {
 
   #client: RealtimeClient | null = null
   #queryClient: QueryClient | null = null
+  /** whether this socket has been live before, which is what makes the next open a *re*connect */
+  #wasOpen = false
   #subscribed = new Set<string>()
   /** modules that want the raw stream (chat keeps its own state rather than a query cache) */
   #taps = new Set<(msg: ServerMessage) => void>()
@@ -43,8 +45,12 @@ class Realtime {
       getToken,
       onStatus: (s) => {
         this.status = s
-        // a reconnect may have missed events, so refresh what the user is looking at
-        if (s === 'open') this.#queryClient?.invalidateQueries()
+        // a reconnect may have missed events, so refresh what the user is looking at — the first
+        // open has missed nothing, and refetching there only doubles the queries the page just ran
+        if (s === 'open') {
+          if (this.#wasOpen) this.#queryClient?.invalidateQueries()
+          this.#wasOpen = true
+        }
       },
       onMessage: (msg) => this.#handle(msg),
     })
@@ -101,6 +107,7 @@ class Realtime {
     this.#client?.close()
     this.#client = null
     this.#subscribed.clear()
+    this.#wasOpen = false
     this.status = 'disabled'
   }
 

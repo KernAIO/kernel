@@ -55,6 +55,8 @@ export class RealtimeClient {
   private seq = 0
   private retry = 0
   private closed = false
+  /** true between `welcome` and the socket closing: the gateway ignores everything sent before it */
+  private ready = false
   private pingTimer: ReturnType<typeof setInterval> | null = null
   constructor(private readonly opts: RealtimeOptions) {}
 
@@ -63,12 +65,12 @@ export class RealtimeClient {
     this.open()
   }
   private async open() {
+    this.ready = false
     this.opts.onStatus?.('connecting')
     const WS = this.opts.WebSocket ?? globalThis.WebSocket
     const ws = new WS(this.opts.url)
     this.ws = ws
     ws.onopen = async () => {
-      this.retry = 0
       const token = (await this.opts.getToken()) ?? ''
       this.send({
         t: 'hello',
@@ -76,9 +78,6 @@ export class RealtimeClient {
         clientId: this.opts.clientId ?? cryptoId(),
         since: this.seq || undefined,
       })
-      if (this.subs.size) this.send({ t: 'sub', channels: [...this.subs] })
-      this.opts.onStatus?.('open')
-      this.pingTimer = setInterval(() => this.send({ t: 'ping' }), 25_000)
     }
     ws.onmessage = (ev) => {
       let msg: ServerMessage
@@ -88,10 +87,26 @@ export class RealtimeClient {
         return
       }
       if ('seq' in msg && typeof msg.seq === 'number') this.seq = msg.seq
+      /*
+       * `welcome` is the point the connection exists — not `onopen`.
+       *
+       * A socket the gateway is about to reject as unauthorized opens exactly like a good one, so
+       * treating `onopen` as connected reported an outage that had not ended, resent the channels
+       * into a socket that had not been authenticated yet, and reset the backoff on every attempt —
+       * a rejected client then retried twice a second, forever.
+       */
+      if (msg.t === 'welcome') {
+        this.retry = 0
+        this.ready = true
+        if (this.subs.size) this.send({ t: 'sub', channels: [...this.subs] })
+        this.opts.onStatus?.('open')
+        this.pingTimer = setInterval(() => this.send({ t: 'ping' }), 25_000)
+      }
       this.opts.onMessage(msg)
     }
     ws.onclose = () => {
       if (this.pingTimer) clearInterval(this.pingTimer)
+      this.ready = false
       this.opts.onStatus?.('closed')
       if (this.closed) return
       const delay = Math.min(30_000, 500 * 2 ** this.retry++) + Math.random() * 300
@@ -100,7 +115,10 @@ export class RealtimeClient {
     ws.onerror = () => ws.close()
   }
   send(msg: ClientMessage) {
-    if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(msg))
+    if (this.ws?.readyState !== 1) return
+    // anything but `hello` before `welcome` reaches a socket the gateway has not authenticated yet
+    if (!this.ready && msg.t !== 'hello') return
+    this.ws.send(JSON.stringify(msg))
   }
   subscribe(...channels: string[]) {
     for (const c of channels) this.subs.add(c)
