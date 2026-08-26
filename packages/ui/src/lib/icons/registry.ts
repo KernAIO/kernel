@@ -10,6 +10,7 @@ import BellOff from '@lucide/svelte/icons/bell-off'
 import Bold from '@lucide/svelte/icons/bold'
 import Bookmark from '@lucide/svelte/icons/bookmark'
 import Bot from '@lucide/svelte/icons/bot'
+import Boxes from '@lucide/svelte/icons/boxes'
 import Briefcase from '@lucide/svelte/icons/briefcase'
 import Bug from '@lucide/svelte/icons/bug'
 import Building2 from '@lucide/svelte/icons/building-2'
@@ -29,6 +30,7 @@ import CircleAlert from '@lucide/svelte/icons/circle-alert'
 import CircleCheck from '@lucide/svelte/icons/circle-check'
 import CircleHelp from '@lucide/svelte/icons/circle-help'
 import CircleUser from '@lucide/svelte/icons/circle-user'
+import ClipboardList from '@lucide/svelte/icons/clipboard-list'
 import Clock from '@lucide/svelte/icons/clock'
 import Code from '@lucide/svelte/icons/code'
 import Columns3 from '@lucide/svelte/icons/columns-3'
@@ -78,6 +80,7 @@ import Lock from '@lucide/svelte/icons/lock'
 import LockOpen from '@lucide/svelte/icons/lock-open'
 import LogOut from '@lucide/svelte/icons/log-out'
 import Mail from '@lucide/svelte/icons/mail'
+import MapPin from '@lucide/svelte/icons/map-pin'
 import Maximize2 from '@lucide/svelte/icons/maximize-2'
 import Menu from '@lucide/svelte/icons/menu'
 import MessageCircle from '@lucide/svelte/icons/message-circle'
@@ -88,6 +91,7 @@ import Minus from '@lucide/svelte/icons/minus'
 import Monitor from '@lucide/svelte/icons/monitor'
 import Moon from '@lucide/svelte/icons/moon'
 import Move from '@lucide/svelte/icons/move'
+import Package from '@lucide/svelte/icons/package'
 import Palette from '@lucide/svelte/icons/palette'
 import PanelRight from '@lucide/svelte/icons/panel-right'
 import Paperclip from '@lucide/svelte/icons/paperclip'
@@ -98,10 +102,13 @@ import Play from '@lucide/svelte/icons/play'
 import Plug from '@lucide/svelte/icons/plug'
 import Plus from '@lucide/svelte/icons/plus'
 import Puzzle from '@lucide/svelte/icons/puzzle'
+import QrCode from '@lucide/svelte/icons/qr-code'
 import Quote from '@lucide/svelte/icons/quote'
+import Receipt from '@lucide/svelte/icons/receipt'
 import Redo2 from '@lucide/svelte/icons/redo-2'
 import RefreshCw from '@lucide/svelte/icons/refresh-cw'
 import RotateCcw from '@lucide/svelte/icons/rotate-ccw'
+import ScanLine from '@lucide/svelte/icons/scan-line'
 import ScrollText from '@lucide/svelte/icons/scroll-text'
 import Search from '@lucide/svelte/icons/search'
 import Settings from '@lucide/svelte/icons/settings'
@@ -128,12 +135,14 @@ import ToggleLeft from '@lucide/svelte/icons/toggle-left'
 import Trash2 from '@lucide/svelte/icons/trash-2'
 import TreePalm from '@lucide/svelte/icons/tree-palm'
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert'
+import Truck from '@lucide/svelte/icons/truck'
 import Undo2 from '@lucide/svelte/icons/undo-2'
 import Upload from '@lucide/svelte/icons/upload'
 import User from '@lucide/svelte/icons/user'
 import UserPlus from '@lucide/svelte/icons/user-plus'
 import Users from '@lucide/svelte/icons/users'
 import Video from '@lucide/svelte/icons/video'
+import Warehouse from '@lucide/svelte/icons/warehouse'
 import Wifi from '@lucide/svelte/icons/wifi'
 import WifiOff from '@lucide/svelte/icons/wifi-off'
 import Wrench from '@lucide/svelte/icons/wrench'
@@ -293,6 +302,15 @@ const registry: Record<string, IconComponent> = {
   pilcrow: Pilcrow,
   'sticky-note': StickyNote,
   table: Table,
+  boxes: Boxes,
+  'clipboard-list': ClipboardList,
+  'map-pin': MapPin,
+  package: Package,
+  'qr-code': QrCode,
+  receipt: Receipt,
+  'scan-line': ScanLine,
+  truck: Truck,
+  warehouse: Warehouse,
 }
 
 export function registerIcons(more: Record<string, IconComponent>) {
