@@ -1,5 +1,14 @@
 # @kernhq/contracts
 
+## 0.6.0
+
+### Minor Changes
+
+- 696cda5: New `mcp` contract group on `coreContract`: the pending-authorization, connected-client and token
+  procedures behind MCP consent screens and workspace admin surfaces. New exported schemas
+  `McpClient`, `McpTokenInfo`, `McpAuthRequestInfo` and the coarse scope shape (`<module>:read|write`).
+  Additive for parsing and constructing — no existing field changed.
+
 ## 0.5.2
 
 ### Patch Changes

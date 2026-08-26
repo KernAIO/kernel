@@ -1,5 +1,14 @@
 # @kernhq/ui
 
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies [696cda5]
+  - @kernhq/contracts@0.6.0
+  - @kernhq/kernel@0.7.2
+  - @kernhq/sdk@0.1.8
+
 ## 0.8.3
 
 ### Patch Changes
