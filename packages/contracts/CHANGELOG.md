@@ -1,5 +1,11 @@
 # @kernhq/contracts
 
+## 0.6.1
+
+### Patch Changes
+
+- chore(contracts): format mcp.ts so lint passes again
+
 ## 0.6.0
 
 ### Minor Changes
