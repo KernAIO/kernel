@@ -1,5 +1,15 @@
 # @kernhq/ui
 
+## 0.8.3
+
+### Patch Changes
+
+- docs: update repo references for kern->app and app->shell rename
+- Updated dependencies
+  - @kernhq/contracts@0.5.2
+  - @kernhq/kernel@0.7.1
+  - @kernhq/sdk@0.1.7
+
 ## 0.8.2
 
 ### Patch Changes

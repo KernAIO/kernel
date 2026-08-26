@@ -1,5 +1,13 @@
 # @kernhq/kernel
 
+## 0.7.1
+
+### Patch Changes
+
+- docs: update repo references for kern->app and app->shell rename
+- Updated dependencies
+  - @kernhq/contracts@0.5.2
+
 ## 0.7.0
 
 ### Minor Changes

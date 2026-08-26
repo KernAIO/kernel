@@ -1,5 +1,13 @@
 # @kernhq/testing
 
+## 0.1.9
+
+### Patch Changes
+
+- docs: update repo references for kern->app and app->shell rename
+- Updated dependencies
+  - @kernhq/kernel@0.7.1
+
 ## 0.1.8
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @kernhq/contracts
 
+## 0.5.2
+
+### Patch Changes
+
+- docs: update repo references for kern->app and app->shell rename
+
 ## 0.5.1
 
 ### Patch Changes

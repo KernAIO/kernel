@@ -1,5 +1,13 @@
 # @kernhq/sdk
 
+## 0.1.7
+
+### Patch Changes
+
+- docs: update repo references for kern->app and app->shell rename
+- Updated dependencies
+  - @kernhq/contracts@0.5.2
+
 ## 0.1.6
 
 ### Patch Changes
