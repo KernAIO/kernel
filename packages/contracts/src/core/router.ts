@@ -14,6 +14,7 @@ import {
   PresetId,
 } from './dashboard.js'
 import { CreateUpload, FileObject, UploadTicket } from './files.js'
+import { McpAuthRequestInfo, McpClient, McpTokenInfo } from './mcp.js'
 import { Notification, NotificationSettings, NotificationTypeDef, PushSubscription } from './notifications.js'
 import { SearchHit, SearchInput } from './search.js'
 import { InstanceSettings, ModuleReport } from './settings.js'
@@ -398,6 +399,56 @@ export const coreContract = {
     .route({ method: 'GET', path: '/search', tags: ['search'] })
     .input(SearchInput)
     .output(z.object({ hits: z.array(SearchHit), tookMs: z.number() })),
+
+  /**
+   * Model Context Protocol. Tools are generated from every module's OpenAPI document and exist only
+   * here as the things a person decides on: the pending authorization a user is shown, the clients
+   * that asked to connect, and the tokens that came out of a consent.
+   *
+   * `authorize.*` touches the caller's own consent decision — authenticated but deliberately not
+   * behind a permission key, the way `dashboard.get` is. `clients` and `tokens.list` are workspace
+   * admin surfaces (`core.integrations.manage`); `revoke` also accepts a token's owner.
+   */
+  mcp: {
+    authorize: {
+      get: base
+        .route({ method: 'GET', path: '/mcp/authorize/{id}', tags: ['mcp'] })
+        .input(z.object({ id: z.string() }))
+        .output(McpAuthRequestInfo),
+      approve: base
+        .route({ method: 'POST', path: '/mcp/authorize/{id}/approve', tags: ['mcp'] })
+        .input(z.object({ id: z.string(), workspaceId: WorkspaceId }))
+        .output(z.object({ redirectUrl: z.string() })),
+      deny: base
+        .route({ method: 'POST', path: '/mcp/authorize/{id}/deny', tags: ['mcp'] })
+        .input(z.object({ id: z.string() }))
+        .output(z.object({ redirectUrl: z.string() })),
+    },
+    clients: {
+      list: base
+        .route({ method: 'GET', path: '/workspaces/{workspaceId}/mcp/clients', tags: ['mcp'] })
+        .input(ws)
+        .output(
+          z.array(
+            McpClient.extend({
+              workspaceId: WorkspaceId,
+              activeTokens: z.number(),
+              lastUsedAt: z.string().nullable(),
+            }),
+          ),
+        ),
+    },
+    tokens: {
+      list: base
+        .route({ method: 'GET', path: '/workspaces/{workspaceId}/mcp/tokens', tags: ['mcp'] })
+        .input(ws)
+        .output(z.array(McpTokenInfo)),
+      revoke: base
+        .route({ method: 'DELETE', path: '/mcp/tokens/{id}', tags: ['mcp'] })
+        .input(z.object({ id: Id }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+  },
 
   admin: {
     settings: base
