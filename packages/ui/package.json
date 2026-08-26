@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/ui",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Kern design system — Svelte 5 components, tokens and app-shell layout (Ink/paper)",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
@@ -56,7 +56,7 @@
     "@hocuspocus/provider": "^4.6.0",
     "@kernhq/contracts": "^0.5.0",
     "@kernhq/kernel": "^0.7.0",
-    "@kernhq/sdk": "^0.1.1",
+    "@kernhq/sdk": "^0.1.6",
     "@lucide/svelte": "^1.33.0",
     "@tiptap/core": "^3.30.3",
     "@tiptap/extension-collaboration": "^3.30.3",

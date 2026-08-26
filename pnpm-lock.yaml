@@ -207,7 +207,7 @@ importers:
         specifier: ^0.7.0
         version: link:../kernel
       '@kernhq/sdk':
-        specifier: ^0.1.1
+        specifier: ^0.1.6
         version: link:../sdk
       '@lucide/svelte':
         specifier: ^1.33.0

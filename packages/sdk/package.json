@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/sdk",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Typed client SDK for the Kern API and realtime WebSocket",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
