@@ -1,5 +1,90 @@
 # @kernhq/ui
 
+## 0.10.0
+
+### Minor Changes
+
+- 222ad54: Give the page editor a `/` menu, and make `@` work in a page at all
+
+  The wiki block set has been in the schema and in the renderer since it was written, and there was no
+  way to type any of it: no toolbar, no bubble menu, no slash menu. A callout, a table, a toggle and a
+  divider had no entry point of any kind. `@` and `+` were worse than that — `buildPageExtensions` has
+  asked for `onSuggest` and `onPageSuggest` since the day it was added, and `CollaborativeEditor` never
+  passed them, so typing `@` in a wiki page opened nothing.
+
+  `/` now offers every block a page can hold — text, all six headings, three kinds of list, quote, code
+  block, table, toggle, divider, the five callout tones, and the two mentions — grouped, filtered by
+  label or by the words people actually type (`bullet`, `todo`, `hr`), and driven entirely from the
+  keyboard while the caret stays in the document. The menu is the same `SuggestionMenu` for all three
+  triggers, drawn in Svelte on the shared `.kmenu` surface, so it has the product's tokens, dark mode
+  and RTL rather than its own.
+
+  `slash.test.ts` checks the list against `PAGE_DOC_NODES`: a node that no item inserts has to be named
+  in `SLASH_STRUCTURAL_NODES` with a reason, so adding a block to the page format and forgetting to
+  give anyone a way to type it fails in the same commit. The extension carries no nodes and no marks,
+  and `page-schema.test.ts` now passes the new options through its "same schema whatever the options"
+  check to keep it that way.
+
+  Two entries depend on the host and are hidden without it: **Image** needs a new `pickImage` prop
+  (this package has no upload surface, and a picture is stored by file id), and **Link a page** appears
+  only where `pageSource` is wired.
+
+  Labels ship in all five languages the package already speaks — English, Persian, Arabic, German,
+  Turkish — as a new `editor.*` bundle registered the same way `common.*` is.
+
+- 4e23275: Give the design system one layer scale, so a popup opened from a dialog is on top of it
+
+  A `Select` inside a `Dialog` rendered underneath the dialog overlay and could not be operated with
+  a mouse at all: the popup said `z-index: 60`, the overlay said `70`, both are portalled to `<body>`,
+  and the overlay won. In Quire that made every column type except Text, and the board, gallery, list
+  and calendar view kinds, unreachable with a pointer — and it was never only Quire, because it is
+  every dialog in Kern that contains a select, a menu or a popover.
+
+  The numbers are now `--kern-z-*` tokens in `tokens.css`, ordered by a rule rather than by whoever
+  wrote the component first: a popup is opened _from_ a surface and a surface is never opened from a
+  popup, so every menu, select and popover sits above every drawer, sheet, dialog and command palette.
+  `layers.test.ts` reads the scale back and fails when a component invents a number of its own.
+
+  Two things came out with it:
+
+  - The popup surface (`.kmenu`, `.kmenu-item` and the rest) has moved from `MenuItems.svelte` into
+    `styles/menu.css`, which `styles/index.css` imports. `Select` emits those classes without
+    rendering `MenuItems`, so an app that used a select and no menu could have the stylesheet tree-
+    shaken away and shipped a popup with no ground, no border and no layer. Also exported as
+    `@kernhq/ui/styles/menu.css`.
+  - The wiki page's drag grip is hidden until the plugin places it, which is what its comment always
+    claimed. It keyed on a `hide` class nothing has ever added, so the rule was inert and the grip sat
+    in the top-left corner of the editor from first paint until the first pointer move.
+
+  A `note` callout also renders in colour now. `CALLOUT_TONES` has five tones and `prose.css` dressed
+  four, so `note` — a valid tone, which therefore never reaches the fallback — came out undressed.
+  `callout.test.ts` checks the two lists against each other.
+
+### Patch Changes
+
+- 55dc4ee: Let a `Select` and a `Table` carry their own accessible name
+
+  `Switch` has taken an `ariaLabel` since it was written; `Select` and `Table` never did. A `Select`
+  fell back to naming itself after its `placeholder`, which names an empty control well and a filled
+  one badly — a status filter showing "Assigned" still announced itself as "All statuses" — and a
+  `Table` rendered `role="table"` with no name at all, so a screen reader read "table" and left the
+  reader to guess which one.
+
+  Both now accept `ariaLabel`, and both keep exactly their old behaviour when it is not passed.
+
+- fcdc590: Register the icons an asset register needs
+
+  `package`, `boxes`, `warehouse`, `map-pin`, `truck`, `receipt`, `qr-code`, `scan-line` and
+  `clipboard-list` join the curated registry. Nothing about the package's API changes — `getIcon`,
+  `registerIcons` and `iconNames` keep their signatures, and `registerIcons` already allowed a
+  consumer to add these at runtime. What changes is that a module may now name them, which is the
+  thing `check-icons.mjs` enforces: an unregistered name renders a blank square and throws nothing,
+  so the registry is where an icon becomes real.
+
+  They are here for `module-inventory`, which is growing from an asset register into stock control —
+  locations, items, movements, suppliers, purchase orders and printed QR labels each need a name the
+  rail and the command palette can draw.
+
 ## 0.9.0
 
 ### Minor Changes
