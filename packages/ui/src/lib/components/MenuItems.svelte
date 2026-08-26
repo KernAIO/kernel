@@ -65,36 +65,3 @@ const SubContent = $derived(P.SubContent)
     </Item>
   {/if}
 {/each}
-
-<style>
-  :global(.kmenu) {
-    min-width: 180px; max-width: 320px; padding: 5px;
-    background: var(--kern-surface-raised); border: 1px solid var(--kern-border);
-    border-radius: var(--kern-r-2xl); box-shadow: var(--kern-shadow-popover);
-    z-index: 60; outline: none; animation: kfade 0.12s ease-out;
-    max-height: var(--bits-dropdown-menu-content-available-height, var(--bits-context-menu-content-available-height, 70vh)); overflow-y: auto;
-  }
-  :global(.kmenu-item) {
-    display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 9px; border-radius: var(--kern-r-md2);
-    font-size: 13.5px; color: var(--kern-ink-800); cursor: pointer; user-select: none; outline: none; text-decoration: none;
-  }
-  :global(.kmenu-item[data-highlighted]), :global(.kmenu-item:hover) { background: var(--kern-surface-popover-hover); }
-  :global(.kmenu-item[data-disabled]) { opacity: 0.45; cursor: not-allowed; }
-  :global(.kmenu-item.danger) { color: var(--kern-danger); }
-  :global(.kmenu-ic) { width: 16px; display: inline-grid; place-items: center; color: var(--kern-ink-400); flex: none; }
-  :global(.kmenu-item.danger .kmenu-ic) { color: inherit; }
-  :global(.kmenu-l) { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  :global(.kmenu-l) { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
-  /* the hint explains why an item is unavailable; it yields to the label rather than truncating it */
-  :global(.kmenu-hint) {
-    font-size: 12px; color: var(--kern-ink-250);
-    flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  /* an item carrying a hint may wrap onto two lines rather than squeeze both onto one */
-  :global(.kmenu-item:has(.kmenu-hint)) { height: auto; min-height: 34px; padding-block: 5px; flex-wrap: wrap; }
-  :global(.kmenu-item:has(.kmenu-hint) .kmenu-hint) { flex-basis: 100%; padding-inline-start: 24px; }
-  :global(.kmenu-chev) { color: var(--kern-ink-250); }
-  :global([dir='rtl'] .kmenu-chev) { transform: scaleX(-1); }
-  :global(.kmenu-sep) { height: 1px; background: var(--kern-border-hairline); margin: 5px 4px; }
-  :global(.kmenu-label) { padding: 6px 9px 4px; font-family: var(--kern-font-mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--kern-ink-300); }
-</style>

@@ -35,6 +35,6 @@ let {
 </P.Root>
 
 <style>
-  :global(.ktip) { display: inline-flex; align-items: center; gap: 8px; background: var(--kern-ink-900); color: var(--kern-ink-inverse); font-size: 12px; padding: 5px 8px; border-radius: var(--kern-r-md); z-index: 80; animation: kfade 0.1s ease-out; max-width: 260px; line-height: 1.35; pointer-events: none; }
+  :global(.ktip) { display: inline-flex; align-items: center; gap: 8px; background: var(--kern-ink-900); color: var(--kern-ink-inverse); font-size: 12px; padding: 5px 8px; border-radius: var(--kern-r-md); z-index: var(--kern-z-tooltip); animation: kfade 0.1s ease-out; max-width: 260px; line-height: 1.35; pointer-events: none; }
   :global(.ktip-kbd) { color: inherit; opacity: 0.6; }
 </style>

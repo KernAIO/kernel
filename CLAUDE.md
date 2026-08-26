@@ -123,3 +123,26 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
 - The kernel's version is `KERN_VERSION` from the image, not a constant a service passes in. A
   service that passes `version:` to `createKernel` overrides the release and makes `/api/health` lie;
   only tests should do it.
+- **A layer is never a number you pick; it is `--kern-z-*` in `tokens.css`.** Everything that leaves
+  its surface is portalled to `<body>`, so one stacking context orders all of it and the only thing
+  deciding what a pointer hits is those numbers. Picked per component, they were wrong: a select
+  popup at 60 under a dialog overlay at 70, so every dialog in Kern containing a select had an
+  unclickable control and nothing in any one file looked wrong. The rule the scale encodes is that a
+  popup is opened *from* a surface and a surface is never opened from a popup, so menus, selects and
+  popovers sit above every drawer, sheet, dialog and command palette. `layers.test.ts` fails when a
+  component writes a literal.
+- **Global CSS in a component's `<style>` disappears with the component.** `Select` emits `.kmenu`
+  and `.kmenu-item` but never renders `MenuItems.svelte`, where those rules lived — so a bundler
+  that dropped the unused menu components dropped the select's ground, border and layer with them.
+  `:global()` rules several components depend on belong in `src/lib/styles/`, not in whichever one
+  was written first.
+- **Do not declare a property a third-party plugin clears with an inline style.** The drag-handle
+  extension shows its grip with `element.style.visibility = ''`, so a `visibility` rule in the
+  stylesheet would be what it falls through to and the grip would never come back. Render the
+  element with the inline style already set instead. The rule it replaced keyed on a `hide` class
+  nothing ever added, which is a shape worth checking for: `:not(.x)` against `.x` always resolves
+  to the first branch when nothing sets `x`, and it reads as if it does the opposite.
+- **`@kernhq/ui` has one test that opens a browser** (`tests/layering.browser.test.ts`: a Vite dev
+  server, `playwright-core`, Chromium). Whether a pointer aimed at a menu item reaches it has no
+  answer in a DOM without layout, which is why the defect above survived every other check. CI
+  installs Chromium before `pnpm test`; a laptop without one skips, CI does not.

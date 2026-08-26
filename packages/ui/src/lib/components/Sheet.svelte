@@ -59,12 +59,12 @@ let {
 </P.Root>
 
 <style>
-  :global(.ksheet-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: 40; animation: kfade 0.1s ease-out; }
+  :global(.ksheet-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: var(--kern-z-sheet); animation: kfade 0.1s ease-out; }
   :global(.ksheet) {
     position: fixed; top: 0; bottom: 0; inset-inline-end: 0; width: var(--w); max-width: 100vw;
     display: flex; flex-direction: column;
     background: var(--kern-surface-raised); border-inline-start: 1px solid var(--kern-border-strong); box-shadow: var(--kern-shadow-panel);
-    z-index: 41; outline: none; animation: kslide 0.16s ease-out;
+    z-index: calc(var(--kern-z-sheet) + 1); outline: none; animation: kslide 0.16s ease-out;
   }
   :global([dir='rtl'] .ksheet) { animation-name: kslide-rtl; }
   :global(.ksheet.inline) { position: absolute; }

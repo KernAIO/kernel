@@ -157,6 +157,36 @@
   --kern-dur-fast: 80ms;
   --kern-dur-panel: 160ms;
   --kern-dur-fade: 120ms;
+  /*
+   * Layers.
+   *
+   * Everything that leaves its surface — a dialog, a sheet, a menu, a select, a popover, a
+   * tooltip, a toast — is portalled to <body>, so all of it lands in the one stacking context the
+   * root element makes and paint order is decided by nothing but these numbers. Picking a number
+   * per component is how a select popup ended up under a dialog overlay: the popup said 60 and the
+   * overlay said 70, both were right on their own, and the property-type picker in every Quire
+   * dialog became unclickable.
+   *
+   * The order below is the rule, and it is not arbitrary. **A popup is opened from a surface; a
+   * surface is never opened from a popup.** So every transient popup sits above every modal
+   * surface, a tooltip above the popups (it can describe a menu item), and a toast above all of it
+   * because it reports on work that is still running.
+   *
+   * The convention within a tier: the scrim sits at the tier, the surface one above it.
+   *
+   * `--kern-z-anchored` is the exception, and deliberately small: an emoji picker or a mention
+   * list positioned inside its own container is ordered against its siblings, not against the
+   * app. Lifting one onto the portal scale would let it paint over a dialog that covers its input.
+   */
+  --kern-z-anchored: 20;
+  --kern-z-drawer: 40;
+  --kern-z-sheet: 50;
+  --kern-z-dialog: 60;
+  --kern-z-command: 70;
+  --kern-z-popup: 80;
+  --kern-z-tooltip: 90;
+  --kern-z-toast: 100;
+  --kern-z-skip-link: 110;
 }
 
 /* ---- dark (proposed) — toggled by the app via data-theme on <html> ---- */
@@ -484,7 +514,7 @@
     position: fixed;
     inset-inline-start: 12px;
     top: -48px;
-    z-index: 100;
+    z-index: var(--kern-z-skip-link);
     padding: 8px 12px;
     border-radius: var(--kern-r-lg);
     background: var(--kern-ink-900);

@@ -64,7 +64,7 @@ let { candidates, active, loading = false, onpick, onhover }: Props = $props()
     position: absolute;
     bottom: calc(100% + 6px);
     inset-inline-start: 0;
-    z-index: 30;
+    z-index: var(--kern-z-anchored);
     width: min(320px, 100%);
     max-height: 260px;
     overflow-y: auto;

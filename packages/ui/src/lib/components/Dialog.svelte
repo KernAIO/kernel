@@ -84,13 +84,13 @@ function focusOnOpen(event: Event) {
 </P.Root>
 
 <style>
-  :global(.kdlg-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: 70; animation: kfade 0.1s ease-out; }
+  :global(.kdlg-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: var(--kern-z-dialog); animation: kfade 0.1s ease-out; }
   :global(.kdlg) {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 480px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px);
     display: flex; flex-direction: column;
     background: var(--kern-surface-raised); border-radius: var(--kern-r-dialog); box-shadow: var(--kern-shadow-dialog);
-    z-index: 71; outline: none; overflow: hidden; animation: kfade 0.12s ease-out;
+    z-index: calc(var(--kern-z-dialog) + 1); outline: none; overflow: hidden; animation: kfade 0.12s ease-out;
   }
   :global(.kdlg.s-sm) { width: 400px; }
   :global(.kdlg.s-lg) { width: 640px; }

@@ -252,8 +252,11 @@ const statusLabel: Record<CollabStatus, string> = {
       `aria-hidden` and not a button on purpose: dragging is the only thing it does, there is no
       keyboard equivalent behind it yet, and a focusable control that does nothing on Enter is a
       worse answer for a screen reader than no control at all.
+
+      The inline `visibility: hidden` is load-bearing and has to be inline — see the note beside
+      `.drag-handle` in the stylesheet below.
     -->
-    <div bind:this={dragHandle} class="drag-handle" aria-hidden="true">
+    <div bind:this={dragHandle} class="drag-handle" style="visibility: hidden" aria-hidden="true">
       <Icon name="grip-vertical" size={16} />
     </div>
   {/if}
@@ -335,8 +338,20 @@ const statusLabel: Record<CollabStatus, string> = {
   border-block-end-color: var(--kern-accent);
 }
 /*
- * Positioned by floating-ui, so only the look belongs here. Hidden until the plugin places it —
- * without that it sits at the top-left corner of the page on first paint.
+ * Positioned by floating-ui, so only the look belongs here — and *only* the look.
+ *
+ * Showing and hiding belongs to the plugin, which does it with an inline
+ * `element.style.visibility` it sets to `hidden` when the pointer is not beside a block and clears
+ * to the empty string to show the grip again. Two rules follow from that, and both were wrong
+ * here: this stylesheet must never declare `visibility`, because clearing an inline declaration
+ * falls through to the sheet and the grip would never come back; and the element has to be
+ * *rendered* already hidden, because the plugin only takes it over when the editor is created —
+ * which is after the highlighting grammars have been fetched, so the grip would otherwise sit in
+ * the top-left corner of the editor for as long as that takes.
+ *
+ * What was here instead was `.drag-handle:not(.hide)` against `.drag-handle.hide`, on a class
+ * nothing has ever added: `:not(.hide)` always matched, so the pair resolved to a permanently
+ * visible grip and read as if it did the opposite.
  */
 .drag-handle {
   position: absolute;
@@ -348,8 +363,9 @@ const statusLabel: Record<CollabStatus, string> = {
   border-radius: var(--kern-r-sm);
   color: var(--kern-ink-400);
   cursor: grab;
-  opacity: 0;
-  transition: opacity var(--kern-dur-fast) var(--kern-ease-out);
+  transition:
+    background-color var(--kern-dur-fast) var(--kern-ease-out),
+    color var(--kern-dur-fast) var(--kern-ease-out);
 }
 .drag-handle:hover {
   background: var(--kern-surface-hover);
@@ -357,14 +373,6 @@ const statusLabel: Record<CollabStatus, string> = {
 }
 .drag-handle:active {
   cursor: grabbing;
-}
-/* The plugin adds this once it has a block to sit beside. */
-.drag-handle:not(.hide) {
-  opacity: 1;
-}
-.drag-handle.hide {
-  opacity: 0;
-  pointer-events: none;
 }
 .surface :global(.kern-prose) {
   outline: none;

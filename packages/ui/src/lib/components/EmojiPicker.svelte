@@ -111,7 +111,7 @@ $effect(() => {
     position: absolute;
     bottom: calc(100% + 6px);
     inset-inline-start: 0;
-    z-index: 40;
+    z-index: var(--kern-z-anchored);
     width: 296px;
     border: 1px solid var(--kern-border);
     border-radius: var(--kern-r-2xl);

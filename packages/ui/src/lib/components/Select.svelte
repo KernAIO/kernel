@@ -104,9 +104,9 @@ const groups = $derived.by(() => {
   :global(.ksel-l) { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :global(.ksel-ic) { color: var(--kern-ink-400); flex: none; }
   :global(.ksel-chev) { color: var(--kern-ink-250); flex: none; }
-  :global(.ksel-content) { min-width: var(--bits-select-anchor-width); max-height: var(--bits-select-content-available-height, 320px); }
+  :global(.kmenu.ksel-content) { min-width: var(--bits-select-anchor-width); max-height: var(--bits-select-content-available-height, 320px); }
   :global(.ksel-item[data-selected]) { font-weight: 500; }
   :global(.ksel-check) { color: var(--kern-ink-900); flex: none; }
   :global(.ksel-d) { display: block; font-size: 12px; color: var(--kern-ink-350); white-space: normal; }
-  :global(.ksel-content .kmenu-l) { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+  :global(.kmenu.ksel-content .kmenu-l) { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
 </style>

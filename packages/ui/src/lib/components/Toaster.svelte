@@ -22,7 +22,7 @@ let { position = 'bottom-center', inline = false }: Props = $props()
 </div>
 
 <style>
-  .ktoasts { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 90; pointer-events: none; max-width: calc(100vw - 32px); }
+  .ktoasts { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: var(--kern-z-toast); pointer-events: none; max-width: calc(100vw - 32px); }
   .ktoasts.inline { position: absolute; }
   .ktoasts.bottom-end { left: auto; transform: none; inset-inline-end: 20px; align-items: flex-end; }
   .ktoast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--kern-ink-900); color: var(--kern-ink-inverse); font-size: 13px; padding: 10px 16px; border-radius: var(--kern-r-lg); box-shadow: var(--kern-shadow-toast); animation: kfade 0.14s ease-out; max-width: 440px; }

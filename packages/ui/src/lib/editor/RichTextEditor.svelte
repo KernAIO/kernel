@@ -580,7 +580,7 @@ const isEnabled = (t: Tool) => {
 
   .mmenu {
     position: fixed;
-    z-index: 60;
+    z-index: var(--kern-z-popup);
     min-width: 190px;
     max-width: 280px;
     max-height: 240px;

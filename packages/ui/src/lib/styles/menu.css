@@ -1,0 +1,114 @@
+/* ------------------------------------------------------------------
+   The popup surface — one menu, four components.
+
+   `DropdownMenu`, `ContextMenu` and `Select` all emit `.kmenu` and `.kmenu-item`, and only the
+   first two render `MenuItems.svelte`, which is where these rules used to live. Every one of them
+   was already `:global()`, so nothing scoped them to that component — but a bundler still drops a
+   component nothing imports, and it takes the stylesheet with it. An app that uses `Select` and no
+   menu therefore shipped a select popup with no ground, no border and, worse, no layer: it landed
+   under whatever it was opened from.
+
+   Global CSS four components depend on belongs in the stylesheet, not in whichever of them
+   happened to be written first.
+   ------------------------------------------------------------------ */
+
+.kmenu {
+  min-width: 180px;
+  max-width: 320px;
+  padding: 5px;
+  background: var(--kern-surface-raised);
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-2xl);
+  box-shadow: var(--kern-shadow-popover);
+  z-index: var(--kern-z-popup);
+  outline: none;
+  animation: kfade 0.12s ease-out;
+  max-height: var(
+    --bits-dropdown-menu-content-available-height,
+    var(--bits-context-menu-content-available-height, 70vh)
+  );
+  overflow-y: auto;
+}
+.kmenu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 34px;
+  padding: 0 9px;
+  border-radius: var(--kern-r-md2);
+  font-size: 13.5px;
+  color: var(--kern-ink-800);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  text-decoration: none;
+}
+.kmenu-item[data-highlighted],
+.kmenu-item:hover {
+  background: var(--kern-surface-popover-hover);
+}
+.kmenu-item[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.kmenu-item.danger {
+  color: var(--kern-danger);
+}
+.kmenu-ic {
+  width: 16px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--kern-ink-400);
+  flex: none;
+}
+.kmenu-item.danger .kmenu-ic {
+  color: inherit;
+}
+.kmenu-l {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the hint explains why an item is unavailable; it yields to the label rather than truncating it */
+.kmenu-hint {
+  font-size: 12px;
+  color: var(--kern-ink-250);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* an item carrying a hint may wrap onto two lines rather than squeeze both onto one */
+.kmenu-item:has(.kmenu-hint) {
+  height: auto;
+  min-height: 34px;
+  padding-block: 5px;
+  flex-wrap: wrap;
+}
+.kmenu-item:has(.kmenu-hint) .kmenu-hint {
+  flex-basis: 100%;
+  padding-inline-start: 24px;
+}
+.kmenu-chev {
+  color: var(--kern-ink-250);
+}
+[dir="rtl"] .kmenu-chev {
+  transform: scaleX(-1);
+}
+.kmenu-sep {
+  height: 1px;
+  background: var(--kern-border-hairline);
+  margin: 5px 4px;
+}
+.kmenu-label {
+  padding: 6px 9px 4px;
+  font-family: var(--kern-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kern-ink-300);
+}

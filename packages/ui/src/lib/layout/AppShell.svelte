@@ -58,10 +58,10 @@ let {
 
   @media (max-width: 1024px) {
     .kshell { grid-template-columns: var(--kern-rail-w) minmax(0, 1fr); }
-    .kshell-sidebar { position: fixed; top: var(--kshell-top-h); bottom: 0; inset-inline-start: var(--kern-rail-w); width: var(--kern-sidebar-w); z-index: 45; transform: translateX(-100%); transition: transform 160ms var(--kern-ease-out); box-shadow: none; }
+    .kshell-sidebar { position: fixed; top: var(--kshell-top-h); bottom: 0; inset-inline-start: var(--kern-rail-w); width: var(--kern-sidebar-w); z-index: calc(var(--kern-z-drawer) + 1); transform: translateX(-100%); transition: transform 160ms var(--kern-ease-out); box-shadow: none; }
     :global([dir='rtl']) .kshell-sidebar { transform: translateX(100%); }
     .drawer-open .kshell-sidebar { transform: translateX(0) !important; box-shadow: var(--kern-shadow-popover); }
-    .drawer-open .kshell-scrim { display: block; position: fixed; inset: var(--kshell-top-h) 0 0; z-index: 44; background: var(--kern-overlay); border: 0; animation: kfade 0.1s; }
+    .drawer-open .kshell-scrim { display: block; position: fixed; inset: var(--kshell-top-h) 0 0; z-index: var(--kern-z-drawer); background: var(--kern-overlay); border: 0; animation: kfade 0.1s; }
   }
   @media (max-width: 768px) {
     /* a phone has one place open at a time: the strip goes, the bottom bar takes over */

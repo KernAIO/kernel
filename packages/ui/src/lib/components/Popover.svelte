@@ -53,7 +53,7 @@ let {
 </P.Root>
 
 <style>
-  :global(.kpop) { background: var(--kern-surface-raised); border-radius: var(--kern-r-2xl); box-shadow: var(--kern-shadow-popover); border: 1px solid var(--kern-border); overflow: hidden; z-index: 60; outline: none; animation: kfade 0.12s ease-out; max-width: calc(100vw - 16px); }
+  :global(.kpop) { background: var(--kern-surface-raised); border-radius: var(--kern-r-2xl); box-shadow: var(--kern-shadow-popover); border: 1px solid var(--kern-border); overflow: hidden; z-index: var(--kern-z-popup); outline: none; animation: kfade 0.12s ease-out; max-width: calc(100vw - 16px); }
   .kpop-head { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 14px; background: var(--kern-surface-popover-hover); font-size: 13px; font-weight: 500; color: var(--kern-ink-900); }
   .acts { display: inline-flex; gap: 4px; }
   .kpop-body { max-height: min(70vh, 560px); overflow-y: auto; }

@@ -68,5 +68,9 @@ jobs:
       - run: if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
       - run: pnpm lint
       - run: pnpm typecheck
+      # @kernhq/ui's layering test drives a real browser, because the thing it checks — whether a
+      # pointer aimed at a menu item reaches the menu item — has no answer in a DOM without layout.
+      # A select inside a dialog was unclickable in every Kern dialog and every other check was green.
+      - run: pnpm --filter @kernhq/ui exec playwright-core install --with-deps chromium
       - run: pnpm test
       - run: pnpm build

@@ -102,13 +102,13 @@ function run(it: CommandItem) {
 </Dialog.Root>
 
 <style>
-  :global(.kcmd-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: 80; animation: kfade 0.1s ease-out; }
+  :global(.kcmd-overlay) { position: fixed; inset: 0; background: var(--kern-overlay); z-index: var(--kern-z-command); animation: kfade 0.1s ease-out; }
   :global(.kcmd-overlay.inline) { position: absolute; }
   :global(.kcmd) {
     position: fixed; top: 84px; left: 50%; transform: translateX(-50%);
     width: 560px; max-width: calc(100vw - 24px); max-height: min(520px, calc(100dvh - 100px));
     background: var(--kern-surface-raised); border-radius: var(--kern-r-dialog); box-shadow: var(--kern-shadow-dialog);
-    overflow: hidden; z-index: 81; outline: none; animation: kfade 0.1s ease-out; display: flex; flex-direction: column;
+    overflow: hidden; z-index: calc(var(--kern-z-command) + 1); outline: none; animation: kfade 0.1s ease-out; display: flex; flex-direction: column;
   }
   :global(.kcmd.inline) { position: absolute; }
   :global(.kcmd-root) { display: flex; flex-direction: column; min-height: 0; }

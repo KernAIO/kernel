@@ -348,9 +348,18 @@
 .kern-prose .kern-callout > :last-child {
   margin-bottom: 0;
 }
+/*
+ * One pair per tone in `CALLOUT_TONES`, and the set is closed on both sides: the extension narrows
+ * an unknown tone to `info`, so a tone with no pair here is not a fallback — it is a callout that
+ * renders undressed. `callout.test.ts` reads this file and fails when the two lists disagree.
+ */
 .kern-prose .kern-callout[data-callout="info"] {
   border-inline-start-color: var(--kern-info);
   background: var(--kern-info-tint);
+}
+.kern-prose .kern-callout[data-callout="note"] {
+  border-inline-start-color: var(--kern-slate);
+  background: var(--kern-slate-tint);
 }
 .kern-prose .kern-callout[data-callout="success"] {
   border-inline-start-color: var(--kern-success);
