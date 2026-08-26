@@ -4,6 +4,7 @@ import { ApiError, PageInput, page } from '../common.js'
 import { Id, UserId, WorkspaceId } from '../ids.js'
 import { ModuleManifest, WorkspaceModuleState } from '../module.js'
 import { ActivityEvent } from './activity.js'
+import { ApiKeyAdminInfo, ApiKeyInfo, ApiKeyScope } from './api-keys.js'
 import {
   DashboardItems,
   DashboardLayout,
@@ -448,6 +449,39 @@ export const coreContract = {
         .input(z.object({ id: Id }))
         .output(z.object({ ok: z.literal(true) })),
     },
+  },
+
+  /**
+   * Personal API keys — a member's own credential for the ordinary REST API, `read` or
+   * `read_write`, scoped to one workspace. `create` and `list` are self-service, gated only by the
+   * `apiKeys` capability (and its audience, invisible here — a switched-off or not-for-you capability
+   * answers the same 404 either way). `revoke` also accepts an integration manager acting on someone
+   * else's key, and `listAll` is that manager's view of every key issued in their workspace.
+   */
+  apiKeys: {
+    list: base
+      .route({ method: 'GET', path: '/workspaces/{workspaceId}/api-keys', tags: ['api-keys'] })
+      .input(ws)
+      .output(z.array(ApiKeyInfo)),
+    create: base
+      .route({ method: 'POST', path: '/workspaces/{workspaceId}/api-keys', tags: ['api-keys'] })
+      .input(
+        ws.extend({
+          name: z.string().min(1).max(80),
+          scope: ApiKeyScope,
+          /** null = never expires */
+          expiresInDays: z.number().int().positive().max(365).nullable(),
+        }),
+      )
+      .output(ApiKeyInfo.extend({ key: z.string() })),
+    revoke: base
+      .route({ method: 'DELETE', path: '/api-keys/{id}', tags: ['api-keys'] })
+      .input(z.object({ id: Id }))
+      .output(z.object({ ok: z.literal(true) })),
+    listAll: base
+      .route({ method: 'GET', path: '/workspaces/{workspaceId}/api-keys/all', tags: ['api-keys'] })
+      .input(ws)
+      .output(z.array(ApiKeyAdminInfo)),
   },
 
   admin: {

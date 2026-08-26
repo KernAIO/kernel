@@ -45,6 +45,12 @@ export const Principal = z.object({
   service: z.string().nullable().default(null),
   memberships: z.array(MembershipSummary).default([]),
   permissionVersion: z.number().int().default(0),
+  /**
+   * Only ever set when `kind` is `api_key`. Genuinely optional, not defaulted — a defaulted field
+   * becomes required in every literal that builds a `Principal`, and every kind but `api_key` has
+   * nothing honest to put here. `read` rejects anything but GET/HEAD; missing means unrestricted.
+   */
+  apiKeyScope: z.enum(['read', 'read_write']).optional(),
 })
 export type Principal = z.infer<typeof Principal>
 
