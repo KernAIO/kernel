@@ -150,6 +150,21 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
   const { kernel } = opts
   const app = Fastify({
     logger: false,
+    /**
+     * **`context.ip` is a claim, not evidence, and nothing may make a security decision on it.**
+     *
+     * `true` trusts *every* proxy rather than a named hop, so Fastify takes the client address from
+     * `X-Forwarded-For` whoever sent it. Measured: a forged header on a socket from `10.0.0.5`
+     * yields `req.ip === '203.0.113.9'`. That is correct for a log line and for rate-limit
+     * bucketing, which is all anything does with it today, and wrong for anything that decides
+     * access — an IP allowlist built on this is defeated by one header, which is worse than no
+     * allowlist because an administrator believes it pins requests to their office.
+     *
+     * `module-hr` declined to ship an office IP allowlist for exactly this reason. Before anything
+     * gates on `ip`, this has to become a hop count or a CIDR list, and that changes client-address
+     * semantics for every service at once — so it is a deliberate change with a deployment story,
+     * not a line somebody tightens in passing.
+     */
     trustProxy: true,
     bodyLimit: 25 * 1024 * 1024,
     genReqId: () => crypto.randomUUID(),
