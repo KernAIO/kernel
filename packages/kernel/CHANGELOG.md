@@ -1,5 +1,11 @@
 # @kernhq/kernel
 
+## 0.7.5
+
+### Patch Changes
+
+- docs(kernel): warn that context.ip is a claim, not evidence
+
 ## 0.7.4
 
 ### Patch Changes
