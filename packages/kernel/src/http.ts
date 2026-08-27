@@ -73,8 +73,18 @@ export const requiresCapability = (moduleId: string, capability: string) =>
       throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
     const on = await context.kernel.capabilities(workspaceId, moduleId)
     if (!on.has(capability))
+      // "not available", not "not enabled" — the resolved set is a *closure*, so a capability drops
+      // out either because its own switch is off or because something it depends on is, and this
+      // middleware cannot tell which: it is handed the answer, not the working. Saying "not enabled"
+      // sent an administrator to look at a switch that was plainly on, and then to toggle a setting
+      // that was already correct. Measured on `hr.payroll_export`, which depends on `attendance` and
+      // `periods`: with either of those off, all three refusals read identically.
+      //
+      // Naming the missing dependency needs the module's declarations, which live in the registry
+      // and are not reachable from here. Worth doing when something else needs `kernel` to expose
+      // them; until then the honest sentence is the one that does not claim to know.
       throw new ORPCError('NOT_FOUND', {
-        message: `${moduleId}.${capability} is not enabled in this workspace`,
+        message: `${moduleId}.${capability} is not available in this workspace — it is switched off, or something it depends on is`,
       })
     return next()
   })
