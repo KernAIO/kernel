@@ -15,7 +15,13 @@ let { padding = 'list', maxWidth, class: className, children, ref = $bindable(nu
 <div bind:this={ref} class={cn('kpage', `p-${padding}`, className)}><div class="inner" style:max-width={maxWidth}>{@render children()}</div></div>
 <style>
   .kpage { flex: 1; overflow-y: auto; overflow-x: hidden; background: var(--kern-surface); min-height: 0; }
-  .inner { min-width: 0; }
+  /*
+   * Centred, because `maxWidth` describes a measure rather than a left margin. Without this a
+   * document page pinned its 780px column to the left of a 1352px area and left 540px of dead
+   * space beside it — the reading column in one half of the screen and nothing in the other.
+   * A page that sets no `maxWidth` is already full width, so `auto` does nothing there.
+   */
+  .inner { min-width: 0; margin-inline: auto; }
   .p-home { padding: 20px 24px 40px; }
   .p-list { padding: 18px 24px 44px; }
   .p-board { padding: 22px 28px 30px; }

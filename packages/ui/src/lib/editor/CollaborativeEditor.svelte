@@ -543,7 +543,17 @@ const statusLabel: Record<CollabStatus, string> = {
   cursor: grabbing;
 }
 .surface :global(.kern-prose) {
+  /*
+   * No focus ring on the page body. `outline: none` alone does not do it — the design system's
+   * global `:focus-visible` rule draws a 3px `box-shadow`, and a box-shadow is not an outline, so
+   * the whole document wore a border the moment somebody clicked into it.
+   *
+   * Removing it is safe *here* and nowhere else: a caret and a selection are what tell you a text
+   * surface has focus, and this surface fills the page. A comment box or an issue description is a
+   * discrete field among other controls and keeps its ring.
+   */
   outline: none;
+  box-shadow: none;
   min-height: 220px;
 }
 .surface.locked {
