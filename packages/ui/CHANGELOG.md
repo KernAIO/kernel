@@ -1,5 +1,26 @@
 # @kernhq/ui
 
+## 0.13.0
+
+### Minor Changes
+
+- 143eb33: Eight reading macros in the page schema, and the vocabulary a renderer needs to draw them.
+
+  `children`, `excerpt`, `excerpt-include`, `include-page`, `recently-updated`, `contributors`,
+  `status lozenge` and `expand` are nodes in `buildPageExtensions` — the wide wiki schema only; the
+  narrow one a comment box and an issue description share is untouched.
+
+  `PAGE_DOC_READING_MACROS` is exported alongside them, and it is the point of the export rather than
+  a convenience: four of the eight _read other pages_, so a renderer has to resolve them against
+  whoever is reading — and on a public site there is no reader at all. Naming that set in the schema
+  is what lets the renderer refuse to draw one it cannot resolve, instead of drawing a title nobody
+  was allowed to see.
+
+### Patch Changes
+
+- Updated dependencies [ba49174]
+  - @kernhq/kernel@0.8.0
+
 ## 0.12.6
 
 ### Patch Changes

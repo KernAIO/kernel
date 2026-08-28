@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/kernel",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "Kern module runtime (defineModule, registry, events, call, authz, jobs, settings, storage, http)",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
