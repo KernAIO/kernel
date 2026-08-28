@@ -158,3 +158,48 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   refreshed lockfile pointed three packages at npm instead of at `../contracts`. Add
   `prefer-workspace-packages=true` to the clone's `.npmrc` for the regeneration and the diff is your
   dependency and nothing else.
+- **A superuser bypasses row-level security, so every tenant policy in Kern was decorative.**
+  `enable`, `force`, the policy and `withWorkspace`'s `set_config` were all correct and none of them
+  applied, because every compose file connected as the Postgres container's superuser — and `force
+  row level security` binds *owners*, not superusers. Nothing failed, no test could see it, and the
+  only way to observe it is to compare the rows two roles get from the same query. `createDatabase`
+  now reads `rolsuper`/`rolbypassrls` and refuses to boot in production; `db.rls.test.ts` is the
+  proof, and any change to policies or ownership belongs beside it. The general rule: **a security
+  control whose failure mode is "nothing happens" needs a test that observes the data, not the
+  configuration.**
+- **A refusal that prescribes a fix the reader cannot run is not a fix.** That RLS boot refusal
+  first shipped telling the operator to `reassign owned by <current owner> to kern_app` — and on the
+  shipped stack the current owner *is* the bootstrap superuser, so the command needs the exact
+  privilege the message is telling them to stop using. It also stopped one step short: creating the
+  role by hand on a fresh external database gets past the refusal and into `permission denied to
+  create extension "vector"` from core's `0000_init.sql`, with nothing pointing anywhere. `vector`
+  and `pg_stat_statements` are the untrusted ones; `pg_trgm`, `pgcrypto`, `ltree` and `btree_gist`
+  are trusted and a nosuperuser owner creates them fine. The message now branches on shipped-stack
+  versus external Postgres, because the two actions have nothing in common. Read an error you write
+  as the person who will receive it, and check they hold the privileges every line of it assumes.
+- **`broker.has()` is local-only, and reading it as "does this exist" is a silent no-op.** It
+  consults this process's module registry and nothing else, so `chat`, `mail` and `collab` asking
+  `has('billing.entitlements.get')` always got `false` — every entitlement check in those services
+  resolved UNLIMITED without asking anybody. Use `mightAnswer()` and then let the call decide: NATS
+  answers a request with no subscriber immediately (`503 no responders`), which is what makes
+  "nobody hosts this" a *fact* rather than a timeout. `call()` marks the two apart with `reason`
+  (`NO_RESPONDERS` vs `RPC_UNREACHABLE`) and keeps the code `UNAVAILABLE`, because consumers already
+  branch on the code.
+- **A module can ship a raw-body HTTP route; `extend` is the service's, not the module's.**
+  `ServerModule.httpRoutes` mounts a plain Fastify route under the module's API prefix, in its own
+  encapsulated scope, with `parseAs: 'buffer'` when `raw` — the only thing a webhook signature can
+  be checked against. The type lives in `@kernhq/kernel` and not in `@kernhq/contracts` on purpose:
+  the handler is typed in Fastify terms and `contracts` has zod and `@orpc/contract` behind it and
+  is imported by the browser. Encapsulation is load-bearing — a content-type parser added on the
+  instance replaces oRPC's pass-through one and every request body then arrives as `undefined`.
+- **`trustProxy: <number>` is ignored by Fastify 5 and fails closed.** The documentation offers a
+  hop count; `getTrustProxyFn` turns a number into `() => false`, deliberately, because a hop count
+  cannot validate the immediate peer. So a number trusts *nothing* rather than the hops it looks
+  like it asks for. Name the proxies instead — an address, a CIDR, or `loopback` / `uniquelocal` /
+  `linklocal`, which is what `TRUSTED_PROXIES` takes.
+- **A `statement_timeout` on the pool would kill migrations, so migrations get their own
+  connections.** The request pool carries `statement_timeout`, `idle_in_transaction_session_timeout`
+  and `lock_timeout`; `migrateSchema` runs on a separate pool with none of them, and the advisory
+  lock takes a dedicated `pg.Client` rather than a connection from that pool. The lock waiter holds
+  its connection for as long as the winner takes, so pooling the two together deadlocks — four
+  concurrent `migrateModule` calls against a pool of two never returned, and `db.test.ts` catches it.

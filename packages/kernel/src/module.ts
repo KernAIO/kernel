@@ -12,6 +12,7 @@ import type {
 import type { ContractRouter } from '@orpc/contract'
 import type { Router } from '@orpc/server'
 import type { PgSchema } from 'drizzle-orm/pg-core'
+import type { FastifyReply, FastifyRequest, HTTPMethods } from 'fastify'
 import { satisfies as semverSatisfies } from 'semver'
 import type { z } from 'zod'
 import type { RequestContext } from './http.js'
@@ -86,6 +87,80 @@ export interface ObjectResolver {
   >
 }
 
+/** What a module's raw HTTP handler is handed. */
+export interface ModuleHttpContext {
+  kernel: Kernel
+  request: FastifyRequest
+  reply: FastifyReply
+  /**
+   * The request body.
+   *
+   * A `raw` route gets a `Buffer` of exactly the bytes the client sent, with no parsing of any kind
+   * — which is the only thing a webhook signature can be checked against, because re-encoding JSON
+   * is not guaranteed to reproduce the bytes that were signed. Without `raw` it is whatever
+   * Fastify's parsers made of it.
+   */
+  body: Buffer | unknown
+}
+
+/**
+ * A plain HTTP route a module needs beside its oRPC surface.
+ *
+ * **This is only for routes oRPC genuinely cannot carry**, and in practice that means one thing:
+ * an inbound webhook, where a third party picks the URL, the method, the content type and the
+ * status codes, and where verifying the signature requires the unparsed body. Everything a Kern
+ * client calls belongs in the module's `router`, which gets typing, the OpenAPI document, the SDK
+ * and every middleware in this file for free — none of which a route here has.
+ *
+ * Mounted under the module's API prefix, so `{ path: '/webhooks/stripe' }` in `module-billing`
+ * answers at `/api/billing/webhooks/stripe`. That is a static path and Fastify prefers it over the
+ * `\/api\/billing\/*` wildcard the oRPC handler is mounted on, so the two do not collide.
+ *
+ * What still applies to a route registered here, because it is registered on the same server:
+ * helmet, CORS, the per-IP rate limit, the maintenance gate (a webhook gets a 503 with `retry-after`
+ * during an upgrade, which every sender retries), and `x-request-id`.
+ *
+ * What does **not** apply: no principal is resolved, no permission is checked, no workspace is
+ * scoped. A route here authenticates its own caller — that is the whole reason it exists — and it
+ * must do so before it touches the database. `kernel.database.withWorkspace` is how it then gets
+ * the tenant context every RLS policy reads.
+ *
+ * ```ts
+ * export default defineServerModule({
+ *   definition,
+ *   httpRoutes: [
+ *     {
+ *       method: 'POST',
+ *       path: '/webhooks/stripe',
+ *       raw: true,
+ *       handler: async ({ kernel, request, reply, body }) => {
+ *         const signature = request.headers['stripe-signature']
+ *         if (typeof signature !== 'string') return reply.status(400).send({ error: 'no signature' })
+ *         const result = await handleWebhook(kernel, body as Buffer, signature)
+ *         return { received: true, ...result }
+ *       },
+ *     },
+ *   ],
+ * })
+ * ```
+ *
+ * A **service** that needs the same thing — Better Auth's handler, tus, a websocket upgrade — does
+ * not use this; it passes `extend` to `createHttpServer` and has the whole Fastify instance. The
+ * difference is ownership: `extend` belongs to whoever assembles the service, `httpRoutes` travels
+ * with the module, so deleting the module removes the route too.
+ */
+export interface ModuleHttpRoute {
+  method: HTTPMethods | HTTPMethods[]
+  /** path under the module's API prefix; must start with `/` */
+  path: string
+  /** hand the handler the exact bytes the client sent, unparsed, as a `Buffer` */
+  raw?: boolean
+  /** bytes accepted on this route; defaults to the server's own limit */
+  bodyLimit?: number
+  /** return a value to send it as JSON, or use `reply` and return it */
+  handler: (ctx: ModuleHttpContext) => Promise<unknown> | unknown
+}
+
 export interface ModuleDefinition<TSettings extends z.ZodTypeAny = z.ZodTypeAny> {
   id: string
   name: string
@@ -127,6 +202,12 @@ export interface ServerModule<TSettings extends z.ZodTypeAny = z.ZodTypeAny> {
   /** oRPC contract + implementation; mounted at /api/<apiPrefix|id> */
   contract?: ContractRouter<any>
   router?: (kernel: Kernel) => Router<any, RequestContext>
+  /**
+   * Plain HTTP routes under the same prefix, for the things oRPC cannot carry — an inbound webhook
+   * that needs the unparsed body to check a signature. See `ModuleHttpRoute`, which is where the
+   * rules for one are written down.
+   */
+  httpRoutes?: ModuleHttpRoute[]
   /** event subscriptions: event name (or `module.*` wildcard) → handler */
   subscriptions?: Record<string, EventHandler<any>>
   jobs?: JobDef<any>[]

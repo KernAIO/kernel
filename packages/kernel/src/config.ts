@@ -16,6 +16,21 @@ export const KernelEnv = z.object({
   KERN_VERSION: z.string().default('0.0.0-dev'),
   DATABASE_URL: z.string().url(),
   DATABASE_POOL_MAX: z.coerce.number().int().default(20),
+  /**
+   * Per-connection query-cost bounds, in milliseconds. `0` disables one.
+   *
+   * Every tenant shares one pool, so a single pathological query — a saved view with no bound, a
+   * report over a table that grew — holds a connection for as long as Postgres will let it, and the
+   * pool runs out for everybody else. These are the only thing that puts a ceiling on that, and
+   * Postgres has no useful default for any of them.
+   *
+   * They are sent in the startup packet, so they apply to the request pool only: migrations run on
+   * their own connections with all three off, because an index build on a large table is exactly the
+   * long statement `statement_timeout` exists to kill, and killing it fails the boot.
+   */
+  DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(0).default(30_000),
+  DATABASE_IDLE_TX_TIMEOUT_MS: z.coerce.number().int().min(0).default(60_000),
+  DATABASE_LOCK_TIMEOUT_MS: z.coerce.number().int().min(0).default(10_000),
   NATS_URL: z.string().optional(),
   VALKEY_URL: z.string().optional(),
   S3_ENDPOINT: z.string().url().optional(),
@@ -33,6 +48,20 @@ export const KernelEnv = z.object({
   LOG_LEVEL: z.string().optional(),
   /** comma-separated allowed browser origins (defaults to KERN_BASE_URL) */
   CORS_ORIGINS: z.string().optional(),
+  /**
+   * Which peers may set `X-Forwarded-For`, and therefore decide what `req.ip` is.
+   *
+   * A comma-separated list of addresses, CIDRs, or the named ranges `loopback`, `uniquelocal` and
+   * `linklocal`. Empty means those three — Caddy sits on a private network in all three shipped
+   * topologies — so a request arriving straight from a public address is not believed whatever
+   * header it carries. `none` trusts nothing, for a service with no proxy in front of it.
+   *
+   * It used to be `trustProxy: true`, which trusts *every* hop: `req.ip` was whatever the client
+   * claimed, so the per-IP rate limit was keyed on a value the caller picked. Nothing may decide
+   * access on `req.ip` even now; this only makes it honest enough to count with. See
+   * `trustProxyFrom` for why a bare hop count is not one of the accepted forms.
+   */
+  TRUSTED_PROXIES: z.string().optional(),
 })
 export type KernelEnv = z.infer<typeof KernelEnv>
 

@@ -7,9 +7,16 @@ import { OpenAPIHandler } from '@orpc/openapi/node'
 import { ORPCError, onError, os } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/node'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
+import Fastify, {
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+  type HTTPMethods,
+} from 'fastify'
+import type { UnscopedAccess } from './access-signal.js'
 import { httpStatusFor, KernError } from './errors.js'
 import type { Kernel } from './kernel.js'
+import type { ModuleHttpRoute } from './module.js'
 
 /** Context every oRPC procedure receives. */
 export interface RequestContext {
@@ -36,7 +43,7 @@ export const authed = o.middleware(async ({ context, next }) => {
  * every procedure's input shape; each procedure behind it must take `{ workspaceId }`.
  */
 export const workspaceScoped = (moduleId?: string) =>
-  o.middleware(async ({ context, next }, input) => {
+  o.middleware(async ({ context, next, path }, input) => {
     const { workspaceId } = input as { workspaceId: string }
     const { kernel, principal } = context
     if (principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
@@ -44,6 +51,37 @@ export const workspaceScoped = (moduleId?: string) =>
       throw new ORPCError('BAD_REQUEST', { message: 'workspaceId required' })
     if (!principal.instanceAdmin && principal.kind !== 'service')
       kernel.authz.requireMember(principal, workspaceId)
+    // An instance admin or a service reaching a workspace it is not in is legitimate and has to
+    // leave a trace: support opening a customer's data used to be indistinguishable from the
+    // customer opening it. Fire-and-forget by construction — see `UnscopedAccessSignal`.
+    else recordUnscopedAccess(context, workspaceId, path)
+    /**
+     * The one place `apiRateLimit` is enforced.
+     *
+     * Per workspace, so one tenant's runaway integration cannot spend the instance's capacity, and
+     * measured against what that workspace's plan actually allows. Unlimited when nothing bills —
+     * which is every self-hosted instance, and costs no I/O — and never able to refuse for a reason
+     * of its own: an unreachable Valkey lets the request through.
+     *
+     * After the membership check on purpose: a stranger must not be able to spend a workspace's
+     * budget. Service principals are exempt because internal traffic is not the customer's API use.
+     */
+    if (principal.kind !== 'service') {
+      const verdict = await kernel.apiBudget.check(workspaceId)
+      if (!verdict.ok)
+        throw new ORPCError('RATE_LIMITED', {
+          message: verdict.plan
+            ? `This workspace's ${verdict.plan} plan allows ${verdict.limit} API requests a minute`
+            : `This workspace is limited to ${verdict.limit} API requests a minute`,
+          data: {
+            reason: 'billing.api_rate.limit_reached',
+            limit: verdict.limit,
+            plan: verdict.plan,
+            retryAfter: verdict.retryAfterSec,
+          },
+          status: httpStatusFor('RATE_LIMITED'),
+        })
+    }
     if (moduleId && !(await kernel.isModuleEnabled(workspaceId, moduleId)))
       // `MODULE_DISABLED` is ours, not one of oRPC's standard codes, so oRPC has no status to fall
       // back on and would answer 500. Every Kern-specific code has to carry its status explicitly.
@@ -89,6 +127,34 @@ export const requiresCapability = (moduleId: string, capability: string) =>
     return next()
   })
 
+/**
+ * Build and hand off the record for a principal that passed `workspaceScoped` without a membership.
+ *
+ * Deliberately does everything cheap here and nothing expensive: assembling the object is a few
+ * property reads, and `record()` returns before any sink has finished. A `kernel` without the signal
+ * — a stub in a test, an older service that has not been rebuilt — is skipped rather than throwing,
+ * because failing a request to observe it would be the wrong way round.
+ */
+function recordUnscopedAccess(context: RequestContext, workspaceId: string, path: readonly string[]) {
+  const { kernel, principal } = context
+  if (!kernel.unscopedAccess) return
+  const access: UnscopedAccess = {
+    workspaceId,
+    procedure: path.join('.'),
+    via: principal.kind === 'service' ? 'service' : 'instance_admin',
+    principal: {
+      kind: principal.kind,
+      userId: principal.userId ?? null,
+      email: principal.email ?? null,
+      service: principal.service ?? null,
+    },
+    requestId: context.requestId,
+    ip: context.ip,
+    at: new Date().toISOString(),
+  }
+  kernel.unscopedAccess.record(access)
+}
+
 /** Middleware factory: require a permission at workspace scope. */
 export const requires = (permission: string) =>
   o.middleware(async ({ context, next }, input: { workspaceId: string }) => {
@@ -129,15 +195,72 @@ export function kernErrorToORPC(err: unknown): unknown {
   return err
 }
 
+/** What Fastify is given for `trustProxy`: a list of trusted peers, or `false` for none. */
+export type TrustProxySetting = string[] | false
+
+/**
+ * The peers Kern trusts to have written `X-Forwarded-For` when `TRUSTED_PROXIES` says nothing else:
+ * loopback and the private ranges. That is where Caddy sits in all three shipped topologies — the
+ * same set Caddy itself is told to trust with `trusted_proxies static private_ranges`.
+ *
+ * A request arriving straight from a public address is therefore not trusted, and `req.ip` is its
+ * socket address no matter what header it sent.
+ */
+export const DEFAULT_TRUSTED_PROXIES = ['loopback', 'uniquelocal', 'linklocal']
+
+/**
+ * Turn `TRUSTED_PROXIES` into what Fastify wants: a comma-separated list of addresses, CIDRs, or
+ * `proxy-addr`'s named ranges (`loopback`, `uniquelocal`, `linklocal`). `none`, `off` or `0` trust
+ * nothing at all, which is right for a service exposed with no proxy in front.
+ *
+ * **A bare hop count is not accepted, and it is worth saying why**, because Fastify's documentation
+ * offers one. Fastify 5.12 turns `trustProxy: 2` into a predicate that returns `false` for every
+ * address — deliberately: a hop count cannot validate the immediate peer, so a client that sends
+ * enough `X-Forwarded-For` entries of its own would be believed. A number here therefore trusts
+ * *nothing* rather than the two hops it looks like it asks for, which is the safe direction and not
+ * the one the operator meant. Naming the proxies is the only form that means anything, so it is the
+ * only form this takes; anything unparseable falls back to the default rather than to `true`.
+ */
+export function trustProxyFrom(value: string | undefined): TrustProxySetting {
+  const raw = (value ?? '').trim()
+  if (!raw) return DEFAULT_TRUSTED_PROXIES
+  if (/^(none|off|false|0)$/i.test(raw)) return false
+  const list = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return list.length ? list : DEFAULT_TRUSTED_PROXIES
+}
+
 export type PrincipalResolver = (req: FastifyRequest, kernel: Kernel) => Promise<Principal>
 
 export interface HttpOptions {
   kernel: Kernel
   resolvePrincipal: PrincipalResolver
   corsOrigins: string[]
-  /** extra Fastify setup (Better Auth handler, tus, webhooks, websockets…) */
+  /**
+   * Extra Fastify setup owned by **the service** — Better Auth's handler, tus, a websocket upgrade.
+   * Runs last, after every module's routes are mounted, with the whole instance.
+   *
+   * A raw body here is `scope.addContentTypeParser('*', { parseAs: 'buffer' }, …)` inside
+   * `app.register(async (scope) => …)`. Encapsulate it: a parser added on `app` itself replaces the
+   * parsers for every route in the service, including the oRPC ones, and the symptom is every
+   * request body arriving as `undefined`.
+   *
+   * **A module cannot use this** — it never sees the Fastify instance, and it must not import the
+   * service that assembles it. A module that needs a raw-body route (a webhook whose signature
+   * covers the exact bytes) declares `httpRoutes` on its `ServerModule` instead; see
+   * `ModuleHttpRoute` in `module.ts` for the shape and the rules. That is the supported path, and it
+   * is the one `module-billing`'s Stripe webhook uses.
+   */
   extend?: (app: FastifyInstance) => Promise<void> | void
   openapi?: { title: string; version: string; description?: string }
+  /**
+   * The per-IP limit, which is about one caller flooding the service and is a different question
+   * from the per-workspace budget `workspaceScoped` applies (that one is about a plan). Defaults to
+   * 600 a minute.
+   */
+  rateLimit?: { max?: number; timeWindow?: string }
 }
 
 /**
@@ -153,19 +276,21 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
     /**
      * **`context.ip` is a claim, not evidence, and nothing may make a security decision on it.**
      *
-     * `true` trusts *every* proxy rather than a named hop, so Fastify takes the client address from
-     * `X-Forwarded-For` whoever sent it. Measured: a forged header on a socket from `10.0.0.5`
-     * yields `req.ip === '203.0.113.9'`. That is correct for a log line and for rate-limit
-     * bucketing, which is all anything does with it today, and wrong for anything that decides
-     * access — an IP allowlist built on this is defeated by one header, which is worse than no
-     * allowlist because an administrator believes it pins requests to their office.
+     * It used to be `true`, which trusts *every* hop: Fastify then took the client address from
+     * `X-Forwarded-For` whoever sent it. Measured — a forged header on a socket from `10.0.0.5`
+     * yielded `req.ip === '203.0.113.9'`. That made the per-IP rate limit keyed on a value the
+     * caller picks, which is the same as having no per-IP rate limit: send a different address each
+     * request and the bucket is always empty.
      *
-     * `module-hr` declined to ship an office IP allowlist for exactly this reason. Before anything
-     * gates on `ip`, this has to become a hop count or a CIDR list, and that changes client-address
-     * semantics for every service at once — so it is a deliberate change with a deployment story,
-     * not a line somebody tightens in passing.
+     * Now it is a list of trusted peers from `TRUSTED_PROXIES` — loopback and the private ranges by
+     * default, which is where Caddy sits in all three shipped topologies. The header is read only
+     * when the socket's own peer is one of them, so `req.ip` is the address the proxy in front
+     * observed, which is good enough to count with. It is still not good enough to *decide* with: an
+     * operator can put anything in front of this, and a proxy that appends rather than replaces
+     * still carries whatever the client sent. `module-hr` declined to ship an office IP allowlist
+     * for that reason and the reason has not changed.
      */
-    trustProxy: true,
+    trustProxy: trustProxyFrom(kernel.env?.TRUSTED_PROXIES),
     bodyLimit: 25 * 1024 * 1024,
     genReqId: () => crypto.randomUUID(),
   })
@@ -194,9 +319,23 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
   await app.register(rateLimit, {
-    max: 600,
-    timeWindow: '1 minute',
-    allowList: (req) => req.headers['x-kern-service'] !== undefined,
+    max: opts.rateLimit?.max ?? 600,
+    timeWindow: opts.rateLimit?.timeWindow ?? '1 minute',
+    /**
+     * Only a service credential that **verifies** is exempt.
+     *
+     * This used to be `req.headers['x-kern-service'] !== undefined`: the mere presence of the
+     * header lifted the limit, and the resolver that would reject a bad token does not run until
+     * the route handler. So `curl -H 'x-kern-service: x'` was unlimited, from any address, with no
+     * credential of any kind. The token is an HS256 JWT over `KERN_SECRET` — the same one
+     * `resolvePrincipal` checks a moment later — so verifying it here costs one symmetric
+     * verification on the requests that carry it and nothing at all on the ones that do not.
+     */
+    allowList: async (req) => {
+      const token = req.headers['x-kern-service']
+      if (typeof token !== 'string' || !token) return false
+      return (await kernel.auth?.verifyService(token).catch(() => null)) != null
+    },
   })
 
   app.addHook('onRequest', async (req, reply) => {
@@ -258,8 +397,12 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
   const generator = new OpenAPIGenerator({ schemaConverters: [jsonSchema] })
 
   for (const mod of kernel.registry.all()) {
-    if (!mod.router) continue
     const prefix = `/api/${mod.definition.apiPrefix ?? mod.definition.id}`
+    // Before the oRPC wildcard, though the order does not actually matter: Fastify's router prefers
+    // a static path over `${prefix}/*`, so the two cannot shadow each other.
+    for (const route of mod.httpRoutes ?? [])
+      await registerModuleRoute(app, kernel, mod.definition.id, prefix, route)
+    if (!mod.router) continue
     const router = mod.router(kernel)
     // Translate domain errors into oRPC errors and make anything unexpected visible in the logs –
     // oRPC answers with a bare 500 otherwise, which is impossible to diagnose in production.
@@ -310,4 +453,43 @@ export async function createHttpServer(opts: HttpOptions): Promise<FastifyInstan
   }
   await opts.extend?.(app)
   return app
+}
+
+/**
+ * Mount one `ModuleHttpRoute` in its own encapsulated Fastify scope.
+ *
+ * The scope is what makes `raw` safe: `removeAllContentTypeParsers` and `addContentTypeParser` are
+ * encapsulated in Fastify, so a module asking for unparsed bytes changes nothing for the oRPC
+ * routes beside it — or for another module's route, which may want the parsed body.
+ *
+ * `parseAs: 'buffer'` and a parser that hands the buffer straight back is what produces the exact
+ * bytes the client sent. Anything that decodes and re-encodes — `JSON.parse` and back — breaks
+ * every webhook signature, and breaks it in a way that looks like a wrong secret.
+ */
+async function registerModuleRoute(
+  app: FastifyInstance,
+  kernel: Kernel,
+  moduleId: string,
+  prefix: string,
+  route: ModuleHttpRoute,
+): Promise<void> {
+  if (!route.path.startsWith('/'))
+    throw new Error(
+      `Module ${moduleId} declares an http route whose path does not start with "/": ${route.path}`,
+    )
+  const url = `${prefix}${route.path}`
+  await app.register(async (scope) => {
+    if (route.raw) {
+      scope.removeAllContentTypeParsers()
+      scope.addContentTypeParser('*', { parseAs: 'buffer' }, (_req, body, done) => done(null, body))
+    }
+    scope.route({
+      method: route.method as HTTPMethods | HTTPMethods[],
+      url,
+      bodyLimit: route.bodyLimit,
+      handler: async (request: FastifyRequest, reply: FastifyReply) =>
+        route.handler({ kernel, request, reply, body: request.body }),
+    })
+  })
+  kernel.log.info({ module: moduleId, url, raw: route.raw === true }, 'module http route mounted')
 }

@@ -1,6 +1,7 @@
 import type { Principal } from '@kernhq/contracts'
-import type { ProcedureBroker } from './call.js'
+import { NO_RESPONDERS, type ProcedureBroker } from './call.js'
 import { KernError } from './errors.js'
+import type { Logger } from './logger.js'
 
 /**
  * The procedure a billing module registers to answer "what is this workspace allowed to do".
@@ -8,6 +9,24 @@ import { KernError } from './errors.js'
  * `broker.has()` is how we find out whether anybody is answering.
  */
 export const ENTITLEMENTS_PROCEDURE = 'billing.entitlements.get'
+
+/**
+ * Where a resolved entitlement came from — and in particular, whether "no limits" is an answer or
+ * the absence of one.
+ *
+ * - `none`   — nothing in this instance bills. Every self-hosted install, on every request.
+ * - `plan`   — a billing module answered; the limits are its.
+ * - `unavailable` — a biller may exist and did not answer in time. The caller is let through
+ *   unlimited, because a billing outage must never lock a paying customer out of their own
+ *   workspace, but the two are not the same fact and anything that reports on limits has to be able
+ *   to say so.
+ *
+ * This exists because reachability used to be `broker.has()`, which only sees the **local** module
+ * registry: `chat`, `mail` and `collab` do not host `module-billing`, so every entitlement check
+ * written in one of them resolved UNLIMITED without asking anybody. An entitlement key nothing can
+ * enforce outside one service is the same lie as an entitlement key nothing enforces at all.
+ */
+export type EntitlementSource = 'none' | 'plan' | 'unavailable'
 
 /**
  * The limits a plan can set.
@@ -39,6 +58,11 @@ export interface Entitlement {
    * Suspension withholds the service, it never deletes the customer's data.
    */
   active: boolean
+  /**
+   * Whether these limits were answered, absent, or simply not obtainable. Set by `Entitlements.of`;
+   * a billing module never sends it (it returns a `Partial<Entitlement>` and this key is overwritten).
+   */
+  source: EntitlementSource
 }
 
 /** What every workspace gets when no module is answering — i.e. every self-hosted instance. */
@@ -51,6 +75,7 @@ export const UNLIMITED: Entitlement = Object.freeze({
   apiRateLimit: null,
   planName: null,
   active: true,
+  source: 'none' as EntitlementSource,
 })
 
 /** Keys whose limit is a number, and which therefore can be compared against a wanted total. */
@@ -78,20 +103,52 @@ export class Entitlements {
     private readonly broker: ProcedureBroker,
     private readonly system: Principal,
     private readonly ttlMs = 30_000,
+    private readonly log?: Logger,
+    /**
+     * How long a lookup may take before the caller is let through unlimited.
+     *
+     * Deliberately far below the broker's ten seconds: `workspaceScoped` asks on every request, so
+     * this is the ceiling a billing outage can add to every API call in the instance. NATS answers
+     * "nobody is hosting that" in one round trip, so the timeout is only ever spent on a biller that
+     * exists and is wedged.
+     */
+    private readonly callTimeoutMs = 1_500,
   ) {}
 
-  /** The resolved limits for a workspace. Never throws: an unreachable biller means unlimited. */
+  /**
+   * The resolved limits for a workspace. **Never throws** — a biller that is absent, slow or broken
+   * resolves to unlimited, because no billing failure may lock a customer out of their own data.
+   *
+   * What it does not do any more is pretend the three are the same. `source` says which one
+   * happened, and an `unavailable` answer is cached for a few seconds rather than the full TTL so a
+   * biller that comes back is noticed quickly.
+   */
   async of(workspaceId: string): Promise<Entitlement> {
-    if (!this.broker.has(ENTITLEMENTS_PROCEDURE)) return UNLIMITED
     const hit = this.cache.get(workspaceId)
     if (hit && hit.exp > Date.now()) return hit.v
-    const raw = await this.broker.call<Partial<Entitlement> | null>(
-      ENTITLEMENTS_PROCEDURE,
-      { workspaceId },
-      this.system,
-    )
-    const v: Entitlement = { ...UNLIMITED, ...(raw ?? {}) }
-    this.cache.set(workspaceId, { v, exp: Date.now() + this.ttlMs })
+    // Nothing hosts it here and there is no bus to carry it: certainly nobody, no round trip needed.
+    if (!this.broker.mightAnswer(ENTITLEMENTS_PROCEDURE)) return this.remember(workspaceId, UNLIMITED)
+    try {
+      const raw = await this.broker.call<Partial<Entitlement> | null>(
+        ENTITLEMENTS_PROCEDURE,
+        { workspaceId },
+        this.system,
+        { timeoutMs: this.callTimeoutMs },
+      )
+      return this.remember(workspaceId, { ...UNLIMITED, ...(raw ?? {}), source: 'plan' })
+    } catch (err) {
+      // No responder is an answer: this instance has no billing module, which is the normal state.
+      if ((err as { reason?: string }).reason === NO_RESPONDERS) return this.remember(workspaceId, UNLIMITED)
+      this.log?.warn(
+        { workspaceId, err: err instanceof Error ? err.message : String(err) },
+        'entitlements: the billing module did not answer; treating this workspace as unlimited',
+      )
+      return this.remember(workspaceId, { ...UNLIMITED, source: 'unavailable' }, 5_000)
+    }
+  }
+
+  private remember(workspaceId: string, v: Entitlement, ttlMs = this.ttlMs): Entitlement {
+    this.cache.set(workspaceId, { v, exp: Date.now() + ttlMs })
     return v
   }
 

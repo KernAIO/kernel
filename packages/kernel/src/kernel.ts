@@ -1,6 +1,7 @@
 import type { CapabilityId, EventDef, EventEnvelope, EventPayload, Principal } from '@kernhq/contracts'
 import { Redis } from 'ioredis'
 import type { NatsConnection } from 'nats'
+import { UnscopedAccessSignal, workspaceAccessCrossed } from './access-signal.js'
 import { type AuthVerifier, createAuthVerifier, systemPrincipal } from './auth.js'
 import { Authz, type AuthzCache, type AuthzStore } from './authz.js'
 import { ProcedureBroker } from './call.js'
@@ -14,6 +15,7 @@ import { createLogger, type Logger } from './logger.js'
 import { createMaintenance, type Maintenance } from './maintenance.js'
 import type { ServerModule } from './module.js'
 import { assertModulesSatisfyKernel, toManifest } from './module.js'
+import { memoryCounter, redisCounter, WorkspaceApiBudget } from './ratelimit.js'
 import { createRealtime, type Realtime } from './realtime.js'
 import { ModuleRegistry } from './registry.js'
 import { Secrets } from './secrets.js'
@@ -49,6 +51,13 @@ export interface Kernel {
   settings: Settings
   /** what a workspace's plan allows; unlimited when no billing module is answering */
   entitlements: Entitlements
+  /** the one enforcement site for the `apiRateLimit` entitlement; see `WorkspaceApiBudget` */
+  apiBudget: WorkspaceApiBudget
+  /**
+   * Fires when a principal reaches a workspace it is not a member of — an instance admin or a
+   * service. Core subscribes and writes the audit row; nothing here decides anything on it.
+   */
+  unscopedAccess: UnscopedAccessSignal
   secrets: Secrets
   storage: Storage
   realtime: Realtime
@@ -79,7 +88,17 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
   const log = createLogger(opts.service)
   const role = opts.role ?? 'api'
   const registry = new ModuleRegistry(opts.modules)
-  const database = createDatabase({ url: env.DATABASE_URL, max: env.DATABASE_POOL_MAX, log })
+  const database = createDatabase({
+    url: env.DATABASE_URL,
+    max: env.DATABASE_POOL_MAX,
+    log,
+    nodeEnv: env.NODE_ENV,
+    timeouts: {
+      statementMs: env.DATABASE_STATEMENT_TIMEOUT_MS,
+      idleInTransactionMs: env.DATABASE_IDLE_TX_TIMEOUT_MS,
+      lockMs: env.DATABASE_LOCK_TIMEOUT_MS,
+    },
+  })
   const events = await createEventBus({ url: env.NATS_URL, service: opts.service, log })
   const nats = events instanceof NatsEventBus ? events.connection : undefined
   const redis = env.VALKEY_URL
@@ -90,7 +109,7 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
   const system = systemPrincipal(opts.service)
   const secrets = new Secrets(env.KERN_SECRET)
   const settings = new Settings(broker, system)
-  const entitlements = new Entitlements(broker, system)
+  const entitlements = new Entitlements(broker, system, undefined, log)
   const storage = createStorage({
     endpoint: env.S3_ENDPOINT,
     publicEndpoint: env.S3_PUBLIC_ENDPOINT,
@@ -101,6 +120,11 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
     forcePathStyle: env.S3_FORCE_PATH_STYLE,
   })
   const realtime = createRealtime(nats)
+  // Valkey when there is one, because the budget belongs to the workspace and not to this replica.
+  // Without it the count is per process — right for the single-process instance that has no Valkey,
+  // and stated rather than silently assumed.
+  const apiBudget = new WorkspaceApiBudget(entitlements, redis ? redisCounter(redis) : memoryCounter(), log)
+  const unscopedAccess = new UnscopedAccessSignal(log)
   const maintenance = createMaintenance({ database, log })
   const auth = createAuthVerifier({ coreUrl: env.CORE_URL, kernSecret: env.KERN_SECRET })
   const cache: AuthzCache | undefined = redis
@@ -141,6 +165,8 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
     jobs,
     settings,
     entitlements,
+    apiBudget,
+    unscopedAccess,
     secrets,
     storage,
     realtime,
@@ -166,6 +192,24 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
       // before any migration runs: a module that cannot run on this platform stops the boot, rather
       // than migrating its schema and then failing somewhere unrelated at request time
       assertModulesSatisfyKernel(registry.all(), kernel.version)
+      // and before that, the thing every tenant policy rests on: that row-level security applies to
+      // the role this pool connects as. In production this refuses rather than warns — see
+      // `checkRowLevelSecurity`.
+      await database.ready()
+      /**
+       * The default sink: put every workspace crossing on the bus, so `core` can write the audit row
+       * for a request that happened in `chat`.
+       *
+       * `publish` is not awaited and its failure is swallowed by the signal — a bus that is down
+       * must not be able to fail a request that has already been allowed. That is a deliberate
+       * trade: this is a *signal*, and the durable record is core's job at the other end.
+       */
+      unscopedAccess.on((access) =>
+        events.publish(workspaceAccessCrossed, access, {
+          workspaceId: access.workspaceId,
+          actorId: access.principal.userId,
+        }),
+      )
       await maintenance.ensure()
       for (const mod of registry.all()) {
         if (mod.migrationsFolder) await database.migrateModule(mod.definition.id, mod.migrationsFolder)
