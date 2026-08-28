@@ -648,6 +648,133 @@
   font-weight: 700;
 }
 
+/* ------------------------------------------------------------------
+   Diagrams and embeds
+   ------------------------------------------------------------------ */
+
+/*
+ * A diagram is a picture that cannot be made narrower, so it gets the same treatment a table does —
+ * it scales down to the measure rather than pushing the page sideways. That is the defect shell's
+ * e2e sweep exists to catch, and it is worst in Persian.
+ */
+.kern-prose .kern-diagram {
+  margin: 0.9em 0;
+  padding: 12px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-surface-raised);
+  overflow-x: auto;
+  max-width: 100%;
+}
+.kern-prose .kern-diagram .kern-mermaid {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  /* Every stroke in the SVG is `currentColor`, so the diagram takes the page's ink in either theme. */
+  color: var(--kern-ink-800);
+}
+/* The ground behind an edge label, so the line does not run through the words. */
+.kern-prose .kern-diagram .kern-mermaid-ground {
+  fill: var(--kern-surface-raised);
+}
+.kern-prose .kern-diagram .kern-mermaid-shape,
+.kern-prose .kern-diagram .kern-mermaid-note {
+  fill: var(--kern-surface);
+}
+.kern-prose .kern-diagram figcaption {
+  margin-top: 8px;
+  color: var(--kern-ink-500);
+  font-size: 0.9em;
+  text-align: start;
+}
+/*
+ * A diagram that could not be drawn shows its own source and the reason. Muted with a colour rather
+ * than an opacity, like every other secondary line in this file.
+ */
+.kern-prose .kern-diagram-message {
+  margin: 0 0 6px;
+  color: var(--kern-ink-500);
+  font-size: 0.92em;
+}
+.kern-prose .kern-diagram pre {
+  margin: 0;
+  max-height: 18em;
+  overflow: auto;
+}
+.kern-prose .kern-diagram-link {
+  display: inline-block;
+  margin-top: 4px;
+}
+/* The button the editor adds, which the read side never draws. */
+.kern-prose .kern-diagram-edit {
+  margin-top: 8px;
+  padding: 4px 10px;
+  min-height: 28px;
+  border: 1px solid var(--kern-border-strong);
+  border-radius: var(--kern-r-md);
+  background: var(--kern-surface);
+  color: var(--kern-ink-700);
+  font: inherit;
+  font-size: 0.88em;
+  cursor: pointer;
+}
+.kern-prose .kern-diagram-edit:hover {
+  background: var(--kern-surface-hover);
+}
+
+/*
+ * An embed: a headline, who the site is, and a sentence. There is no remote picture in it on
+ * purpose — a card that loads a third party's image tells that third party who read the page.
+ */
+.kern-prose .kern-embed {
+  display: block;
+  margin: 0.9em 0;
+  padding: 10px 12px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-surface-raised);
+}
+.kern-prose .kern-embed-link {
+  text-decoration: none;
+}
+.kern-prose .kern-embed-title {
+  display: block;
+  font-weight: 600;
+  color: var(--kern-ink-800);
+  /* A headline is one line: a wrapped one turns a card into a paragraph with a border. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kern-prose .kern-embed-site {
+  display: block;
+  margin-top: 2px;
+  color: var(--kern-ink-500);
+  font-size: 0.85em;
+}
+.kern-prose .kern-embed-description {
+  margin: 6px 0 0;
+  color: var(--kern-ink-600);
+  font-size: 0.92em;
+}
+/* One of Kern's own objects, drawn in the macro frame it shares with the reading macros. */
+.kern-prose .kern-object {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kern-prose .kern-object-kind {
+  color: var(--kern-ink-500);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.kern-prose .kern-object-subtitle {
+  color: var(--kern-ink-500);
+  font-size: 0.9em;
+}
+
 /*
  * On paper a collapsed toggle is content that simply vanished, so every one of them is opened.
  * The marker goes with it: a triangle that cannot be clicked is noise on a printout.
@@ -664,5 +791,12 @@
   }
   .kern-prose .kern-table-wrap {
     overflow-x: visible;
+  }
+  /* Same reason: a scroller on paper is a picture with its right-hand side cut off. */
+  .kern-prose .kern-diagram {
+    overflow-x: visible;
+  }
+  .kern-prose .kern-diagram-edit {
+    display: none;
   }
 }

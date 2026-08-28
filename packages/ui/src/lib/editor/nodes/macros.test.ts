@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { PAGE_DOC_READING_MACROS } from '../page-doc.js'
+import { ObjectEmbed } from './embed.js'
 import {
   CHILDREN_SORTS,
   childrenSort,
@@ -159,6 +160,13 @@ describe('the node list', () => {
       'contributors',
       'excerptInclude',
       'includePage',
+      /*
+       * The sixth, and it lives in `embed.ts` rather than here. It belongs on this list for the
+       * same reason the other five do — it names something outside the document and holds no title
+       * of its own — and it is the reason the check below spans both files: a reading macro is
+       * defined by what it needs an audience for, not by which file it was written in.
+       */
+      'objectEmbed',
       'pageChildren',
       'recentlyUpdated',
     ])
@@ -166,6 +174,13 @@ describe('the node list', () => {
       expect(reading.has(name), `${name} resolves from the document and must not need an audience`).toBe(
         false,
       )
-    for (const name of reading) expect(macroNodes.map((n) => n.name)).toContain(name)
+    /*
+     * `embed` is deliberately not one: it holds the unfurl of a public URL, which the server fetched
+     * once and stored like any other prose. There is no permission on a public headline, so there is
+     * nobody to ask and nothing a renderer could wrongly reveal.
+     */
+    expect(reading.has('embed')).toBe(false)
+    const declared = [...macroNodes, ObjectEmbed].map((n) => n.name)
+    for (const name of reading) expect(declared).toContain(name)
   })
 })

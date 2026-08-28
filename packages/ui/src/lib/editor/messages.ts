@@ -60,6 +60,19 @@ const ar = {
   'editor.menu_people': 'الأشخاص',
   'editor.menu_pages': 'الصفحات',
   'editor.menu_empty': 'لا توجد نتائج مطابقة',
+  'editor.diagram_mermaid': 'مخطط Mermaid',
+  'editor.diagram_excalidraw': 'رسم Excalidraw',
+  'editor.diagram_drawio': 'مخطط Draw.io',
+  'editor.diagram_edit': 'تحرير المخطط',
+  'editor.diagram_empty': 'لا يوجد مصدر لهذا المخطط بعد',
+  'editor.diagram_unsupported': 'يستخدم هذا المخطط شيئًا لا يمكن رسمه هنا',
+  'editor.diagram_broken': 'تعذّر رسم هذا المخطط',
+  'editor.diagram_no_picture': 'لا توجد صورة محفوظة',
+  'editor.embed_link': 'تضمين رابط',
+  'editor.embed_untitled': 'رابط بلا عنوان',
+  'editor.embed_object': 'عنصر من Kern',
+  'editor.embed_object_none': 'لم يُختَر شيء',
+  'editor.embed_object_other': 'عنصر في وحدة أخرى',
 }
 
 const de = {
@@ -109,6 +122,19 @@ const de = {
   'editor.menu_people': 'Personen',
   'editor.menu_pages': 'Seiten',
   'editor.menu_empty': 'Keine Treffer',
+  'editor.diagram_mermaid': 'Mermaid-Diagramm',
+  'editor.diagram_excalidraw': 'Excalidraw-Zeichnung',
+  'editor.diagram_drawio': 'Draw.io-Diagramm',
+  'editor.diagram_edit': 'Diagramm bearbeiten',
+  'editor.diagram_empty': 'Dieses Diagramm hat noch keine Quelle',
+  'editor.diagram_unsupported': 'Dieses Diagramm enthält etwas, das hier nicht gezeichnet werden kann',
+  'editor.diagram_broken': 'Dieses Diagramm konnte nicht gezeichnet werden',
+  'editor.diagram_no_picture': 'kein Bild gespeichert',
+  'editor.embed_link': 'Link einbetten',
+  'editor.embed_untitled': 'Link ohne Titel',
+  'editor.embed_object': 'Etwas aus Kern',
+  'editor.embed_object_none': 'Nichts gewählt',
+  'editor.embed_object_other': 'Etwas in einem anderen Modul',
 }
 
 const en = {
@@ -158,6 +184,19 @@ const en = {
   'editor.menu_people': 'People',
   'editor.menu_pages': 'Pages',
   'editor.menu_empty': 'Nothing matches that',
+  'editor.diagram_mermaid': 'Mermaid diagram',
+  'editor.diagram_excalidraw': 'Excalidraw drawing',
+  'editor.diagram_drawio': 'Draw.io diagram',
+  'editor.diagram_edit': 'Edit diagram',
+  'editor.diagram_empty': 'This diagram has no source yet',
+  'editor.diagram_unsupported': 'This diagram uses something that cannot be drawn here',
+  'editor.diagram_broken': 'This diagram could not be drawn',
+  'editor.diagram_no_picture': 'no picture saved',
+  'editor.embed_link': 'Embed a link',
+  'editor.embed_untitled': 'Untitled link',
+  'editor.embed_object': 'Something from Kern',
+  'editor.embed_object_none': 'Nothing chosen',
+  'editor.embed_object_other': 'Something in another module',
 }
 
 const fa = {
@@ -207,6 +246,19 @@ const fa = {
   'editor.menu_people': 'افراد',
   'editor.menu_pages': 'صفحه‌ها',
   'editor.menu_empty': 'چیزی با این عبارت پیدا نشد',
+  'editor.diagram_mermaid': 'نمودار Mermaid',
+  'editor.diagram_excalidraw': 'طرح Excalidraw',
+  'editor.diagram_drawio': 'نمودار Draw.io',
+  'editor.diagram_edit': 'ویرایش نمودار',
+  'editor.diagram_empty': 'این نمودار هنوز منبعی ندارد',
+  'editor.diagram_unsupported': 'این نمودار چیزی دارد که اینجا قابل رسم نیست',
+  'editor.diagram_broken': 'رسم این نمودار ممکن نشد',
+  'editor.diagram_no_picture': 'تصویری ذخیره نشده است',
+  'editor.embed_link': 'جاسازی پیوند',
+  'editor.embed_untitled': 'پیوند بدون عنوان',
+  'editor.embed_object': 'چیزی از Kern',
+  'editor.embed_object_none': 'چیزی انتخاب نشده است',
+  'editor.embed_object_other': 'چیزی در پیمانهٔ دیگر',
 }
 
 const tr = {
@@ -256,6 +308,19 @@ const tr = {
   'editor.menu_people': 'Kişiler',
   'editor.menu_pages': 'Sayfalar',
   'editor.menu_empty': 'Eşleşen bir şey yok',
+  'editor.diagram_mermaid': 'Mermaid diyagramı',
+  'editor.diagram_excalidraw': 'Excalidraw çizimi',
+  'editor.diagram_drawio': 'Draw.io diyagramı',
+  'editor.diagram_edit': 'Diyagramı düzenle',
+  'editor.diagram_empty': 'Bu diyagramın henüz bir kaynağı yok',
+  'editor.diagram_unsupported': 'Bu diyagram burada çizilemeyen bir şey içeriyor',
+  'editor.diagram_broken': 'Bu diyagram çizilemedi',
+  'editor.diagram_no_picture': 'kayıtlı görsel yok',
+  'editor.embed_link': 'Bağlantı göm',
+  'editor.embed_untitled': 'Başlıksız bağlantı',
+  'editor.embed_object': 'Kern’den bir şey',
+  'editor.embed_object_none': 'Hiçbir şey seçilmedi',
+  'editor.embed_object_other': 'Başka bir modüldeki bir şey',
 }
 
 export const editorMessages: Record<string, Record<string, string>> = { ar, de, en, fa, tr }

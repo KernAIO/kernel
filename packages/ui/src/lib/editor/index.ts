@@ -1,3 +1,13 @@
+export {
+  MERMAID_DIAGRAMS,
+  MERMAID_FAILURES,
+  type MermaidDiagram,
+  type MermaidFailure,
+  type MermaidFailureReason,
+  type MermaidRender,
+  type MermaidSuccess,
+  renderMermaid,
+} from './mermaid.js'
 export { editorMessages } from './messages.js'
 export {
   CALLOUT_TONES,
@@ -6,6 +16,25 @@ export {
   calloutTone,
   DEFAULT_CALLOUT_TONE,
 } from './nodes/callout.js'
+export {
+  Diagram,
+  type DiagramOptions,
+  diagramFileId,
+  diagramKind,
+  diagramSource,
+  diagramTitle,
+} from './nodes/diagram.js'
+export {
+  Embed,
+  embedDescription,
+  embedSite,
+  embedTitle,
+  embedUrl,
+  ObjectEmbed,
+  type ObjectEmbedOptions,
+  objectRef,
+  objectRefType,
+} from './nodes/embed.js'
 export {
   CHILDREN_SORTS,
   type ChildrenSort,
@@ -35,10 +64,20 @@ export {
   statusTone,
 } from './nodes/macros.js'
 export {
+  DEFAULT_PAGE_DIAGRAM_KIND,
+  PAGE_DIAGRAM_KINDS,
+  PAGE_DIAGRAM_MAX_SOURCE,
+  PAGE_DIAGRAM_MAX_TITLE,
   PAGE_DOC_MARKS,
   PAGE_DOC_NODES,
   PAGE_DOC_READING_MACROS,
+  PAGE_EMBED_MAX_DESCRIPTION,
+  PAGE_EMBED_MAX_SITE,
+  PAGE_EMBED_MAX_TITLE,
+  PAGE_EMBED_MAX_URL,
   PAGE_HEADING_LEVELS,
+  PAGE_OBJECT_REF,
+  type PageDiagramKind,
   type PageDoc,
   type PageDocMark,
   type PageDocMarkType,

@@ -85,6 +85,11 @@ export {
   selectionToAnchor,
 } from './editor/comment-anchors.js'
 export {
+  type MermaidFailureReason,
+  type MermaidRender,
+  renderMermaid,
+} from './editor/mermaid.js'
+export {
   CALLOUT_TONES,
   Callout,
   type CalloutTone,
@@ -92,9 +97,19 @@ export {
   DEFAULT_CALLOUT_TONE,
 } from './editor/nodes/callout.js'
 export {
+  DEFAULT_PAGE_DIAGRAM_KIND,
+  PAGE_DIAGRAM_KINDS,
+  PAGE_DIAGRAM_MAX_SOURCE,
+  PAGE_DIAGRAM_MAX_TITLE,
   PAGE_DOC_MARKS,
   PAGE_DOC_NODES,
+  PAGE_EMBED_MAX_DESCRIPTION,
+  PAGE_EMBED_MAX_SITE,
+  PAGE_EMBED_MAX_TITLE,
+  PAGE_EMBED_MAX_URL,
   PAGE_HEADING_LEVELS,
+  PAGE_OBJECT_REF,
+  type PageDiagramKind,
   type PageDoc,
   type PageDocMark,
   type PageDocMarkType,

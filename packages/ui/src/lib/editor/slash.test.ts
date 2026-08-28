@@ -19,6 +19,9 @@ const everything = {
   pageMentions: true,
   pickImage: async () => null,
   pickPage: async () => ({ pageId: '01920000-0000-7000-8000-00000000000a' }),
+  editDiagram: async () => ({ source: '<svg/>' }),
+  pickEmbed: async () => ({ url: 'https://example.test/a' }),
+  pickObject: async () => ({ ref: 'tracker:issue:abc' }),
 }
 
 describe('the slash menu', () => {
@@ -65,6 +68,33 @@ describe('the slash menu', () => {
     const full = slashItems(everything).map((i) => i.id)
     expect(full).toContain('includePage')
     expect(full).toContain('excerptInclude')
+  })
+
+  /**
+   * The three diagram kinds split exactly where the server-side story splits.
+   *
+   * Mermaid is a notation `renderMermaid` can draw, so it needs nothing from the host and is always
+   * offered. Excalidraw and Draw.io are editors: without a host that can open one, an entry for
+   * either inserts a block that can never become a picture.
+   */
+  it('offers Mermaid always and the other two diagram kinds only with an editor behind them', () => {
+    const bare = slashItems().map((i) => i.id)
+    expect(bare).toContain('diagram:mermaid')
+    expect(bare).not.toContain('diagram:excalidraw')
+    expect(bare).not.toContain('diagram:drawio')
+    const full = slashItems(everything).map((i) => i.id)
+    expect(full).toContain('diagram:excalidraw')
+    expect(full).toContain('diagram:drawio')
+  })
+
+  /** Both embeds need the host: one to unfurl a URL, one to pick an object. */
+  it('offers the two embeds only when the host can answer them', () => {
+    const bare = slashItems().map((i) => i.id)
+    expect(bare).not.toContain('embed')
+    expect(bare).not.toContain('objectEmbed')
+    const full = slashItems(everything).map((i) => i.id)
+    expect(full).toContain('embed')
+    expect(full).toContain('objectEmbed')
   })
 
   /** The six macros that need nothing from the host are always there. */

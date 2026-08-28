@@ -6,6 +6,7 @@ import { t } from '../i18n.svelte.js'
 import '../common-messages.js'
 import './messages.js'
 import { CALLOUT_TONES } from './nodes/callout.js'
+import type { DiagramOptions } from './nodes/diagram.js'
 import { STATUS_TONES } from './nodes/macros.js'
 import { PAGE_HEADING_LEVELS } from './page-doc.js'
 
@@ -57,9 +58,36 @@ export interface SlashOptions {
    * search pages, and a macro with no page id draws an empty frame on both sides of the wire.
    */
   pickPage?: () => Promise<{ pageId: string } | null>
+  /**
+   * Opens the host's diagram editor. Only the two notations this package cannot draw need it —
+   * Excalidraw and Draw.io — so those two entries are hidden without it and Mermaid never is.
+   */
+  editDiagram?: DiagramOptions['editDiagram']
+  /**
+   * Asks the host for a URL and hands back the unfurl its server produced. Without it the Embed
+   * entry is hidden: this package must not fetch a URL, so an embed inserted here with nothing
+   * behind it would be a card with an address on it and nothing else.
+   */
+  pickEmbed?: () => Promise<{
+    url: string
+    title?: string | null
+    description?: string | null
+    siteName?: string | null
+  } | null>
+  /** Opens the host's object picker. Without it there is no way to name one, so the entry is hidden. */
+  pickObject?: () => Promise<{ ref: string } | null>
   /** Whether `+` page mentions are wired up; the entry that types one is hidden when they are not. */
   pageMentions?: boolean
 }
+
+/**
+ * What a Mermaid entry inserts.
+ *
+ * A starter rather than an empty block, and it matters: an empty Mermaid source draws as "there is
+ * nothing here", so the first thing a writer would see after choosing the menu entry is a failure.
+ * Two nodes and an arrow is the smallest thing that draws, and it shows the syntax by being it.
+ */
+const MERMAID_STARTER = 'flowchart TD\n  A[Start] --> B[Finish]'
 
 /**
  * Nodes in `PAGE_DOC_NODES` that no slash item inserts, and why.
@@ -228,6 +256,20 @@ export function slashItems(options: SlashOptions = {}): SlashItem[] {
     },
 
     /*
+     * A Mermaid diagram, offered unconditionally — it is the one notation this package can both
+     * draw and re-read, so it needs nothing from the host at all. The other two kinds are added
+     * below, beside the entries that need a picker, because they do.
+     */
+    {
+      id: 'diagram:mermaid',
+      label: t('editor.diagram_mermaid'),
+      group: blocks,
+      icon: 'git-branch',
+      keywords: ['diagram', 'mermaid', 'flowchart', 'sequence', 'graph', 'chart'],
+      run: (e) => e.chain().focus().setDiagram({ kind: 'mermaid', source: MERMAID_STARTER }).run(),
+    },
+
+    /*
      * The macros. Six of the eight are here unconditionally; the two that name another page are
      * added below, because they need a picker only the host can open.
      *
@@ -341,6 +383,81 @@ export function slashItems(options: SlashOptions = {}): SlashItem[] {
         },
       },
     )
+  }
+
+  /*
+   * The two notations that are editors rather than grammars. Offered only where the host can open
+   * one, for the same reason the Image entry is: this package cannot draw an Excalidraw scene, so an
+   * entry with nothing behind it inserts a block that will never become a picture.
+   */
+  const editDiagram = options.editDiagram
+  if (editDiagram) {
+    const insert = (kind: 'excalidraw' | 'drawio') => (e: Editor) => {
+      void editDiagram({ kind, source: '', title: null, svgFileId: null, href: null }).then((made) => {
+        if (!made) return
+        e.chain()
+          .focus()
+          .setDiagram({ kind, ...made })
+          .run()
+      })
+    }
+    items.push(
+      {
+        id: 'diagram:excalidraw',
+        label: t('editor.diagram_excalidraw'),
+        group: blocks,
+        icon: 'pencil',
+        keywords: ['excalidraw', 'diagram', 'sketch', 'whiteboard', 'draw'],
+        run: insert('excalidraw'),
+      },
+      {
+        id: 'diagram:drawio',
+        label: t('editor.diagram_drawio'),
+        group: blocks,
+        icon: 'diamond',
+        keywords: ['drawio', 'diagrams', 'diagram', 'visio', 'flowchart'],
+        run: insert('drawio'),
+      },
+    )
+  }
+
+  /*
+   * An embed of a public URL. The host asks its server to unfurl the address and hands back what
+   * came off it, so this package never touches the network — see `pickEmbed`.
+   */
+  const pickEmbed = options.pickEmbed
+  if (pickEmbed) {
+    items.push({
+      id: 'embed',
+      label: t('editor.embed_link'),
+      group: inserts,
+      icon: 'globe',
+      keywords: ['embed', 'link', 'url', 'bookmark', 'preview', 'unfurl'],
+      run: (e) => {
+        void pickEmbed().then((picked) => {
+          if (!picked) return
+          e.chain().focus().setEmbed(picked).run()
+        })
+      },
+    })
+  }
+
+  /* One of Kern's own objects, by reference. Never unfurled — see the note on `ObjectEmbed`. */
+  const pickObject = options.pickObject
+  if (pickObject) {
+    items.push({
+      id: 'objectEmbed',
+      label: t('editor.embed_object'),
+      group: inserts,
+      icon: 'puzzle',
+      keywords: ['object', 'issue', 'link', 'card', 'reference', 'kern'],
+      run: (e) => {
+        void pickObject().then((picked) => {
+          if (!picked) return
+          e.chain().focus().setObjectEmbed({ ref: picked.ref }).run()
+        })
+      },
+    })
   }
 
   const pickImage = options.pickImage

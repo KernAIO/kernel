@@ -32,6 +32,10 @@ const everything = () =>
     pickImage: async () => null,
     pickPage: async () => ({ pageId: '01920000-0000-7000-8000-00000000000a' }),
     macroPageLabel: () => 'A page',
+    editDiagram: async () => ({ source: 'flowchart TD\n A --> B' }),
+    pickEmbed: async () => ({ url: 'https://example.test/a' }),
+    pickObject: async () => ({ ref: 'tracker:issue:abc' }),
+    objectLabel: () => 'An issue',
     lowlight: createLowlight(common),
     document: new Y.Doc(),
     // Never called: `render` runs when the plugin gets a view, and this test never makes one.

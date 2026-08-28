@@ -34,6 +34,10 @@
       "svelte": "./dist/editor/index.js",
       "default": "./dist/editor/index.js"
     },
+    "./editor/mermaid": {
+      "types": "./dist/editor/mermaid.d.ts",
+      "default": "./dist/editor/mermaid.js"
+    },
     "./editor/page-doc": {
       "types": "./dist/editor/page-doc.d.ts",
       "default": "./dist/editor/page-doc.js"

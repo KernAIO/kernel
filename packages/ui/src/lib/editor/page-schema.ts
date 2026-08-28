@@ -18,6 +18,8 @@ import type { SuggestionProps } from '@tiptap/suggestion'
 import type { createLowlight } from 'lowlight'
 import type { Doc as YDoc } from 'yjs'
 import { Callout } from './nodes/callout.js'
+import { Diagram, type DiagramOptions } from './nodes/diagram.js'
+import { Embed, ObjectEmbed } from './nodes/embed.js'
 import {
   Contributors,
   Excerpt,
@@ -101,6 +103,37 @@ export interface PageSchemaOptions {
    * is the honest fallback: a cached title outlives the permission that allowed it.
    */
   macroPageLabel?: (pageId: string) => string | null
+  /**
+   * Supply to make the `/` menu's Excalidraw and Draw.io entries reachable, and to give a writer a
+   * way back into a diagram they have already inserted. It opens the host's own diagram editor, for
+   * the same reason `pickImage` opens its file picker: this package has no upload surface and no
+   * Excalidraw, and a diagram nobody can edit is a picture with a source attached to it.
+   *
+   * Mermaid needs none of this — it is a notation this package can both draw and re-read.
+   */
+  editDiagram?: DiagramOptions['editDiagram']
+  /**
+   * Supply to make the `/` menu's Embed entry reachable. It asks the host for a URL and hands back
+   * the unfurl the server produced for it — this package must never fetch a URL a writer typed, and
+   * on a page render nothing does: the answer is stored in the document once, here.
+   */
+  pickEmbed?: () => Promise<{
+    url: string
+    title?: string | null
+    description?: string | null
+    siteName?: string | null
+  } | null>
+  /**
+   * Supply to make the `/` menu's "something from Kern" entry reachable. It opens the host's own
+   * object picker and returns a `<module>:<type>:<id>` reference — never a title, which is resolved
+   * against whoever is reading.
+   */
+  pickObject?: () => Promise<{ ref: string } | null>
+  /**
+   * What an embedded object is called, for the editor's card only — never stored in the document.
+   * The same bargain `macroPageLabel` makes, and for the same reason.
+   */
+  objectLabel?: (ref: string) => string | null
   /** Consulted while either menu is open; return true to swallow the key. */
   onSuggestKey?: (event: KeyboardEvent) => boolean
   /** `createLowlight(common)`, when the caller is willing to pay for syntax highlighting. */
@@ -284,6 +317,15 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
     Contributors,
     StatusLozenge,
     Expand,
+    /*
+     * Diagrams and embeds. Unconditional like everything else that carries a node: `editDiagram`,
+     * `pickEmbed` and `objectLabel` change how a block is *reached* and what the writer's own card
+     * says, never what the document can hold — so a page written on a surface that wires all three
+     * opens identically on one that wires none.
+     */
+    Diagram.configure({ editDiagram: options.editDiagram }),
+    Embed,
+    ObjectEmbed.configure({ objectLabel: options.objectLabel }),
     Mention.configure({
       // The class the renderer emits, so a mention looks the same being written as being read.
       HTMLAttributes: { class: 'kern-mention' },
@@ -334,6 +376,9 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
       onKey: options.onSuggestKey,
       pickImage: options.pickImage,
       pickPage: options.pickPage,
+      editDiagram: options.editDiagram,
+      pickEmbed: options.pickEmbed,
+      pickObject: options.pickObject,
       // The `+` entry types a `+`, which is only useful where something answers it.
       pageMentions: Boolean(options.pageSource),
     }),
@@ -355,6 +400,15 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
 }
 
 export { CALLOUT_TONES, type CalloutTone, calloutTone } from './nodes/callout.js'
+export { diagramFileId, diagramKind, diagramSource, diagramTitle } from './nodes/diagram.js'
+export {
+  embedDescription,
+  embedSite,
+  embedTitle,
+  embedUrl,
+  objectRef,
+  objectRefType,
+} from './nodes/embed.js'
 export {
   CHILDREN_SORTS,
   type ChildrenSort,
@@ -376,10 +430,20 @@ export {
   statusTone,
 } from './nodes/macros.js'
 export {
+  DEFAULT_PAGE_DIAGRAM_KIND,
+  PAGE_DIAGRAM_KINDS,
+  PAGE_DIAGRAM_MAX_SOURCE,
+  PAGE_DIAGRAM_MAX_TITLE,
   PAGE_DOC_MARKS,
   PAGE_DOC_NODES,
   PAGE_DOC_READING_MACROS,
+  PAGE_EMBED_MAX_DESCRIPTION,
+  PAGE_EMBED_MAX_SITE,
+  PAGE_EMBED_MAX_TITLE,
+  PAGE_EMBED_MAX_URL,
   PAGE_HEADING_LEVELS,
+  PAGE_OBJECT_REF,
+  type PageDiagramKind,
   type PageDoc,
   type PageDocMark,
   type PageDocMarkType,
