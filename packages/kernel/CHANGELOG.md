@@ -1,5 +1,11 @@
 # @kernhq/kernel
 
+## 0.9.1
+
+### Patch Changes
+
+- test(kernel): assert a shared base builder escapes the read-only gate
+
 ## 0.9.0
 
 ### Minor Changes
