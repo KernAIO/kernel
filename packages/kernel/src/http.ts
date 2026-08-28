@@ -78,8 +78,14 @@ const READ_ONLY_SAFE = Symbol.for('kern.http.readOnlySafe')
  * ```
  *
  * Order does not matter — `workspaceScoped` reads the procedure's whole middleware list, not the
- * ones that have run so far — but the exemption is deliberately per-procedure and never per-router:
- * a router-level exemption would silently cover every procedure added to that router afterwards.
+ * ones that have run so far.
+ *
+ * **Put it on the procedure, never on a shared base.** This is convention, not mechanism: oRPC
+ * copies a builder's middlewares into everything derived from it, so one `.use(allowWhileSuspended)`
+ * on a base builder exempts every procedure built from that base — including ones written later by
+ * someone who never saw the `.use`. By the time the gate reads the list, an inherited marker and a
+ * deliberate one are the same entry, so nothing here can tell them apart or warn. `http.test.ts`
+ * asserts the escape so it is discoverable from the suite rather than in production.
  *
  * It exempts a procedure from the **subscription** gate only. Membership, permissions, capabilities
  * and the per-workspace API budget all still apply.

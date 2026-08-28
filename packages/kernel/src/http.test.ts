@@ -753,3 +753,45 @@ describe('a workspace whose subscription no longer entitles it', () => {
     expect((await rest(paying, '/widgets/get')).status).toBe(200)
   })
 })
+
+/**
+ * The exemption is convention at the procedure level and mechanism nowhere.
+ *
+ * `reachableWhileSuspended` looks for the marker anywhere in a procedure's middleware list, and oRPC
+ * copies a builder's middlewares into every procedure derived from it. So `allowWhileSuspended`
+ * applied once to a shared base — the ordinary way anyone would avoid repeating `workspaceScoped` —
+ * exempts every procedure built from that base, including ones written months later by someone who
+ * never saw the `.use`. Nothing warns; the gate simply stops applying to a whole router.
+ *
+ * This is asserted rather than fixed because the marker cannot tell where it was applied: by the
+ * time the gate reads the list, a per-procedure `.use` and an inherited one are the same entry. The
+ * test exists so the edge is discoverable from the test suite instead of being found in production,
+ * and so that a future mechanism which *does* close it has something to flip.
+ */
+describe('the read-only gate: how a router-level exemption escapes', () => {
+  it('inherits the marker into every procedure built from a shared base', () => {
+    // the ordinary way somebody avoids repeating `workspaceScoped` on every procedure
+    const lax = o.use(workspaceScoped('demo')).use(allowWhileSuspended)
+    const meantToBeExempt = lax
+      .route({ method: 'POST', path: '/lax/pay' })
+      .input(Input)
+      .output(Output)
+      .handler(async () => ({ ok: true }))
+    // written later, by someone who never saw the `.use` above
+    const neverMarked = lax
+      .route({ method: 'POST', path: '/lax/delete-everything' })
+      .input(Input)
+      .output(Output)
+      .handler(async () => ({ ok: true }))
+
+    const READ_ONLY_SAFE = Symbol.for('kern.http.readOnlySafe')
+    const carriesMarker = (p: unknown) =>
+      (p as { '~orpc': { middlewares: readonly unknown[] } })['~orpc'].middlewares.some(
+        (m) => (m as Record<symbol, unknown>)[READ_ONLY_SAFE] === true,
+      )
+
+    expect(carriesMarker(meantToBeExempt)).toBe(true)
+    // the whole point: this one is exempt too, and nothing in its own definition says so
+    expect(carriesMarker(neverMarked)).toBe(true)
+  })
+})
