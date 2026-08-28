@@ -12,7 +12,6 @@
  * Keep this list short. It is not a general string library: a word only belongs here once more
  * than one module needs it and no module owns its meaning.
  */
-import { registerMessages } from './i18n.svelte.js'
 
 const ar = {
   'common.add': 'إضافة',
@@ -161,4 +160,16 @@ export const commonMessages: Record<string, Record<string, string>> = {
   tr,
 }
 
-for (const [locale, messages] of Object.entries(commonMessages)) registerMessages(locale, messages)
+/*
+ * No registration here, deliberately.
+ *
+ * This used to end with `for (…of Object.entries(commonMessages)) registerMessages(…)`, and a
+ * side effect at import is exactly the thing a bundler is licensed to remove: `sideEffects` in this
+ * package's manifest names only CSS, so Rollup duplicated the *data* into six chunks and kept the
+ * loop in one — which tracker's settings routes never load. Every `common.*` key on those screens
+ * rendered as itself, a button read `common.add`, and thirteen end-to-end tests waited out a
+ * timeout looking for one called "Add".
+ *
+ * `i18n.svelte.ts` seeds these into its map when it is initialised instead. Importing this file for
+ * its exported object is now the only thing it is for.
+ */

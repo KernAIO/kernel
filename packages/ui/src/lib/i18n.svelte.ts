@@ -15,16 +15,37 @@
  */
 
 import type { Message } from '@kernhq/kernel/client'
+import { commonMessages } from './common-messages.js'
 
 export type { Message }
 
-/** Merged messages per locale: `{ en: { 'chat.nav': 'Chat' } }`. */
-const bundles: Record<string, Record<string, Message>> = {}
+/**
+ * Merged messages per locale: `{ en: { 'chat.nav': 'Chat' } }`.
+ *
+ * `$state`, and that is load-bearing rather than tidiness. A module registers its bundle when the
+ * shell registers the module, and the framework's own `common` bundle registers as a side effect of
+ * importing `common-messages.js` — both of which can land *after* a lazily-loaded screen has already
+ * drawn. While this was a plain object those screens kept their raw keys for ever, because nothing
+ * re-rendered: tracker's settings pages showed a button labelled `common.add`, which is also why
+ * `getByRole('button', { name: 'Add' })` matched nothing and thirteen end-to-end tests waited out
+ * their timeout.
+ *
+ * The comment below has always claimed this was reactive. It described `current` on the next line.
+ */
+const bundles = $state<Record<string, Record<string, Message>>>({})
+
+/*
+ * The framework's own words — Add, Cancel, Delete, Save — are seeded here rather than registering
+ * themselves from `common-messages.ts`. See the note at the foot of that file: a registration that
+ * happens as an import side effect is one a bundler may drop, and it did.
+ */
+for (const [locale, messages] of Object.entries(commonMessages))
+  bundles[locale] = { ...bundles[locale], ...messages }
 
 /**
- * Reactive on purpose. Every module string on screen is a `t()` call, and `t()` reads this — so
- * changing it re-renders all of them, which is the whole reason the language switcher works
- * without a reload.
+ * The locale `t()` resolves against. Reactive for the same reason `bundles` is: every module string
+ * on screen is a `t()` call that reads both, so changing either re-renders all of them — which is
+ * what makes the language switcher work without a reload.
  */
 let current = $state('en')
 
