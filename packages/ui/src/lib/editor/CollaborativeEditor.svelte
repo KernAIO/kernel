@@ -62,6 +62,17 @@ interface Props {
    * has no upload surface and a picture is stored by file id rather than by URL.
    */
   pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
+  /**
+   * Opens the host's page picker for the two macros that repeat another page — include page and
+   * excerpt include. Without it those two entries are not offered, for the same reason the Image
+   * entry is not: a macro with no page id draws an empty frame for every reader.
+   */
+  pickPage?: () => Promise<{ pageId: string } | null>
+  /**
+   * The title of a page a macro names, for the editor's own card. Resolved live, never stored — a
+   * title cached in the document outlives the permission that allowed it.
+   */
+  macroPageLabel?: (pageId: string) => string | null
   /** The heading outline, as it changes. Only fires with `page`. */
   onOutline?: (entries: PageOutlineEntry[]) => void
   /**
@@ -97,6 +108,8 @@ const {
   page = false,
   pageSource,
   pickImage,
+  pickPage,
+  macroPageLabel,
   onOutline,
   onpeers,
   onstatus,
@@ -298,6 +311,8 @@ onMount(() => {
           mentionSource,
           pageSource,
           pickImage,
+          pickPage,
+          macroPageLabel,
           lowlight,
           onOutline,
           onSuggest: onPersonSuggest,

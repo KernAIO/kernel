@@ -375,6 +375,189 @@
 }
 
 /*
+ * The macros.
+ *
+ * One frame for all five reading macros, because they are the same thing to a reader: a boxed
+ * region of the page whose contents came from somewhere else. Distinguishing them by colour would
+ * say something about them that is not true — what differs is where they read from, not how much
+ * they matter.
+ */
+.kern-prose .kern-macro {
+  margin: 0.8em 0;
+  padding: 8px 12px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-surface-raised);
+}
+/*
+ * A macro that resolved to nothing says so, rather than leaving a box a reader reads as broken.
+ * Muted with a *colour*, never with opacity: `opacity` fades the text against the page and a row at
+ * 0.5 is unreadable whatever its token says.
+ */
+.kern-prose .kern-macro-empty {
+  margin: 0;
+  color: var(--kern-ink-500);
+  font-size: 0.92em;
+}
+.kern-prose .kern-macro-pages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kern-prose .kern-macro-pages ul {
+  /* A nested level, indented on the side the text runs from. */
+  margin: 0;
+  padding-inline-start: 1.1em;
+  list-style: none;
+}
+.kern-prose .kern-macro-pages li {
+  margin: 0.15em 0;
+}
+.kern-prose .kern-macro-pages .kern-macro-icon {
+  margin-inline-end: 6px;
+}
+.kern-prose .kern-macro-pages .kern-macro-excerpt,
+.kern-prose .kern-macro-meta {
+  margin: 0.1em 0 0;
+  color: var(--kern-ink-500);
+  font-size: 0.9em;
+}
+/* The card the *editor* draws for an atom macro: the question, never the answer. */
+.kern-prose .kern-macro-card {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  cursor: default;
+  user-select: none;
+}
+.kern-prose .kern-macro-name {
+  font-weight: 600;
+  color: var(--kern-ink-800);
+}
+.kern-prose .kern-macro-detail {
+  color: var(--kern-ink-500);
+  font-size: 0.9em;
+}
+/* The title of an included page, so a reader can tell where the prose under it came from. */
+.kern-prose .kern-macro-source {
+  display: block;
+  margin-block-end: 0.4em;
+  font-weight: 600;
+  color: var(--kern-ink-700);
+}
+
+/*
+ * The excerpt — a region of *this* page other pages may repeat.
+ *
+ * Marked rather than boxed: it is ordinary prose that happens to be quotable, and drawing a panel
+ * around it would change how the page reads for every reader in order to tell the writer something.
+ * A dotted stripe is enough, and `data-hidden` is what removes the prose from this page entirely
+ * for a source page whose only job is to be quoted.
+ */
+.kern-prose .kern-excerpt {
+  margin: 0.6em 0;
+  padding-inline-start: 0.9em;
+  border-inline-start: 2px dotted var(--kern-border-muted);
+}
+.kern-prose .kern-excerpt[data-hidden="true"] {
+  display: none;
+}
+
+/*
+ * The expand — the toggle's sibling, boxed so the two are told apart at a glance.
+ *
+ * See the note on `Expand` in `nodes/macros.ts` for why both exist: an expand's open state is a
+ * decision the writer stored, a toggle's is the reader's own.
+ */
+.kern-prose .kern-expand {
+  margin: 0.8em 0;
+  padding: 6px 12px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-surface-raised);
+}
+.kern-prose .kern-expand > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--kern-ink-800);
+  list-style: none;
+  border-radius: var(--kern-r-xs);
+}
+.kern-prose .kern-expand > summary::-webkit-details-marker {
+  display: none;
+}
+.kern-prose .kern-expand > summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-inline-end: 6px;
+  color: var(--kern-ink-400);
+  transition: transform var(--kern-dur-fast) var(--kern-ease-out);
+}
+.kern-prose .kern-expand[open] > summary::before {
+  transform: rotate(90deg);
+}
+[dir="rtl"] .kern-prose .kern-expand > summary::before {
+  transform: rotate(180deg);
+}
+[dir="rtl"] .kern-prose .kern-expand[open] > summary::before {
+  transform: rotate(90deg);
+}
+.kern-prose .kern-expand > summary:focus-visible {
+  outline: 2px solid var(--kern-ring);
+  outline-offset: 2px;
+}
+.kern-prose .kern-expand > div {
+  margin-block-start: 0.35em;
+}
+
+/*
+ * The status lozenge.
+ *
+ * One pair per tone in `STATUS_TONES`, closed on both sides exactly as the callout's are: the
+ * extension narrows an unknown tone to `neutral`, so a tone with no pair here renders undressed
+ * rather than falling back. `nodes/macros.test.ts` reads this file and fails when the two disagree.
+ *
+ * Every pair is ink-on-tint and every one of the ten was measured against the tint it sits on, in
+ * both themes. `--kern-success-ink` rather than `--kern-success` is the one that is not the obvious
+ * token: the obvious one is 4.08:1 on its own tint in the light theme, which is a word nobody with
+ * ordinary eyesight can read comfortably and exactly the defect a colour token cannot warn you about.
+ */
+.kern-prose .kern-status {
+  display: inline-block;
+  padding: 0.05em 0.5em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.5;
+  /* Uppercase would be a second, louder signal on top of the colour, and it mangles Persian. */
+  text-transform: none;
+  white-space: nowrap;
+  background: var(--kern-slate-tint);
+  color: var(--kern-slate);
+}
+.kern-prose .kern-status[data-status="neutral"] {
+  background: var(--kern-slate-tint);
+  color: var(--kern-slate);
+}
+.kern-prose .kern-status[data-status="info"] {
+  background: var(--kern-info-tint);
+  color: var(--kern-info);
+}
+.kern-prose .kern-status[data-status="success"] {
+  background: var(--kern-success-tint);
+  color: var(--kern-success-ink);
+}
+.kern-prose .kern-status[data-status="warning"] {
+  background: var(--kern-warning-tint);
+  color: var(--kern-warning);
+}
+.kern-prose .kern-status[data-status="danger"] {
+  background: var(--kern-danger-tint);
+  color: var(--kern-danger);
+}
+
+/*
  * A link to another page, drawn differently from a link off the site: the wiki is full of both,
  * and knowing which one you are about to follow is the point.
  */
@@ -470,11 +653,13 @@
  * The marker goes with it: a triangle that cannot be clicked is noise on a printout.
  */
 @media print {
-  .kern-prose .kern-toggle > div {
+  .kern-prose .kern-toggle > div,
+  .kern-prose .kern-expand > div {
     display: block !important;
     content-visibility: visible !important;
   }
-  .kern-prose .kern-toggle > summary::before {
+  .kern-prose .kern-toggle > summary::before,
+  .kern-prose .kern-expand > summary::before {
     content: none;
   }
   .kern-prose .kern-table-wrap {

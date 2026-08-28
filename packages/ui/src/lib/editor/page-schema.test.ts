@@ -30,6 +30,8 @@ const everything = () =>
     onSlashSuggest: () => {},
     onSuggestKey: () => false,
     pickImage: async () => null,
+    pickPage: async () => ({ pageId: '01920000-0000-7000-8000-00000000000a' }),
+    macroPageLabel: () => 'A page',
     lowlight: createLowlight(common),
     document: new Y.Doc(),
     // Never called: `render` runs when the plugin gets a view, and this test never makes one.

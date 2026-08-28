@@ -18,6 +18,16 @@ import type { SuggestionProps } from '@tiptap/suggestion'
 import type { createLowlight } from 'lowlight'
 import type { Doc as YDoc } from 'yjs'
 import { Callout } from './nodes/callout.js'
+import {
+  Contributors,
+  Excerpt,
+  ExcerptInclude,
+  Expand,
+  IncludePage,
+  PageChildren,
+  RecentlyUpdated,
+  StatusLozenge,
+} from './nodes/macros.js'
 import { PAGE_DOC_NODES, PAGE_HEADING_LEVELS } from './page-doc.js'
 import type { MentionCandidate, SuggestionState } from './schema.js'
 import { SlashMenu, type SlashSuggestionState } from './slash.js'
@@ -76,6 +86,21 @@ export interface PageSchemaOptions {
    * package has no upload surface, and an image node without a `fileId` is a gap on both sides.
    */
   pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
+  /**
+   * Supply to make the `/` menu's macro entries that name another page reachable — include page and
+   * excerpt include. It opens the host's own page picker, exactly as `pickImage` opens its file
+   * picker: this package cannot search pages, and a macro with no page id renders as an empty frame
+   * on both sides.
+   */
+  pickPage?: () => Promise<{ pageId: string } | null>
+  /**
+   * The title of a page a macro names, for the editor's card only — never stored in the document.
+   *
+   * Resolved live by the host, in the writer's own session, through an API that has already checked
+   * they may see the page. Without it a macro card says what it is without saying which page, which
+   * is the honest fallback: a cached title outlives the permission that allowed it.
+   */
+  macroPageLabel?: (pageId: string) => string | null
   /** Consulted while either menu is open; return true to swallow the key. */
   onSuggestKey?: (event: KeyboardEvent) => boolean
   /** `createLowlight(common)`, when the caller is willing to pay for syntax highlighting. */
@@ -115,7 +140,10 @@ export interface PageOutlineEntry {
  * heading. `doc` and `text` cannot carry attributes, and the inline leaves have nothing to link to.
  */
 const ID_TYPES = PAGE_DOC_NODES.filter(
-  (name) => !(['doc', 'text', 'hardBreak', 'mention', 'pageMention'] as readonly string[]).includes(name),
+  (name) =>
+    !(['doc', 'text', 'hardBreak', 'mention', 'pageMention', 'statusLozenge'] as readonly string[]).includes(
+      name,
+    ),
 ) as unknown as string[]
 
 /** Alignments a table cell may declare, closed so a document string never reaches a style attribute. */
@@ -243,6 +271,19 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
     DetailsSummary,
     DetailsContent,
     Callout,
+    /*
+     * The eight macros. Unconditional like everything else that carries a node: `pageLabel` only
+     * changes what the editor's own card says about a macro, never what the document holds, so a
+     * page written on a surface that resolves titles opens identically on one that does not.
+     */
+    PageChildren.configure({ pageLabel: options.macroPageLabel }),
+    Excerpt,
+    ExcerptInclude.configure({ pageLabel: options.macroPageLabel }),
+    IncludePage.configure({ pageLabel: options.macroPageLabel }),
+    RecentlyUpdated,
+    Contributors,
+    StatusLozenge,
+    Expand,
     Mention.configure({
       // The class the renderer emits, so a mention looks the same being written as being read.
       HTMLAttributes: { class: 'kern-mention' },
@@ -292,6 +333,7 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
       onSuggest: options.onSlashSuggest,
       onKey: options.onSuggestKey,
       pickImage: options.pickImage,
+      pickPage: options.pickPage,
       // The `+` entry types a `+`, which is only useful where something answers it.
       pageMentions: Boolean(options.pageSource),
     }),
@@ -314,14 +356,36 @@ export function buildPageExtensions(options: PageSchemaOptions = {}) {
 
 export { CALLOUT_TONES, type CalloutTone, calloutTone } from './nodes/callout.js'
 export {
+  CHILDREN_SORTS,
+  type ChildrenSort,
+  childrenSort,
+  DEFAULT_CHILDREN_SORT,
+  DEFAULT_RECENT_SCOPE,
+  DEFAULT_STATUS_TONE,
+  MAX_CHILDREN_DEPTH,
+  MAX_MACRO_ROWS,
+  MAX_STATUS_LABEL,
+  macroCount,
+  macroFlag,
+  macroPageId,
+  RECENT_SCOPES,
+  type RecentScope,
+  recentScope,
+  STATUS_TONES,
+  type StatusTone,
+  statusTone,
+} from './nodes/macros.js'
+export {
   PAGE_DOC_MARKS,
   PAGE_DOC_NODES,
+  PAGE_DOC_READING_MACROS,
   PAGE_HEADING_LEVELS,
   type PageDoc,
   type PageDocMark,
   type PageDocMarkType,
   type PageDocNode,
   type PageDocNodeType,
+  type PageDocReadingMacro,
 } from './page-doc.js'
 export {
   filterSlashItems,

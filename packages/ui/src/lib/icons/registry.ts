@@ -28,8 +28,11 @@ import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down'
 import Circle from '@lucide/svelte/icons/circle'
 import CircleAlert from '@lucide/svelte/icons/circle-alert'
 import CircleCheck from '@lucide/svelte/icons/circle-check'
+import CircleDashed from '@lucide/svelte/icons/circle-dashed'
+import CircleDot from '@lucide/svelte/icons/circle-dot'
 import CircleHelp from '@lucide/svelte/icons/circle-help'
 import CircleUser from '@lucide/svelte/icons/circle-user'
+import CircleX from '@lucide/svelte/icons/circle-x'
 import ClipboardList from '@lucide/svelte/icons/clipboard-list'
 import Clock from '@lucide/svelte/icons/clock'
 import Code from '@lucide/svelte/icons/code'
@@ -44,6 +47,7 @@ import Ellipsis from '@lucide/svelte/icons/ellipsis'
 import ExternalLink from '@lucide/svelte/icons/external-link'
 import Eye from '@lucide/svelte/icons/eye'
 import EyeOff from '@lucide/svelte/icons/eye-off'
+import FileInput from '@lucide/svelte/icons/file-input'
 import FileText from '@lucide/svelte/icons/file-text'
 import Filter from '@lucide/svelte/icons/filter'
 import Flag from '@lucide/svelte/icons/flag'
@@ -59,6 +63,7 @@ import Heading3 from '@lucide/svelte/icons/heading-3'
 import Heading4 from '@lucide/svelte/icons/heading-4'
 import Heading5 from '@lucide/svelte/icons/heading-5'
 import Heading6 from '@lucide/svelte/icons/heading-6'
+import History from '@lucide/svelte/icons/history'
 import House from '@lucide/svelte/icons/house'
 import Image from '@lucide/svelte/icons/image'
 import Inbox from '@lucide/svelte/icons/inbox'
@@ -75,6 +80,7 @@ import List from '@lucide/svelte/icons/list'
 import ListChecks from '@lucide/svelte/icons/list-checks'
 import ListCollapse from '@lucide/svelte/icons/list-collapse'
 import ListOrdered from '@lucide/svelte/icons/list-ordered'
+import ListTree from '@lucide/svelte/icons/list-tree'
 import Loader from '@lucide/svelte/icons/loader-circle'
 import Lock from '@lucide/svelte/icons/lock'
 import LockOpen from '@lucide/svelte/icons/lock-open'
@@ -130,6 +136,7 @@ import Sun from '@lucide/svelte/icons/sun'
 import Table from '@lucide/svelte/icons/table'
 import Tag from '@lucide/svelte/icons/tag'
 import Target from '@lucide/svelte/icons/target'
+import TextQuote from '@lucide/svelte/icons/text-quote'
 import Timer from '@lucide/svelte/icons/timer'
 import ToggleLeft from '@lucide/svelte/icons/toggle-left'
 import Trash2 from '@lucide/svelte/icons/trash-2'
@@ -311,6 +318,20 @@ const registry: Record<string, IconComponent> = {
   'scan-line': ScanLine,
   truck: Truck,
   warehouse: Warehouse,
+  /*
+   * The page macros — the `/` menu draws one row per macro and a name that is not in this map draws
+   * a blank square, silently. Nothing type-checks a name (it is a string), and this package has no
+   * check over its own icon names the way `module-quire` and `shell` have over theirs, so all seven
+   * of these shipped as blank rows in the block menu. `circle-dashed` through `circle-x` are the
+   * five status tones, which have to be told apart at a glance or the menu is five identical rows.
+   */
+  'circle-dashed': CircleDashed,
+  'circle-dot': CircleDot,
+  'circle-x': CircleX,
+  'file-input': FileInput,
+  history: History,
+  'list-tree': ListTree,
+  'text-quote': TextQuote,
 }
 
 export function registerIcons(more: Record<string, IconComponent>) {

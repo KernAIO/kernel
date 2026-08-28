@@ -6,6 +6,7 @@ import { t } from '../i18n.svelte.js'
 import '../common-messages.js'
 import './messages.js'
 import { CALLOUT_TONES } from './nodes/callout.js'
+import { STATUS_TONES } from './nodes/macros.js'
 import { PAGE_HEADING_LEVELS } from './page-doc.js'
 
 /**
@@ -50,6 +51,12 @@ export interface SlashOptions {
    * upload surface, and an image node with no `fileId` renders as a gap on both sides of the wire.
    */
   pickImage?: () => Promise<{ fileId: string; alt?: string } | null>
+  /**
+   * Supply to make the two macros that name another page reachable — include page, excerpt include.
+   * Opens the host's own page picker, for the same reason `pickImage` does: this package cannot
+   * search pages, and a macro with no page id draws an empty frame on both sides of the wire.
+   */
+  pickPage?: () => Promise<{ pageId: string } | null>
   /** Whether `+` page mentions are wired up; the entry that types one is hidden when they are not. */
   pageMentions?: boolean
 }
@@ -99,6 +106,15 @@ const CALLOUT_ICONS: Record<string, string> = {
   danger: 'triangle-alert',
 }
 
+/** One icon per lozenge colour, so the menu reads as five states rather than five identical rows. */
+const STATUS_ICONS: Record<string, string> = {
+  neutral: 'circle-dashed',
+  info: 'circle-dot',
+  success: 'circle-check',
+  warning: 'circle-alert',
+  danger: 'circle-x',
+}
+
 /**
  * The whole list, translated, in the order it is offered.
  *
@@ -110,6 +126,7 @@ export function slashItems(options: SlashOptions = {}): SlashItem[] {
   const lists = t('editor.group_lists')
   const blocks = t('editor.group_blocks')
   const inserts = t('editor.group_insert')
+  const macros = t('editor.group_macros')
 
   const items: SlashItem[] = [
     {
@@ -209,6 +226,73 @@ export function slashItems(options: SlashOptions = {}): SlashItem[] {
       keywords: ['mention', 'person', 'people', 'user'],
       run: (e) => e.chain().focus().insertContent('@').run(),
     },
+
+    /*
+     * The macros. Six of the eight are here unconditionally; the two that name another page are
+     * added below, because they need a picker only the host can open.
+     *
+     * `expand` sits beside the toggle deliberately and its keywords say so — somebody typing
+     * "collapse" should be offered both and see which is which from the label, rather than find one
+     * of them and never learn the other exists.
+     */
+    {
+      id: 'pageChildren',
+      label: t('editor.macro_children'),
+      group: macros,
+      icon: 'list-tree',
+      keywords: ['children', 'child', 'pages', 'index', 'contents', 'subpages'],
+      run: (e) => e.chain().focus().setPageChildren({ pageId: null, depth: 1 }).run(),
+    },
+    {
+      id: 'excerpt',
+      label: t('editor.macro_excerpt'),
+      group: macros,
+      icon: 'text-quote',
+      keywords: ['excerpt', 'summary', 'extract', 'snippet'],
+      run: (e) => e.chain().focus().setExcerpt().run(),
+    },
+    {
+      id: 'recentlyUpdated',
+      label: t('editor.macro_recently_updated'),
+      group: macros,
+      icon: 'history',
+      keywords: ['recent', 'updated', 'changes', 'activity', 'latest'],
+      run: (e) => e.chain().focus().setRecentlyUpdated({ scope: 'space', limit: 10 }).run(),
+    },
+    {
+      id: 'contributors',
+      label: t('editor.macro_contributors'),
+      group: macros,
+      icon: 'users',
+      keywords: ['contributors', 'authors', 'people', 'byline', 'credits'],
+      run: (e) => e.chain().focus().setContributors({ limit: 10 }).run(),
+    },
+    {
+      id: 'expand',
+      label: t('editor.macro_expand'),
+      group: macros,
+      icon: 'chevrons-up-down',
+      keywords: ['expand', 'section', 'collapse', 'accordion', 'details'],
+      run: (e) => e.chain().focus().setExpand().run(),
+    },
+    ...STATUS_TONES.map((tone) => ({
+      id: `statusLozenge:${tone}`,
+      label: t(`editor.status_${tone}`),
+      group: macros,
+      icon: STATUS_ICONS[tone] ?? 'circle-dashed',
+      keywords: ['status', 'lozenge', 'badge', 'label', 'state', tone],
+      /*
+       * The tone's own word as the starting label, so the lozenge says something the moment it is
+       * inserted — and the text is ordinary editable content, so the first thing somebody types
+       * replaces it.
+       */
+      run: (e: Editor) =>
+        e
+          .chain()
+          .focus()
+          .setStatusLozenge(tone, t(`editor.status_${tone}`))
+          .run(),
+    })),
   ]
 
   if (options.pageMentions) {
@@ -220,6 +304,43 @@ export function slashItems(options: SlashOptions = {}): SlashItem[] {
       keywords: ['page', 'link', 'wiki'],
       run: (e) => e.chain().focus().insertContent('+').run(),
     })
+  }
+
+  /*
+   * The two macros that repeat another page. Offered only where the host can open a picker, for the
+   * same reason the Image entry is: inserting one with no page id makes an empty frame, and a menu
+   * entry whose only outcome is an empty frame is worse than no entry.
+   */
+  const pickPage = options.pickPage
+  if (pickPage) {
+    items.push(
+      {
+        id: 'includePage',
+        label: t('editor.macro_include_page'),
+        group: macros,
+        icon: 'file-input',
+        keywords: ['include', 'embed', 'page', 'transclude', 'reuse'],
+        run: (e) => {
+          void pickPage().then((picked) => {
+            if (!picked) return
+            e.chain().focus().setIncludePage({ pageId: picked.pageId, showTitle: true }).run()
+          })
+        },
+      },
+      {
+        id: 'excerptInclude',
+        label: t('editor.macro_excerpt_include'),
+        group: macros,
+        icon: 'quote',
+        keywords: ['excerpt', 'include', 'summary', 'reuse', 'extract'],
+        run: (e) => {
+          void pickPage().then((picked) => {
+            if (!picked) return
+            e.chain().focus().setExcerptInclude({ pageId: picked.pageId, showTitle: true }).run()
+          })
+        },
+      },
+    )
   }
 
   const pickImage = options.pickImage

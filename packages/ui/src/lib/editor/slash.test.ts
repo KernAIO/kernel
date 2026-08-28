@@ -15,7 +15,11 @@ import { filterSlashItems, SLASH_STRUCTURAL_NODES, slashInsertableNodes, slashIt
  */
 
 /** Everything switched on, which is what makes the coverage claim a claim about the whole schema. */
-const everything = { pageMentions: true, pickImage: async () => null }
+const everything = {
+  pageMentions: true,
+  pickImage: async () => null,
+  pickPage: async () => ({ pageId: '01920000-0000-7000-8000-00000000000a' }),
+}
 
 describe('the slash menu', () => {
   it('can insert every node the page schema holds', () => {
@@ -37,7 +41,7 @@ describe('the slash menu', () => {
     expect(SLASH_STRUCTURAL_NODES.filter((n) => insertable.has(n))).toEqual([])
   })
 
-  /** The two entries that depend on the host being able to answer them. */
+  /** The entries that depend on the host being able to answer them. */
   it('offers the image and page-link entries only when the host can serve them', () => {
     const bare = slashItems().map((i) => i.id)
     expect(bare).not.toContain('image')
@@ -45,6 +49,30 @@ describe('the slash menu', () => {
     const full = slashItems(everything).map((i) => i.id)
     expect(full).toContain('image')
     expect(full).toContain('pageMention')
+  })
+
+  /**
+   * The two macros that name another page need a picker, exactly as the Image entry does.
+   *
+   * Inserting one with no page id makes a frame that resolves to nothing, on every surface and for
+   * every reader — so an entry offered without a picker behind it has one outcome and it is a
+   * disappointment.
+   */
+  it('offers include-page and excerpt-include only when a page picker is supplied', () => {
+    const bare = slashItems({ pageMentions: true }).map((i) => i.id)
+    expect(bare).not.toContain('includePage')
+    expect(bare).not.toContain('excerptInclude')
+    const full = slashItems(everything).map((i) => i.id)
+    expect(full).toContain('includePage')
+    expect(full).toContain('excerptInclude')
+  })
+
+  /** The six macros that need nothing from the host are always there. */
+  it('always offers the macros that resolve without a picker', () => {
+    const bare = slashItems().map((i) => i.id)
+    for (const id of ['pageChildren', 'excerpt', 'recentlyUpdated', 'contributors', 'expand'])
+      expect(bare, `${id} should not need anything from the host`).toContain(id)
+    expect(bare.some((id) => id.startsWith('statusLozenge:'))).toBe(true)
   })
 
   it('matches on the label and on the keywords behind it', () => {
