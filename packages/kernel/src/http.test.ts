@@ -16,8 +16,11 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { type UnscopedAccess, UnscopedAccessSignal } from './access-signal.js'
+import { NO_RESPONDERS, type ProcedureBroker } from './call.js'
+import { type Entitlement, Entitlements } from './entitlements.js'
 import { httpStatusFor, KernError } from './errors.js'
 import {
+  allowWhileSuspended,
   createHttpServer,
   DEFAULT_TRUSTED_PROXIES,
   kernErrorToORPC,
@@ -63,6 +66,19 @@ const admin: Principal = {
   memberships: [],
 }
 
+/** Another Kern service calling in. Internal traffic is not the customer's subscription. */
+const service: Principal = {
+  kind: 'service',
+  userId: null,
+  email: null,
+  name: null,
+  locale: 'en',
+  instanceAdmin: false,
+  service: 'chat',
+  memberships: [],
+  permissionVersion: 0,
+}
+
 const Input = z.object({ workspaceId: z.string() })
 const Output = z.object({ ok: z.boolean() })
 
@@ -90,6 +106,24 @@ const router = () => ({
       .input(Input)
       .output(Output)
       .handler(async () => ({ ok: true })),
+    /**
+     * A declared `GET`. Every call still arrives over the wire as a POST on the RPC surface, which
+     * is the whole reason the read-only gate reads the contract instead of the request.
+     */
+    read: o
+      .use(workspaceScoped('demo'))
+      .route({ method: 'GET', path: '/widgets/read' })
+      .input(Input)
+      .output(Output)
+      .handler(async () => ({ ok: true })),
+    /** The shape billing's `checkout`/`portal` and core's export take: a write that suspension may not eat. */
+    pay: o
+      .use(workspaceScoped('demo'))
+      .use(allowWhileSuspended)
+      .route({ method: 'POST', path: '/widgets/pay' })
+      .input(Input)
+      .output(Output)
+      .handler(async () => ({ ok: true })),
   },
 })
 
@@ -97,6 +131,28 @@ const demoModule = defineServerModule({
   definition: defineModule({ id: 'demo', name: 'Demo', version: '0.0.0' }),
   router,
 })
+
+/**
+ * A real `Entitlements` over a broker that answers the way each instance shape does.
+ *
+ * - `undefined` — nobody hosts `billing.entitlements.get`, so `mightAnswer` is false and no call is
+ *   made at all. Every self-hosted Kern, on every request.
+ * - `'unreachable'` — a biller exists and fails in a way that is not "nobody is listening", which is
+ *   what `source: 'unavailable'` means.
+ * - an object — a billing module answered; the object is its answer.
+ */
+function entitlementsOver(billing: Partial<Entitlement> | 'unreachable' | undefined): Entitlements {
+  const broker = {
+    mightAnswer: () => billing !== undefined,
+    call: async () => {
+      if (billing === 'unreachable')
+        throw Object.assign(new Error('the billing module timed out'), { reason: 'RPC_TIMEOUT' })
+      if (billing === undefined) throw Object.assign(new Error('no responders'), { reason: NO_RESPONDERS })
+      return billing
+    },
+  } as unknown as ProcedureBroker
+  return new Entitlements(broker, service, 30_000)
+}
 
 /**
  * Only the handful of kernel surfaces `createHttpServer` touches. A real kernel would need Postgres,
@@ -112,6 +168,11 @@ function stubKernel(opts: {
   serviceTokens?: string[]
   crossings?: UnscopedAccess[]
   trustedProxies?: string
+  /**
+   * What the billing module answers, if there is one. `undefined` means nothing bills — a
+   * self-hosted Kern, which is the default every other test in this file runs under.
+   */
+  billing?: Partial<Entitlement> | 'unreachable'
 }): Kernel {
   const noop = () => {}
   const signal = new UnscopedAccessSignal()
@@ -133,6 +194,9 @@ function stubKernel(opts: {
       verifyService: async (token: string) => ((opts.serviceTokens ?? []).includes(token) ? 'chat' : null),
     },
     apiBudget: { check: async () => opts.budget ?? { ok: true } },
+    // the real class, over a stub broker: `source` and the fall-open branches are the thing under
+    // test, and a stubbed `Entitlements` would only assert that the stub was written correctly
+    entitlements: entitlementsOver(opts.billing),
     unscopedAccess: signal,
     // the request hook asks on every request whether the instance is closed for an upgrade
     maintenance: { active: async () => null },
@@ -164,6 +228,10 @@ const rest = (server: Server, path: string) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ workspaceId: WORKSPACE }),
   })
+
+/** GET through the OpenAPI surface, the way a declared read is actually called over REST. */
+const restGet = (server: Server, path: string) =>
+  fetch(`${server.url}/api/demo${path}?workspaceId=${WORKSPACE}`)
 
 /** POST through the oRPC binary protocol the SvelteKit app talks over `@kernhq/sdk`. */
 const rpc = (server: Server, procedure: string) =>
@@ -573,5 +641,115 @@ describe('a module http route', () => {
       body: JSON.stringify({ json: { workspaceId: WORKSPACE }, meta: [] }),
     })
     expect(res.status).toBe(401)
+  })
+})
+
+/**
+ * A suspended workspace is read-only, and that is enforced here or nowhere.
+ *
+ * `Entitlements.requireActive` shipped with no caller anywhere in Kern, so `active: false` reached
+ * a banner on the billing screen and nothing else — a workspace that had stopped paying, or had
+ * been suspended by an operator, kept every write it ever had. ADR 0003 §6 is the contract these
+ * assertions hold the gate to: writes stop, reading and exporting never do, and nothing is deleted.
+ *
+ * The three fall-open cases matter as much as the refusal. Getting one of them wrong turns every
+ * self-hosted instance, or a five-minute billing outage, into a read-only product.
+ */
+describe('a workspace whose subscription no longer entitles it', () => {
+  const SUSPENDED = { active: false, planName: 'Team' } as Partial<Entitlement>
+
+  let suspended: Server
+  let cancelledService: Server
+  let selfHosted: Server
+  let billerDown: Server
+  let paying: Server
+
+  beforeAll(async () => {
+    suspended = await listen(stubKernel({ moduleEnabled: true, billing: SUSPENDED }), member)
+    cancelledService = await listen(stubKernel({ moduleEnabled: true, billing: SUSPENDED }), service)
+    // no billing module anywhere: `mightAnswer` is false and nothing is even asked
+    selfHosted = await listen(stubKernel({ moduleEnabled: true }), member)
+    billerDown = await listen(stubKernel({ moduleEnabled: true, billing: 'unreachable' }), member)
+    paying = await listen(
+      stubKernel({ moduleEnabled: true, billing: { active: true, planName: 'Team' } }),
+      member,
+    )
+  })
+  afterAll(async () => {
+    await Promise.all([
+      suspended?.app.close(),
+      cancelledService?.app.close(),
+      selfHosted?.app.close(),
+      billerDown?.app.close(),
+      paying?.app.close(),
+    ])
+  })
+
+  it('refuses a write, and says which plan it is about', async () => {
+    const res = await rest(suspended, '/widgets/get')
+    expect(res.status).toBe(httpStatusFor('CONFLICT'))
+    const body = (await res.json()) as { data?: { reason?: string; plan?: string }; message?: string }
+    // an honest reason code, so the shell can offer the one action that fixes it rather than a
+    // generic failure toast
+    expect(body.data?.reason).toBe('billing.subscription.inactive')
+    expect(body.data?.plan).toBe('Team')
+  })
+
+  it('refuses it over the RPC surface with the same code', async () => {
+    const res = await rpc(suspended, 'widgets/get')
+    expect(res.status).toBe(httpStatusFor('CONFLICT'))
+    const body = (await res.json()) as { json?: { code?: string; data?: { reason?: string } } }
+    expect(body.json?.code).toBe('CONFLICT')
+    expect(body.json?.data?.reason).toBe('billing.subscription.inactive')
+  })
+
+  it('still serves a read over REST', async () => {
+    const res = await restGet(suspended, '/widgets/read')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true })
+  })
+
+  /**
+   * The assertion the whole design turns on. `/rpc/*` is POST for everything, reads included, so a
+   * gate keyed on the request's method would refuse this — and a suspended workspace would be
+   * unreadable in the app while remaining readable through curl.
+   */
+  it('still serves that same read over RPC, where the wire method is POST', async () => {
+    const res = await rpc(suspended, 'widgets/read')
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { json?: unknown }).json).toEqual({ ok: true })
+  })
+
+  it('lets a write marked `allowWhileSuspended` through — this is how a customer pays', async () => {
+    // billing's `checkout` and `portal` are POSTs whose entire purpose is to end the suspension,
+    // and core's export is a POST the ADR promises always works
+    const res = await rest(suspended, '/widgets/pay')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true })
+  })
+
+  it('does not exempt the procedures beside it', async () => {
+    // the marker is per-procedure on purpose: `/widgets/pay` being exempt must not quietly cover
+    // everything else in the same router
+    expect((await rest(suspended, '/widgets/get')).status).toBe(httpStatusFor('CONFLICT'))
+  })
+
+  it('leaves a service principal alone', async () => {
+    const res = await rest(cancelledService, '/widgets/get')
+    expect(res.status).toBe(200)
+  })
+
+  it('never refuses anything when nothing bills — every self-hosted instance', async () => {
+    expect((await rest(selfHosted, '/widgets/get')).status).toBe(200)
+    expect((await rpc(selfHosted, 'widgets/get')).status).toBe(200)
+  })
+
+  it('never refuses anything when the biller cannot be reached', async () => {
+    // a billing outage must not turn a paying customer's workspace read-only
+    expect((await rest(billerDown, '/widgets/get')).status).toBe(200)
+  })
+
+  it('leaves a workspace that is paying exactly as it was', async () => {
+    expect((await rest(paying, '/widgets/get')).status).toBe(200)
   })
 })

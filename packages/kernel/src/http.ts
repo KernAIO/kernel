@@ -37,13 +37,75 @@ export const authed = o.middleware(async ({ context, next }) => {
   if (context.principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
   return next()
 })
+
+/**
+ * Contract methods that only read, and are therefore reachable in a suspended workspace.
+ *
+ * **Read off the contract, never off the wire.** Every oRPC call arrives over the binary protocol
+ * as `POST /api/<module>/rpc/...`, so a gate that asked the HTTP request what method it was would
+ * classify every read in Kern as a write and make a suspended workspace unreadable — the exact
+ * opposite of what suspension means. `procedure['~orpc'].route.method` is what the module declared,
+ * and it is the same value whether the call came over RPC or REST.
+ *
+ * A procedure with no declared method counts as a write. That is the safe direction: a new
+ * procedure is refused in a suspended workspace until somebody says otherwise, rather than being
+ * quietly exempt.
+ */
+const READING_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+/** Marks the middleware below, so `workspaceScoped` can find it in a procedure's middleware list. */
+const READ_ONLY_SAFE = Symbol.for('kern.http.readOnlySafe')
+
+/**
+ * Let one writing procedure through in a suspended workspace.
+ *
+ * A suspended workspace is read-only, and two kinds of write have to survive that or suspension
+ * becomes a trap:
+ *
+ * - **Paying.** `billing.subscription.checkout` and `.portal` are both `POST`, and they are the two
+ *   procedures whose entire purpose is to end the suspension. Gating them means the customer who is
+ *   trying to give you money is the one person who cannot, and only an operator can let them out.
+ * - **Leaving.** ADR 0003 §6: a customer who has stopped paying "can always still read and export
+ *   what is theirs". An export is a job somebody starts, so it is a `POST` that must not be gated.
+ *
+ * Put it on the procedure, beside `requires(...)`:
+ *
+ * ```ts
+ * checkout: scoped.subscription.checkout
+ *   .use(allowWhileSuspended)
+ *   .use(requires(BILLING_PERMISSIONS.manage))
+ *   .handler(...)
+ * ```
+ *
+ * Order does not matter — `workspaceScoped` reads the procedure's whole middleware list, not the
+ * ones that have run so far — but the exemption is deliberately per-procedure and never per-router:
+ * a router-level exemption would silently cover every procedure added to that router afterwards.
+ *
+ * It exempts a procedure from the **subscription** gate only. Membership, permissions, capabilities
+ * and the per-workspace API budget all still apply.
+ */
+export const allowWhileSuspended = Object.defineProperty(
+  o.middleware(async ({ next }) => next()),
+  READ_ONLY_SAFE,
+  { value: true },
+)
+
+/** Whether this procedure may run in a workspace whose subscription no longer entitles it. */
+function reachableWhileSuspended(procedure: {
+  '~orpc': { route: { method?: string }; middlewares: readonly unknown[] }
+}): boolean {
+  const def = procedure['~orpc']
+  if (READING_METHODS.has(def.route.method ?? 'POST')) return true
+  return def.middlewares.some((m) => (m as Record<symbol, unknown>)[READ_ONLY_SAFE] === true)
+}
+
 /**
  * Middleware factory: require active membership in `input.workspaceId` and that `moduleId` is enabled there.
  * Input is typed `unknown` so the middleware can be applied at router level, where oRPC cannot prove
  * every procedure's input shape; each procedure behind it must take `{ workspaceId }`.
  */
 export const workspaceScoped = (moduleId?: string) =>
-  o.middleware(async ({ context, next, path }, input) => {
+  o.middleware(async ({ context, next, path, procedure }, input) => {
     const { workspaceId } = input as { workspaceId: string }
     const { kernel, principal } = context
     if (principal.kind === 'anonymous') throw new ORPCError('UNAUTHORIZED')
@@ -90,6 +152,31 @@ export const workspaceScoped = (moduleId?: string) =>
         data: { module: moduleId },
         status: httpStatusFor('MODULE_DISABLED'),
       })
+    /**
+     * The one place a suspended workspace becomes read-only.
+     *
+     * `Entitlements.requireActive` existed for months with **no caller anywhere**, so `active:
+     * false` reached a banner on the billing screen and nothing else: a workspace whose
+     * subscription had been cancelled or suspended kept full write access, which is the thing
+     * suspension is for. ADR 0003 §6 says read and export always keep working, and that is what
+     * `reachableWhileSuspended` decides above.
+     *
+     * It **falls open** three ways, on purpose, because refusing a write for a billing reason that
+     * is not true is far worse than allowing one:
+     *
+     * - `source: 'none'` — nothing bills in this instance. Every self-hosted Kern, every request.
+     * - `source: 'unavailable'` — a biller exists and did not answer. A billing outage must never
+     *   turn a customer's workspace read-only.
+     * - a service principal — internal traffic is not the customer spending their subscription.
+     *
+     * The first two are already `active: true` in `UNLIMITED`, so `requireActive` would let them
+     * through on its own; asking `source` first says out loud that they are meant to, and is what a
+     * later change to `active` has to get past.
+     */
+    if (principal.kind !== 'service' && !reachableWhileSuspended(procedure)) {
+      const ent = await kernel.entitlements.of(workspaceId)
+      if (ent.source === 'plan') await kernel.entitlements.requireActive(workspaceId)
+    }
     return next({ context: { ...context, workspaceId } })
   })
 /**
