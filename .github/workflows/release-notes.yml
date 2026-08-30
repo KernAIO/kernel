@@ -57,7 +57,22 @@ jobs:
             echo "body<<NOTES_EOF"
             echo "Published since the last notes release:"
             echo
-            echo "$NEW_TAGS" | sed 's/^/- /'
+            # Each tag's own CHANGELOG.md section is the changelog a reader wants — not a bare
+            # version list. The tag is the state npm got; git show reads the file as of it.
+            echo "$NEW_TAGS" | while read -r TAG; do
+              NAME="${TAG#*/}"; NAME="${NAME%@*}"
+              VERSION="${TAG##*@}"
+              SECTION=$(git show "$TAG:packages/$NAME/CHANGELOG.md" 2>/dev/null \
+                | awk -v ver="$VERSION" 'BEGIN { p=0 } /^## / { if (p) exit; p = ($0 == "## " ver) } p' || true)
+              if [ -n "$SECTION" ]; then
+                echo "#### $TAG"
+                echo
+                echo "$SECTION"
+                echo
+              else
+                echo "- $TAG"
+              fi
+            done
             echo "NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 

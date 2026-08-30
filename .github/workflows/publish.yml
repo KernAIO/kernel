@@ -93,5 +93,42 @@ jobs:
           fi
 
           npm config set "//registry.npmjs.org/:_authToken=$NPM_TOKEN"
+          for d in packages/*/; do
+            # Remember what the registry had before publishing, so the changelog step below
+            # announces only the packages this run actually published, not ones it skipped.
+            PKG=$(node -p "require('./$d/package.json').name")
+            if [ "$(node -p "require('./$d/package.json').private === true")" = "true" ]; then continue; fi
+            npm view "$PKG" version 2>/dev/null > "/tmp/reg-${PKG#*/}" || echo none > "/tmp/reg-${PKG#*/}"
+          done
           pnpm changeset publish
           git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
+
+      # One release per published package, on the tag `changeset publish` just pushed
+      # (@kernhq/<pkg>@x.y.z), bodying on that package's new CHANGELOG.md section — the
+      # per-package changelog on the Releases tab, next to the daily notes-* digest. Idempotent:
+      # a tag that already has a release is left alone.
+      - name: Publish the changelogs as GitHub releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for d in packages/*/; do
+            PKG=$(node -p "require('./$d/package.json').name")
+            if [ "$(node -p "require('./$d/package.json').private === true")" = "true" ]; then continue; fi
+            VERSION=$(node -p "require('./$d/package.json').version")
+            BEFORE=$(cat "/tmp/reg-${PKG#*/}")
+            if [ "$VERSION" = "$BEFORE" ]; then
+              echo "Skipping $PKG — the registry already had $VERSION."
+              continue
+            fi
+            TAG="$PKG@$VERSION"
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG already exists — nothing to announce."
+              continue
+            fi
+            # The newest `## <version>` heading is the section for the version just published.
+            BODY=$(awk -v ver="$VERSION" 'BEGIN { p=0 } /^## / { if (p) exit; p = ($0 == "## " ver) } p' "$d/CHANGELOG.md")
+            [ -n "$BODY" ] || BODY="Version $VERSION — see the commits for what changed."
+            gh release create "$TAG" --title "$TAG" --notes "$BODY"
+          done
