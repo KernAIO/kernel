@@ -56,3 +56,5 @@ export async function createScratchDatabase(
     },
   }
 }
+
+export * from './permission-matrix.js'
