@@ -1,5 +1,12 @@
 # @kernhq/testing
 
+## 0.1.12
+
+### Patch Changes
+
+- ddbaa62: Add permission-matrix helpers (effectiveDefaultMatrix, permissionMatrixDiff) so modules can test
+  their declared permission defaults against a blessed role matrix.
+
 ## 0.1.11
 
 ### Patch Changes
