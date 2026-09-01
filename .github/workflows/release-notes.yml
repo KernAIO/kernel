@@ -34,8 +34,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          LAST=$(gh release list --repo "${{ github.repository }}" --limit 50 --json tagName,createdAt,isDraft \
+          LAST=$(gh release list --repo "${{ github.repository }}" --limit 300 --json tagName,createdAt,isDraft \
                  --jq '[.[] | select(.tagName | startswith("notes-"))] | sort_by(.createdAt) | last | .createdAt // empty')
+          LAST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 300 --json tagName,createdAt \
+                 --jq '[.[] | select(.tagName | startswith("notes-"))] | sort_by(.createdAt) | last | .tagName // empty')
 
           # Every package release is its own tag (`@kernhq/kernel@0.7.0`), pushed by publish.yml.
           # New means created after the last notes release — or every tag, the first time this runs.
@@ -44,6 +46,17 @@ jobs:
                        | awk -v since="$LAST" '$1 > since {print $2}')
           else
             NEW_TAGS=$(git for-each-ref --sort=creatordate --format='%(refname:short)' refs/tags/@kernhq/)
+          fi
+
+          # The creatordate window above is coarse: a tag pushed on the wrong side of the notes
+          # boundary was announced twice (kernel@0.9.1 appeared in two digests). The last notes
+          # release's body is the authority on what was already announced — drop anything it lists.
+          if [ -n "$LAST" ] && [ -n "$NEW_TAGS" ]; then
+            ANNOUNCED=$(gh release view "$LAST_TAG" --repo "${{ github.repository }}" --json body --jq .body \
+                        | grep -oE '@kernhq/[a-z0-9][a-z0-9._-]*@[0-9][0-9A-Za-z._-]*' | sort -u || true)
+            if [ -n "$ANNOUNCED" ]; then
+              NEW_TAGS=$(printf '%s\n' "$NEW_TAGS" | grep -vxF -f <(printf '%s\n' "$ANNOUNCED") || true)
+            fi
           fi
 
           if [ -z "$NEW_TAGS" ]; then
