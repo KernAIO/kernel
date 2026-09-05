@@ -148,7 +148,9 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
     bindings: (workspaceId, userId, groupIds, role) =>
       broker.call('core.authz.bindings', { workspaceId, userId, groupIds, role }, system),
   }
-  const authz = new Authz(null as unknown as AuthzStore, cache)
+  const authz = new Authz(null as unknown as AuthzStore, cache, (op, err) =>
+    log.warn({ err, op }, 'authz cache unavailable; computing without it'),
+  )
 
   kernel = {
     service: opts.service,

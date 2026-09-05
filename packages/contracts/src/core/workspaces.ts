@@ -49,6 +49,17 @@ export const WorkspaceSummary = Workspace.pick({
   unread: z.number().int().default(0),
   mentions: z.number().int().default(0),
   memberCount: z.number().int().optional(),
+  /**
+   * Set while the workspace is archived — which is also how a *scheduled deletion* looks, because
+   * `scheduleWorkspaceDeletion` archives immediately and the row is only purged when the 30 days
+   * are up. A client needs it to tell "this workspace is on its way out, here is the undo" from
+   * "this workspace is gone", and without it the summary could not say which.
+   *
+   * `.nullish()` rather than plain `.nullable()` on purpose: the output type of a required field
+   * breaks every place that *constructs* a summary, in repositories that publish on their own
+   * cadence. Optional keeps them compiling while core always populates it.
+   */
+  archivedAt: Timestamp.nullish(),
 })
 export type WorkspaceSummary = z.infer<typeof WorkspaceSummary>
 

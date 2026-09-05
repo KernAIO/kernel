@@ -35,7 +35,35 @@ export class Authz {
   constructor(
     private readonly store: AuthzStore | null,
     private readonly cache?: AuthzCache,
+    /** Told about a cache that failed, so an outage is visible instead of merely survivable. */
+    private readonly onCacheError?: (op: 'get' | 'set' | 'del', err: unknown) => void,
   ) {}
+
+  /**
+   * Every cache call goes through here, because **a cache being down must not become a refusal**.
+   *
+   * The reads and writes below were plain `await this.cache?.…`, so an unreachable Valkey threw
+   * ioredis' `MaxRetriesPerRequestError` straight out of `effective()` and
+   * `core.workspaces.myPermissions` answered **500** — while `/api/health` stayed green, because
+   * nothing there touches Valkey. Shell fills `session.permissions` from that one call, so every
+   * permission-gated screen in the product rendered empty and the instance looked broken while
+   * reporting itself healthy. Losing a cache has to cost latency, never correctness: a failed read
+   * is a miss and the answer is computed from Postgres, a failed write is a no-op, and a failed
+   * `del` is survivable for the same reason — a cache nobody can reach serves nothing stale either,
+   * and the entries expire in 300s regardless.
+   *
+   * Note it deliberately does not narrow to connection errors. Any throw from a cache is a cache
+   * that is not working, and a permission check is the last place to be clever about which.
+   */
+  private async viaCache<T>(op: 'get' | 'set' | 'del', fn: (c: AuthzCache) => Promise<T>, miss: T) {
+    if (!this.cache) return miss
+    try {
+      return await fn(this.cache)
+    } catch (err) {
+      this.onCacheError?.(op, err)
+      return miss
+    }
+  }
 
   registerPermissions(defs: Array<PermissionDef & { module: string }>) {
     for (const d of defs) {
@@ -67,7 +95,7 @@ export class Authz {
     const m = this.membership(principal, workspaceId)
     if (!m) return new Set()
     const cacheKey = `authz:${workspaceId}:${principal.userId}:${principal.permissionVersion}`
-    const cached = await this.cache?.get(cacheKey)
+    const cached = await this.viaCache('get', (c) => c.get(cacheKey), null)
     if (cached) return new Set(JSON.parse(cached) as string[])
     const set = new Set(this.builtinDefaults[m.role])
     if (this.store) {
@@ -77,7 +105,7 @@ export class Authz {
         for (const k of b.permissions) b.deny ? set.delete(k) : set.add(k)
       }
     }
-    await this.cache?.set(cacheKey, JSON.stringify([...set]), 300)
+    await this.viaCache('set', (c) => c.set(cacheKey, JSON.stringify([...set]), 300), undefined)
     return set
   }
 
@@ -117,6 +145,7 @@ export class Authz {
     return m
   }
   async invalidate(workspaceId: string, userId?: string) {
-    await this.cache?.del(userId ? `authz:${workspaceId}:${userId}:` : `authz:${workspaceId}:`)
+    const prefix = userId ? `authz:${workspaceId}:${userId}:` : `authz:${workspaceId}:`
+    await this.viaCache('del', (c) => c.del(prefix), undefined)
   }
 }
