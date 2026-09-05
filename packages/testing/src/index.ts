@@ -11,9 +11,21 @@ export interface TestInfra {
   stop(): Promise<void>
 }
 
+/**
+ * Blank means unset, the same rule `KernelEnv` applies to the whole environment at once.
+ *
+ * Truthiness is not that rule and gets both halves wrong. `NATS_URL=''` — what a compose file
+ * passes for a variable nobody filled in — came back as `natsUrl: ''`, which the type says is a
+ * URL; `createEventBus` reads it as falsy and quietly hands back the in-memory bus, so a test that
+ * asked for `{ nats: true }` exercises no broker and still passes. And a whitespace-only
+ * `DATABASE_URL` is *truthy*, so it went the other way: it satisfied the guard below and was handed
+ * to `pg` as a connection string instead of falling through to Testcontainers.
+ */
+const set = (value: string | undefined) => (value?.trim() ? value : undefined)
+
 export async function startTestInfra(opts: { nats?: boolean } = {}): Promise<TestInfra> {
-  if (process.env.DATABASE_URL)
-    return { databaseUrl: process.env.DATABASE_URL, natsUrl: process.env.NATS_URL, stop: async () => {} }
+  const databaseUrl = set(process.env.DATABASE_URL)
+  if (databaseUrl) return { databaseUrl, natsUrl: set(process.env.NATS_URL), stop: async () => {} }
   const pg: StartedPostgreSqlContainer = await new PostgreSqlContainer('pgvector/pgvector:pg18')
     .withDatabase('kern_test')
     .withUsername('kern')
