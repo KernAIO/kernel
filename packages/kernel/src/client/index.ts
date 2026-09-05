@@ -91,6 +91,44 @@ export interface SidebarProps {
   segment: string
 }
 
+/**
+ * Something a module renders once per workspace, outside every route.
+ *
+ * `routes`, `sidebar` and `widgets` all live inside a page, so a navigation unmounts them. That is
+ * right for a screen and wrong for anything holding state a person would lose: a call that is
+ * running, an upload in flight, a countdown. An overlay is mounted once when a workspace opens and
+ * unmounted when it closes, so it survives somebody opening an issue — and survives nothing more
+ * than that. A workspace switch and a sign-out both tear it down, which is the half that matters:
+ * an overlay that outlived a sign-out would be a module still running in a signed-out browser.
+ *
+ * The shell decides *where* — above the application, under the command palette — and the module
+ * decides *what*. It is mounted on every page of the workspace, so an overlay that always paints is
+ * a permanent band across the whole product: draw nothing until there is something to say.
+ *
+ * The same two gates as every other contribution, answering the same two questions, and both are
+ * filters rather than a disabled state — see the note at the top of this file.
+ */
+export interface OverlayContribution<C = unknown> {
+  id: string
+  component: () => Promise<{ default: C }>
+  permission?: string
+  /** this module's capability id; nothing is mounted when the workspace has it off */
+  capability?: string
+}
+
+/**
+ * What the shell hands an overlay.
+ *
+ * Deliberately no `pathname`: an overlay outlives the route it was mounted on, so a location passed
+ * in as a prop would be the one that happened to be open when the workspace was opened. An overlay
+ * that needs to know where the person is reads the `navigation` singleton from `@kernhq/ui`, which
+ * the shell keeps current.
+ */
+export interface OverlayProps {
+  workspaceId: string
+  workspaceSlug: string
+}
+
 export interface KeyboardShortcut {
   id: string
   keys: string[]
@@ -262,6 +300,8 @@ export interface ClientModule<C = unknown> {
   commands?: CommandAction[]
   presenters?: ObjectPresenter<C>[]
   sidebar?: SidebarContribution<C>[]
+  /** Components mounted once per workspace and kept across navigation. */
+  overlays?: OverlayContribution<C>[]
   shortcuts?: KeyboardShortcut[]
   notifications?: NotificationRenderer<C>[]
   settingsPages?: ClientSettingsPage<C>[]
