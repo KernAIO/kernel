@@ -158,6 +158,25 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   refreshed lockfile pointed three packages at npm instead of at `../contracts`. Add
   `prefer-workspace-packages=true` to the clone's `.npmrc` for the regeneration and the diff is your
   dependency and nothing else.
+- **A dependency nothing imports still decides what a consumer resolves.** `@kernhq/testing`
+  declared `@kernhq/kernel` from the `@kernhq` scope rename until 2026-09-05 and never imported it —
+  the only `@kernhq` strings in its `dist` were comments, one of them saying the permission-matrix
+  helpers are structural *precisely* so the package need not depend on the framework. It was not
+  inert. `@kernhq/testing` is a devDependency of twelve repositories, a caret on 0.x cannot cross a
+  minor, and `--frozen-lockfile` installs what the lockfile pinned rather than what the range could
+  reach — so every repo still pinning `testing@0.1.12` (peer `kernel@^0.9.0`) resolved a **second**
+  kernel beside its own. Five were in that state at once: `collab`, `module-tracker`, `module-chat`,
+  `module-mail` (0.10.0 beside 0.9.1) and `module-quire` (0.10.0 beside 0.9.0). Bumping the phantom
+  range would have closed those five and re-opened the class at the next kernel minor; deleting the
+  dependency ends it, and stops the churn it caused — three of that package's last four releases
+  were "Updated dependencies → @kernhq/kernel". Before assuming a declared dependency is used, grep
+  the **built output** for it; and reproduce this class with a registry install outside the
+  workspace, because the umbrella links these and shows one copy either way.
+- **`turbo run build test` in one invocation flakes `@kernhq/ui`.** Its vitest picks up the
+  generated `dist/` and `.svelte-kit/__package__/` copies of each suite as well as `src/`, so
+  `svelte-package` rewriting those directories while vitest is collecting them fails eleven files at
+  *load* — 295 tests pass, no assertion fails, and the run is red. Run the two as separate steps, as
+  CI does. A red `@kernhq/ui` with no failing assertion is this and not your change.
 - **A superuser bypasses row-level security, so every tenant policy in Kern was decorative.**
   `enable`, `force`, the policy and `withWorkspace`'s `set_config` were all correct and none of them
   applied, because every compose file connected as the Postgres container's superuser — and `force

@@ -164,9 +164,6 @@ importers:
 
   packages/testing:
     dependencies:
-      '@kernhq/kernel':
-        specifier: ^0.10.0
-        version: link:../kernel
       '@testcontainers/postgresql':
         specifier: ^12.1.0
         version: 12.1.0
