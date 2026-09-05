@@ -1,5 +1,13 @@
 # @kernhq/testing
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [49e4ae4]
+- Updated dependencies [0541769]
+  - @kernhq/kernel@0.10.0
+
 ## 0.1.12
 
 ### Patch Changes
