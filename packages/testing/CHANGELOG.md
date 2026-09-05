@@ -1,5 +1,42 @@
 # @kernhq/testing
 
+## 0.1.14
+
+### Patch Changes
+
+- 08ca7a4: Treat a blank `DATABASE_URL` or `NATS_URL` as unset in `startTestInfra`, the rule `KernelEnv`
+  already applies to the whole environment at once.
+
+  Truthiness is not that rule and got both halves wrong. `NATS_URL=''` — what a compose file passes
+  for a variable nobody filled in, and what a shell that once exported it still carries — came back
+  as `natsUrl: ''`, a string the interface types as a URL. Nothing threw, which is the problem:
+  `createEventBus` reads `''` as falsy and returns the in-memory bus, so a suite that asked for
+  `{ nats: true }` exercised no broker and still reported green. In the other direction
+  `Boolean('   ')` is `true`, so a whitespace-only `DATABASE_URL` satisfied the guard and was handed
+  to `pg` as a connection string instead of falling through to Testcontainers.
+
+  `src/infra.test.ts` covers the shared-infra branch, which is where both lived and the one that
+  needs no Docker.
+
+- 3323f46: Drop the `@kernhq/kernel` dependency, which nothing in the package imports.
+
+  It has been declared since the `@kernhq` scope rename and appears nowhere in the source or the
+  built output — the only `@kernhq` strings in `dist` are comments, one of which says the
+  permission-matrix helpers are structural precisely so this package need not depend on the
+  framework. `pg` and the Testcontainers packages are the real dependencies.
+
+  The declaration was not harmless. `@kernhq/testing` is a devDependency of twelve repositories, and
+  a caret on a 0.x version cannot cross a minor, so every lockfile pinning `@kernhq/testing@0.1.12`
+  (which peers `@kernhq/kernel@^0.9.0`) resolved a **second** kernel next to the one the repository
+  itself declares. Five were in that state: `collab`, `module-tracker`, `module-chat`, `module-mail`
+  (0.10.0 beside 0.9.1) and `module-quire` (0.10.0 beside 0.9.0). Two copies of the kernel are two
+  structurally distinct declarations of the same types, which is what makes a consumer report errors
+  for procedures that exist.
+
+  Bumping the range would have closed those five and re-opened the class at the next kernel minor;
+  removing it ends the class. It also stops the churn it caused — three of this package's last four
+  releases were "Updated dependencies → @kernhq/kernel", published for a dependency it never loaded.
+
 ## 0.1.13
 
 ### Patch Changes

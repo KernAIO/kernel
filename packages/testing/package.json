@@ -1,6 +1,6 @@
 {
   "name": "@kernhq/testing",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Test helpers for Kern services and modules",
   "homepage": "https://kernaio.com",
   "license": "Apache-2.0",
