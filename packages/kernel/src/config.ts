@@ -27,6 +27,42 @@ function blankAsUnset(raw: unknown): unknown {
   return out
 }
 
+const BOOLEAN_WORDS: Record<string, boolean> = {
+  true: true,
+  '1': true,
+  yes: true,
+  on: true,
+  false: false,
+  '0': false,
+  no: false,
+  off: false,
+}
+
+/**
+ * A flag an operator writes as a word.
+ *
+ * `z.coerce.boolean()` is `Boolean(value)`, so it reads every non-empty string as `true` —
+ * `S3_FORCE_PATH_STYLE=false` turned path-style addressing *on*, which is the one setting an
+ * external S3 provider needs turned off. It is wrong in the other direction too: `''` is `false`,
+ * so a blank variable did not fall through to the default, it silently inverted it. Refuse a word
+ * that means neither rather than guess at it — a flag nobody can turn off is worse than a boot that
+ * says why.
+ */
+function booleanEnv(fallback: boolean) {
+  return z
+    .string()
+    .optional()
+    .transform((value, ctx) => {
+      if (value === undefined) return fallback
+      const word = BOOLEAN_WORDS[value.trim().toLowerCase()]
+      if (word === undefined) {
+        ctx.addIssue(`expected true or false, received "${value}"`)
+        return z.NEVER
+      }
+      return word
+    })
+}
+
 /** The fields themselves, exported so `config.test.ts` can walk every key. Parse `KernelEnv`. */
 export const KernelEnvFields = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -66,7 +102,11 @@ export const KernelEnvFields = z.object({
   S3_BUCKET: z.string().default('kern'),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
-  S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  /**
+   * Address buckets as a path (`endpoint/bucket/key`) rather than as a host
+   * (`bucket.endpoint/key`). MinIO needs it; most external S3 providers do not.
+   */
+  S3_FORCE_PATH_STYLE: booleanEnv(true),
   /** URL of the core service (JWKS, internal calls) */
   CORE_URL: z.string().url().default('http://localhost:4000'),
   CHAT_URL: z.string().url().default('http://localhost:4100'),

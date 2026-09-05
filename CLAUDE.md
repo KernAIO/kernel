@@ -211,6 +211,13 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   covered without anybody coming back here. Anything reading `process.env` outside the schema needs
   the same rule spelled out: `??` does not catch `''`, which is how `LOG_LEVEL: ''` reached pino as
   a level and threw "default level: must be included in custom levels" out of `createLogger`.
+- **`z.coerce.boolean()` is `Boolean(value)`, so it is wrong for every environment variable.**
+  `'false'`, `'0'` and `'no'` are all non-empty strings and all parsed as `true` —
+  `S3_FORCE_PATH_STYLE=false` turned path-style addressing on, which is the one thing an external S3
+  provider needs off — while `''` parsed as `false` rather than falling through to the `.default()`,
+  so a blank variable inverted the default instead of missing it. Parse the word (`booleanEnv` in
+  `config.ts`) and refuse one that means neither: a flag nobody can turn off is worse than a boot
+  that says why.
 - **A `statement_timeout` on the pool would kill migrations, so migrations get their own
   connections.** The request pool carries `statement_timeout`, `idle_in_transaction_session_timeout`
   and `lock_timeout`; `migrateSchema` runs on a separate pool with none of them, and the advisory

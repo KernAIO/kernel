@@ -117,4 +117,16 @@ describe('kernel environment', () => {
     expect(KernelEnv.safeParse({ ...base, KERN_SECRET: 'short' }).success).toBe(false)
     expect(() => loadEnv({ ...base, DATABASE_URL: 'not-a-url' })).toThrow(/DATABASE_URL/)
   })
+
+  it('reads S3_FORCE_PATH_STYLE as a word, not as truthiness', () => {
+    const parse = (v: string) =>
+      KernelEnv.parse({ ...blank(''), ...supplied, S3_FORCE_PATH_STYLE: v }).S3_FORCE_PATH_STYLE
+    // `z.coerce.boolean()` is `Boolean(value)`: every one of these used to be `true`, so an
+    // external S3 could not be told to address buckets by host.
+    for (const off of ['false', 'FALSE', ' 0 ', 'no', 'off']) expect(parse(off)).toBe(false)
+    for (const on of ['true', '1', 'yes', 'on']) expect(parse(on)).toBe(true)
+    expect(KernelEnv.safeParse({ ...blank(''), ...supplied, S3_FORCE_PATH_STYLE: 'maybe' }).success).toBe(
+      false,
+    )
+  })
 })
