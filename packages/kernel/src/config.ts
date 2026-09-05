@@ -1,7 +1,34 @@
 import { z } from 'zod'
 
-/** Environment shared by every Kern backend service. */
-export const KernelEnv = z.object({
+/**
+ * Blank means unset, for every key at once.
+ *
+ * A shipped compose file passes each variable through unconditionally — `S3_ENDPOINT:
+ * ${S3_ENDPOINT}` — so a variable nobody filled in arrives as the empty string rather than as
+ * absent, and zod sees a *value* to validate. Half the schema below then refuses it and `loadEnv`
+ * throws before the service binds its port: `''` is "Invalid URL" for `KERN_BASE_URL`,
+ * `S3_ENDPOINT` and `S3_PUBLIC_ENDPOINT` alike, and every service in the instance loads this
+ * schema. The other half accepts it and is quietly wrong, which is worse, because a `.default()`
+ * only fires for `undefined`: `S3_REGION: ''` signs SigV4 against no region, `S3_BUCKET: ''`
+ * addresses no bucket, `KERN_VERSION: ''` makes `/api/health` report an empty release, and
+ * `Number('')` is 0 — so `DATABASE_POOL_MAX: ''` is a pool of zero connections and
+ * `DATABASE_STATEMENT_TIMEOUT_MS: ''` silently removes the only ceiling on a runaway query.
+ *
+ * Doing this per field is a rule the next field added here has to remember, and forgetting it is a
+ * boot failure on somebody else's server. So it is one pass over the whole object, and
+ * `config.test.ts` walks every key the schema declares. Core's `src/env.ts` does the same for its
+ * own schema; this is the half that every service inherits.
+ */
+function blankAsUnset(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null) return raw
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(raw))
+    out[key] = typeof value === 'string' && value.trim() === '' ? undefined : value
+  return out
+}
+
+/** The fields themselves, exported so `config.test.ts` can walk every key. Parse `KernelEnv`. */
+export const KernelEnvFields = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().default(4000),
   HOST: z.string().default('0.0.0.0'),
@@ -63,7 +90,9 @@ export const KernelEnv = z.object({
    */
   TRUSTED_PROXIES: z.string().optional(),
 })
-export type KernelEnv = z.infer<typeof KernelEnv>
+
+export const KernelEnv = z.preprocess(blankAsUnset, KernelEnvFields)
+export type KernelEnv = z.infer<typeof KernelEnvFields>
 
 export function loadEnv(extra: Record<string, string | undefined> = {}): KernelEnv {
   const parsed = KernelEnv.safeParse({ ...process.env, ...extra })

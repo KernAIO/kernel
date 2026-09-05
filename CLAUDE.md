@@ -197,6 +197,20 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   cannot validate the immediate peer. So a number trusts *nothing* rather than the hops it looks
   like it asks for. Name the proxies instead — an address, a CIDR, or `loopback` / `uniquelocal` /
   `linklocal`, which is what `TRUSTED_PROXIES` takes.
+- **An unset variable in a compose file arrives as the empty string, not as absent, and every
+  service loads `KernelEnv`.** All three shipped stacks pass each variable through unconditionally
+  (`S3_ENDPOINT: ${S3_ENDPOINT}`), so a line nobody filled in hands zod a *value* to validate. Half
+  the schema refused it — `''` is "Invalid URL" for `KERN_BASE_URL`, `S3_ENDPOINT` and
+  `S3_PUBLIC_ENDPOINT`, thrown by `loadEnv` before the service binds its port, in every service at
+  once. The other half was quietly wrong, which is worse, because a `.default()` only fires for
+  `undefined`: `S3_REGION: ''` signed against no region, `KERN_VERSION: ''` made `/api/health`
+  report an empty release, and `Number('')` is 0, so `DATABASE_POOL_MAX: ''` was a pool of zero and
+  `DATABASE_STATEMENT_TIMEOUT_MS: ''` removed the only ceiling on a runaway query. `config.ts` maps
+  blank to `undefined` for the whole object at once — per field is a rule the next field has to
+  remember — and `config.test.ts` walks every key the schema declares, so a key added later is
+  covered without anybody coming back here. Anything reading `process.env` outside the schema needs
+  the same rule spelled out: `??` does not catch `''`, which is how `LOG_LEVEL: ''` reached pino as
+  a level and threw "default level: must be included in custom levels" out of `createLogger`.
 - **A `statement_timeout` on the pool would kill migrations, so migrations get their own
   connections.** The request pool carries `statement_timeout`, `idle_in_transaction_session_timeout`
   and `lock_timeout`; `migrateSchema` runs on a separate pool with none of them, and the advisory
