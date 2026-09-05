@@ -201,7 +201,7 @@ importers:
         specifier: ^0.8.0
         version: link:../contracts
       '@kernhq/kernel':
-        specifier: ^0.10.1
+        specifier: ^0.10.2
         version: link:../kernel
       '@kernhq/sdk':
         specifier: ^0.1.10
