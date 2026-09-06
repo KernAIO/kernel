@@ -67,7 +67,7 @@ importers:
         specifier: ^10.0.0
         version: 10.3.0
       '@kernhq/contracts':
-        specifier: ^0.8.0
+        specifier: ^0.8.1
         version: link:../contracts
       '@orpc/contract':
         specifier: ^1.15.0
