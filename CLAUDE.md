@@ -198,9 +198,20 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   needs *two* floors raised per module (ui `^0.14.4` and kernel `^0.10.3`), and because both are
   **peers** on a module, `check-ranges` then forces the peer specifier up — which republishes seven
   modules and drags five hosts after them, the fan-out this file warns about elsewhere. An override
-  forces one copy in the repo's own tree, changes nothing about the published package, and needs no
-  changeset. `module-meet` is the proof: it is the only module carrying the override and one of the
-  only two that was never duplicated, while all seven duplicated modules had `overrides: null`.
+  forces one copy in the repo's own tree and touches no range. `module-meet` is the proof, and it is
+  a genuinely controlled comparison: it had *identical* ranges to the seven — kernel `^0.10.0`,
+  contracts `^0.8.0`, ui `^0.14.0` — and differed only by the override. The ranges were never the
+  variable.
+  It also collapsed a **second `@kernhq/contracts`** nobody had counted: `@kernhq/ui@0.14.0` depends
+  on contracts `^0.7.0`, so all seven were carrying 0.7.0 beside 0.8.0, gone by the same one line.
+  **It does still cost a publish, and "no changeset needed" was wrong** — right about the tarball,
+  wrong about the pipeline. `publish.yml` infers a changeset for any change outside its exclusion
+  list, and `package.json` is not on that list, so all eight modules auto-versioned and republished
+  with content identical apart from the version. Cheap and harmless, but it is exactly the "Updated
+  dependencies" churn complained about two bullets above. Adding `package.json` to the exclusion
+  list would be the wrong repair — it hides real dependency changes; skipping when the diff touches
+  only `pnpm.overrides` would be the narrow one. Before saying a change needs no release, check what
+  `publish.yml` *infers*, not only what ends up in the tarball.
   Note also what this means for urgency: every *host* already carries the override, so a duplicate
   in a module's own lockfile is hygiene in that repo rather than something a consumer resolves.
   Check `pnpm.overrides` before reading a range.
