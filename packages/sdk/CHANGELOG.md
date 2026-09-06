@@ -1,5 +1,13 @@
 # @kernhq/sdk
 
+## 0.1.11
+
+### Patch Changes
+
+- fix(docs): state Apache-2.0 on the packages that are Apache-2.0
+- Updated dependencies
+  - @kernhq/contracts@0.8.2
+
 ## 0.1.10
 
 ### Patch Changes

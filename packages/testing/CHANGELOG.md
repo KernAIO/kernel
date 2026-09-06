@@ -1,5 +1,11 @@
 # @kernhq/testing
 
+## 0.1.15
+
+### Patch Changes
+
+- fix(docs): state Apache-2.0 on the packages that are Apache-2.0
+
 ## 0.1.14
 
 ### Patch Changes
