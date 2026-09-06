@@ -98,7 +98,7 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   the root of the local workspace does not exist. Never point a repo's `tsconfig` outside its own
   checkout.
 - `Omit<Union, K>` collapses a discriminated union. `Realtime`'s publisher types distribute over
-  `ServerMessage` on purpose — see `src/realtime.ts`.
+  `ServerMessage` on purpose — see `packages/kernel/src/realtime.ts`.
 - Biome 2.5 refuses a nested config that extends a root one unless it declares `"root": false`
   (`packages/ui/biome.json`).
 - An ESM-only package still needs a `default` condition in its `exports`, or tools that resolve
