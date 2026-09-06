@@ -174,8 +174,13 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   inert. `@kernhq/testing` is a devDependency of twelve repositories, a caret on 0.x cannot cross a
   minor, and `--frozen-lockfile` installs what the lockfile pinned rather than what the range could
   reach — so every repo still pinning `testing@0.1.12` (peer `kernel@^0.9.0`) resolved a **second**
-  kernel beside its own. Five were in that state at once: `collab`, `module-tracker`, `module-chat`,
-  `module-mail` (0.10.0 beside 0.9.1) and `module-quire` (0.10.0 beside 0.9.0). Bumping the phantom
+  kernel beside its own. **Nine, counted from the lockfiles on 2026-09-06** — the five this bullet
+  originally named (`collab`, `module-tracker`, `module-chat`, `module-mail` at 0.10.0 beside 0.9.1,
+  `module-quire` at 0.10.0 beside 0.9.0) plus `module-billing`, `module-hr`, `module-inventory` and
+  `module-template`, all 0.10.x beside 0.9.1. Twelve repositories still pin `testing@0.1.12`; those
+  nine are the ones whose lockfile actually records the second copy. The original five was a list of
+  what somebody had looked at, written as if it were the count — `grep -oE "kernel@0\.[0-9]+\.[0-9]+"
+  repos/*/pnpm-lock.yaml | sort -u` is the whole answer and takes a second. Bumping the phantom
   range would have closed those five and re-opened the class at the next kernel minor; deleting the
   dependency ends it, and stops the churn it caused — three of that package's last four releases
   were "Updated dependencies → @kernhq/kernel". Before assuming a declared dependency is used, grep
