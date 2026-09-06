@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto'
 import type { EventEnvelope } from '@kernhq/contracts'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createKernel, type Kernel } from './kernel.js'
-import { defineModule, DEMO_SEED_EVENT, defineServerModule, type DemoSeedContext } from './module.js'
+import { DEMO_SEED_EVENT, type DemoSeedContext, defineModule, defineServerModule } from './module.js'
 
 const BASE_URL = process.env.DATABASE_URL
 
@@ -106,9 +106,7 @@ describe.skipIf(!BASE_URL)('a module that declares demo content', () => {
     seen.length = 0
     explode = true
     try {
-      await expect(
-        kernel.events.publishRaw(envelope()),
-      ).resolves.not.toThrow()
+      await expect(kernel.events.publishRaw(envelope())).resolves.not.toThrow()
     } finally {
       explode = false
     }
