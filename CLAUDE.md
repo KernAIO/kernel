@@ -114,6 +114,15 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   "Context ... not found" on open and simply never appeared — no compile error, and the ungrouped
   path (everything that existed until then) kept working. When a headless primitive has a wrapper,
   it is load-bearing.
+- **A component that spreads onto an element must not redeclare `id` for something else.** bits-ui
+  puts an `id` in the trigger props and later decides whether a pointer landed on the trigger by
+  comparing `event.target.id` with it — and two empty strings match, so a trigger rendered without an
+  id reads *every* outside click on an id-less element as a click on itself and the menu never
+  closes. `SidebarSwitcher` called the avatar's identity `id`, which is also the DOM attribute its
+  `HTMLButtonAttributes` declares, so the caller's workspace id replaced the trigger id on the way in
+  and the button ended up with none. The seed is `avatarId` now. Nothing catches this shape — it
+  type-checks, because the prop it collides with is a real HTML attribute — so a prop that is not the
+  element's own attribute gets its own name.
 - **`create ... if not exists` is not atomic in Postgres.** Two sessions both see "not there", both
   insert into the catalogue, and the loser gets a unique violation instead of the no-op it asked for.
   Every service boots at once, so this is the normal case: `migrateModule` holds an advisory lock
