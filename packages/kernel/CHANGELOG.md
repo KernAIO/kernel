@@ -1,5 +1,11 @@
 # @kernhq/kernel
 
+## 0.10.5
+
+### Patch Changes
+
+- style: format demo.test.ts
+
 ## 0.10.4
 
 ### Patch Changes
