@@ -54,4 +54,7 @@ pnpm typecheck  # svelte-check
 pnpm test
 ```
 
-Licensed under AGPL-3.0-only, like the rest of Kern.
+Licensed under **Apache-2.0** — this is framework code a module imports for its screens, so it is
+permissive on purpose and a module built on it need not be open source. The Kern product itself
+(shell, core, chat, mail, collab and the first-party modules) is AGPL-3.0-only. See
+[LICENSING.md](https://github.com/KernAIO/app/blob/main/LICENSING.md).
