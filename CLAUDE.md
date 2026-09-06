@@ -252,3 +252,16 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   lock takes a dedicated `pg.Client` rather than a connection from that pool. The lock waiter holds
   its connection for as long as the winner takes, so pooling the two together deadlocks — four
   concurrent `migrateModule` calls against a pool of two never returned, and `db.test.ts` catches it.
+- **A helper that emits code every first-party consumer hand-patches has a defect only a newcomer
+  can reach.** `rlsPolicySql` emitted `create policy` with no `drop policy if exists` until
+  2026-09-06, so the SQL it produced could be applied exactly once — and `create policy` has no
+  `if not exists`, so a replay throws and takes down the host service with every other module in it.
+  Three module READMEs and three `drizzle.config.ts` comments named the helper as *the* way to write
+  a policy. Every first-party module had quietly added the drop by hand, and two of their migration
+  headers described the helper as emitting what it did not, so the defect was unreachable for
+  everybody who already had a working module and certain for the first third-party author to follow
+  the documented path. The general shape: when the consumers of a generator all patch its output the
+  same way, the patch is the bug report. Diff what a helper emits against what its callers actually
+  shipped, and treat a divergence as the helper being wrong — the callers had to make it work.
+  Found by writing `module-template`'s first `migrations.test.ts`, which promptly failed on the
+  template's own migration.
