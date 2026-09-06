@@ -93,6 +93,14 @@ jobs:
         if: steps.gather.outputs.has_new == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          # The body reaches bash as an environment VALUE, never as `${{ }}` inside the script.
+          # Actions substitutes an expression into the run block as text before a shell ever sees
+          # it, so a changelog entry naming `KernelEnv` or `Boolean(value)` — ordinary prose about
+          # code — arrives as a backtick and a command substitution and is executed. That is what
+          # took this workflow down on 2026-09-06: every run failed with `KernelEnv: command not
+          # found` and a syntax error on `Boolean(value)`, on a runner holding a token. Any changelog
+          # text is untrusted input to this step; a contributor writes it.
+          NOTES: ${{ steps.gather.outputs.body }}
         run: |
           set -euo pipefail
           TAG="notes-$(date -u +%Y-%m-%d)"
@@ -102,7 +110,8 @@ jobs:
             echo "A notes release for $(date -u +%Y-%m-%d) already exists — nothing to do."
             exit 0
           fi
+          printf '%s' "$NOTES" > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
             --title "Packages published — $(date -u +%Y-%m-%d)" \
-            --notes "${{ steps.gather.outputs.body }}"
+            --notes-file "$RUNNER_TEMP/notes.md"
