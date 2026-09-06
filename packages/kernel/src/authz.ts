@@ -122,7 +122,18 @@ export class Authz {
     if (!m) return new Set()
     const cacheKey = `authz:${workspaceId}:${principal.userId}:${principal.permissionVersion}`
     const cached = await this.viaCache('get', (c) => c.get(cacheKey), null)
-    if (cached) return new Set(JSON.parse(cached) as string[])
+    if (cached) {
+      const set = new Set(JSON.parse(cached) as string[])
+      // The floor is re-applied to a cache hit, not only to a computed set. Nothing in the key
+      // names the kernel version or the service, so an entry written by a replica *without* the
+      // floor is served verbatim by one with it — and a rolling deploy runs both images against one
+      // Valkey on purpose. Measured on 2026-09-06 against a real Valkey: an old replica cached
+      // `chat.message.post` for a guest, the new replica read it back and allowed an unbound post
+      // for the whole 300s TTL, and for up to 300s after the last old replica was gone.
+      // `applyGuestFloor` only deletes keys, so doing it twice costs nothing and is idempotent.
+      if (m.role === 'guest') this.applyGuestFloor(set)
+      return set
+    }
     const set = new Set(this.builtinDefaults[m.role])
     if (m.role === 'guest') this.applyGuestFloor(set)
     if (this.store) {

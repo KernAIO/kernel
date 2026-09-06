@@ -201,6 +201,42 @@ describe('a guest in a service core does not host', () => {
     const set = await a.effective(principal('member'), 'w1')
     expect([...set].sort()).toEqual(['chat.channel.view', 'chat.message.post'])
   })
+
+  /**
+   * The rolling-deploy case, which is the one the floor was missing.
+   *
+   * Nothing in the cache key names the kernel version or the service — it is
+   * `authz:<ws>:<user>:<permissionVersion>` — so an entry written by a replica that predates the
+   * floor is read back verbatim by one that has it. A cloud rolling deploy runs both images
+   * against one Valkey on purpose, and the 300s TTL outlives the last old replica.
+   *
+   * Measured against a real Valkey on 2026-09-06 before this was fixed: the new replica served
+   * `chat.message.post` to a guest and allowed an unbound post for the whole window.
+   */
+  it('floors a cached set written by a replica that had no floor', async () => {
+    const stale = JSON.stringify(['chat.channel.view', 'chat.message.post'])
+    const a = new Authz(fromCore, {
+      get: async () => stale,
+      set: async () => {},
+      del: async () => {},
+    } as unknown as AuthzCache)
+    a.registerPermissions(CHAT_DEFS)
+
+    const set = await a.effective(principal('guest'), 'w1')
+    expect([...set], 'the un-floored cache entry was served through').toEqual(['chat.channel.view'])
+
+    // The same scope shape the tests above use. A malformed scope answers false whatever the set
+    // holds, so getting this wrong would have produced an assertion that passes for the wrong
+    // reason — which is the shape of proof this file exists to avoid.
+    await expect(
+      a.can(principal('guest'), 'chat.message.post', {
+        kind: 'object',
+        id: 'c1',
+        workspaceId: 'w1',
+        parents: [{ kind: 'workspace', id: 'w1' }],
+      }),
+    ).resolves.toBe(false)
+  })
 })
 
 describe('a working cache', () => {
