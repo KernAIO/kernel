@@ -186,6 +186,24 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   were "Updated dependencies → @kernhq/kernel". Before assuming a declared dependency is used, grep
   the **built output** for it; and reproduce this class with a registry install outside the
   workspace, because the umbrella links these and shows one copy either way.
+  **"Which repos have two kernels" and "which repos pin old testing" are different questions**, and
+  answering the second as if it were the first is what made the count wrong twice in one day.
+  `@kernhq/testing`'s kernel dependency was a *phantom* — declared, never imported — while
+  `@kernhq/ui@0.14.0`'s is **genuine**, because ui imports the kernel (0.14.1 moved to `^0.10.0`,
+  0.14.2+ to `^0.10.2`). A repo can have either source, or both. Bumping `testing` to `^0.1.14`
+  across twelve repos on 2026-09-06 closed only the three services, because they are the ones with
+  no `@kernhq/ui`; seven modules still resolved 0.9.1 through ui and looked, from the range alone,
+  exactly like the ones that were fixed.
+  **The fix is `pnpm.overrides`, not a range bump, and it costs no publish.** Chasing the ui floor
+  needs *two* floors raised per module (ui `^0.14.4` and kernel `^0.10.3`), and because both are
+  **peers** on a module, `check-ranges` then forces the peer specifier up — which republishes seven
+  modules and drags five hosts after them, the fan-out this file warns about elsewhere. An override
+  forces one copy in the repo's own tree, changes nothing about the published package, and needs no
+  changeset. `module-meet` is the proof: it is the only module carrying the override and one of the
+  only two that was never duplicated, while all seven duplicated modules had `overrides: null`.
+  Note also what this means for urgency: every *host* already carries the override, so a duplicate
+  in a module's own lockfile is hygiene in that repo rather than something a consumer resolves.
+  Check `pnpm.overrides` before reading a range.
 - **`turbo run build test` in one invocation flakes `@kernhq/ui`.** Its vitest picks up the
   generated `dist/` and `.svelte-kit/__package__/` copies of each suite as well as `src/`, so
   `svelte-package` rewriting those directories while vitest is collecting them fails eleven files at
