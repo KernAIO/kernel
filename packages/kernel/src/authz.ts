@@ -89,6 +89,32 @@ export class Authz {
     return principal.memberships.find((m) => m.workspaceId === workspaceId && m.status === 'active')
   }
 
+  /**
+   * A guest holds nothing that belongs to a project, a space or an object until something gives it
+   * to them — applied here, by the process that owns the permission keys.
+   *
+   * It lived only in core's `bindingsFor`, which enumerates `allPermissions()` of the process that
+   * answers, and that process is always core. So the floor listed core's keys and the keys of the
+   * five modules core hosts, and nothing else: `module-chat` runs in `chat`, `module-mail` in
+   * `mail`, and neither service's guest was restrained by a single key. `chat.message.post` is
+   * `scope: 'object'` with `guest` in its `defaultRoles`, so a guest could post in every channel in
+   * the workspace while core reported the floor as applied. Measured 2026-09-06 by asking each
+   * service's own `Authz` what a guest's effective set contains.
+   *
+   * Doing it here fixes that by construction rather than by a list: `this.defs` is exactly the
+   * modules this process registered, so the floor covers what this process can be asked about and
+   * nothing it cannot answer for.
+   *
+   * Applied before the custom roles and the stored bindings on purpose. "Explicitly given" includes
+   * a role, so an administrator's grant is added after the floor and survives it, and a stored
+   * workspace-scoped allow is applied after both and wins — the same order core's synthetic binding
+   * relied on.
+   */
+  private applyGuestFloor(set: Set<string>) {
+    for (const d of this.defs.values())
+      if (d.scope !== 'workspace' && d.scope !== 'instance') set.delete(d.key)
+  }
+
   /** Effective workspace-level permission set (builtin role defaults ∪ custom roles ∪ workspace-scope bindings). */
   async effective(principal: Principal, workspaceId: string): Promise<Set<string>> {
     if (principal.instanceAdmin) return new Set(this.defs.keys())
@@ -98,6 +124,7 @@ export class Authz {
     const cached = await this.viaCache('get', (c) => c.get(cacheKey), null)
     if (cached) return new Set(JSON.parse(cached) as string[])
     const set = new Set(this.builtinDefaults[m.role])
+    if (m.role === 'guest') this.applyGuestFloor(set)
     if (this.store) {
       for (const k of await this.store.customRolePermissions(workspaceId, principal.userId!)) set.add(k)
       for (const b of await this.store.bindings(workspaceId, principal.userId!, m.groupIds, m.role)) {

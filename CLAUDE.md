@@ -247,6 +247,20 @@ realtime client), `@kernhq/ui` (the Ink/paper design system), `@kernhq/testing`,
   "nobody hosts this" a *fact* rather than a timeout. `call()` marks the two apart with `reason`
   (`NO_RESPONDERS` vs `RPC_UNREACHABLE`) and keeps the code `UNAVAILABLE`, because consumers already
   branch on the code.
+- **`allPermissions()` is local-only too, and a rule enumerated from it covers one process.** The
+  guest deny-floor — a guest holds nothing that belongs to a project, a space or an object until
+  something gives it to them — was built in core, from `allPermissions()` of the process that
+  answers `core.authz.bindings`, which is always core. So it listed core's keys and the five modules
+  core hosts and nothing else, and a guest in `chat`, `mail` or `collab` was restrained by not one
+  key: `chat.message.post` is `scope: 'object'` with `guest` in its `defaultRoles`. Measured by
+  removing the fix and re-running `authz.test.ts` — an unbound guest in a chat-shaped process held
+  the key and `can()` answered true for every channel id. `Authz.effective()` applies the floor now,
+  from `this.defs`, which is exactly the modules the asking process registered: a rule that reads a
+  local registry belongs in the process that owns it, not in the one that happens to hold the
+  database. Same shape as `broker.has()` above and as the MCP scope check in the umbrella's notes —
+  ask which processes hold the thing the rule reads before deciding where the rule lives.
+  Order in `effective()` is load-bearing: floor, then custom roles (so an administrator's explicit
+  grant survives it), then stored bindings (so a workspace-scoped allow beats it).
 - **A module can ship a raw-body HTTP route; `extend` is the service's, not the module's.**
   `ServerModule.httpRoutes` mounts a plain Fastify route under the module's API prefix, in its own
   encapsulated scope, with `parseAs: 'buffer'` when `raw` — the only thing a webhook signature can

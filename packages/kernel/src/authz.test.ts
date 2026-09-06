@@ -94,6 +94,115 @@ describe('an unreachable cache', () => {
   })
 })
 
+/**
+ * The guest deny-floor, in a service that is not core.
+ *
+ * The floor was written into core's `bindingsFor`, which enumerates `allPermissions()` of the
+ * process that answers — always core. `chat` hosts `module-chat` and asks core over the broker, so
+ * the binding it received named core's keys and nothing of its own: `chat.message.post` is
+ * `scope: 'object'` with `guest` in its `defaultRoles`, and a guest kept it. This is that shape —
+ * the store returns exactly what core sends and the defs are the asking process's.
+ */
+describe('a guest in a service core does not host', () => {
+  const CHAT_DEFS: Array<PermissionDef & { module: string }> = [
+    {
+      module: 'chat',
+      key: 'chat.channel.view',
+      label: 'View channels',
+      scope: 'workspace',
+      dangerous: false,
+      defaultRoles: ['guest'],
+    },
+    {
+      module: 'chat',
+      key: 'chat.message.post',
+      label: 'Post messages',
+      scope: 'object',
+      dangerous: false,
+      defaultRoles: ['guest'],
+    },
+  ]
+  /** What `core.authz.bindings` sends: a deny carrying core's non-workspace keys, and no chat key. */
+  const fromCore: AuthzStore = {
+    customRolePermissions: async () => [],
+    bindings: async () => [
+      {
+        subjectType: 'builtin_role',
+        subjectId: 'guest',
+        permissions: ['core.audit.view'],
+        scopeKind: 'workspace',
+        scopeId: 'w1',
+        deny: true,
+      },
+    ],
+  }
+  const chatAuthz = (store: AuthzStore = fromCore) => {
+    const a = new Authz(store)
+    a.registerPermissions(CHAT_DEFS)
+    return a
+  }
+
+  it('holds no object-scoped permission of this process, and keeps the workspace-scoped one', async () => {
+    const set = await chatAuthz().effective(principal('guest'), 'w1')
+    expect([...set]).toEqual(['chat.channel.view'])
+  })
+
+  it('is refused a post it would have been allowed', async () => {
+    await expect(
+      chatAuthz().can(principal('guest'), 'chat.message.post', {
+        kind: 'object',
+        id: 'c1',
+        workspaceId: 'w1',
+        parents: [{ kind: 'workspace', id: 'w1' }],
+      }),
+    ).resolves.toBe(false)
+  })
+
+  it('posts in the one channel it was bound to, and in no other', async () => {
+    const bound = chatAuthz({
+      customRolePermissions: fromCore.customRolePermissions,
+      bindings: async () => [
+        ...(await fromCore.bindings('w1', 'u1', [], 'guest')),
+        {
+          subjectType: 'user',
+          subjectId: 'u1',
+          permissions: ['chat.message.post'],
+          scopeKind: 'object',
+          scopeId: 'c1',
+          deny: false,
+        },
+      ],
+    })
+    const at = (id: string) =>
+      bound.can(principal('guest'), 'chat.message.post', {
+        kind: 'object',
+        id,
+        workspaceId: 'w1',
+        parents: [{ kind: 'workspace', id: 'w1' }],
+      })
+    await expect(at('c1')).resolves.toBe(true)
+    await expect(at('c2')).resolves.toBe(false)
+  })
+
+  it('keeps what a custom role gives it, because the floor is applied before them', async () => {
+    const withRole = chatAuthz({
+      customRolePermissions: async () => ['chat.message.post'],
+      bindings: fromCore.bindings,
+    })
+    const set = await withRole.effective(principal('guest'), 'w1')
+    expect([...set].sort()).toEqual(['chat.channel.view', 'chat.message.post'])
+  })
+
+  it('leaves a member alone', async () => {
+    const a = new Authz(fromCore)
+    a.registerPermissions(
+      CHAT_DEFS.map((d) => ({ ...d, defaultRoles: ['member' as const, 'guest' as const] })),
+    )
+    const set = await a.effective(principal('member'), 'w1')
+    expect([...set].sort()).toEqual(['chat.channel.view', 'chat.message.post'])
+  })
+})
+
 describe('a working cache', () => {
   it('is still used, and a hit skips the store', async () => {
     const entries = new Map<string, string>()
