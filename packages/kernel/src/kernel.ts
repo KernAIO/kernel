@@ -14,7 +14,7 @@ import { createJobs, type Jobs } from './jobs.js'
 import { createLogger, type Logger } from './logger.js'
 import { createMaintenance, type Maintenance } from './maintenance.js'
 import type { ServerModule } from './module.js'
-import { assertModulesSatisfyKernel, toManifest } from './module.js'
+import { assertModulesSatisfyKernel, DEMO_SEED_EVENT, toManifest } from './module.js'
 import { memoryCounter, redisCounter, WorkspaceApiBudget } from './ratelimit.js'
 import { createRealtime, type Realtime } from './realtime.js'
 import { ModuleRegistry } from './registry.js'
@@ -235,6 +235,42 @@ export async function createKernel(opts: KernelOptions): Promise<Kernel> {
           await events.subscribe(pattern, (e: EventEnvelope) => handler(e, kernel), {
             durable: `${opts.service}-${mod.definition.id}-${pattern}`,
           })
+        }
+        /**
+         * A module's demo data, wired by the kernel rather than by each module writing the same
+         * subscription. The throw is swallowed on purpose: the workspace already exists and its
+         * owner is already in it, so a seeder that fails must cost them demo content and nothing
+         * else. What it must not do is fail silently — hence the log line, with what the module
+         * reported it wrote.
+         */
+        if (mod.demo) {
+          const seeder = mod.demo
+          const moduleId = mod.definition.id
+          await events.subscribe(
+            DEMO_SEED_EVENT,
+            async (e: EventEnvelope) => {
+              const p = e.payload as { workspaceId: string; actorId: string }
+              try {
+                const summary = await seeder.seed({
+                  kernel,
+                  workspaceId: p.workspaceId,
+                  actorId: p.actorId,
+                  actor: { ...system, userId: p.actorId as Principal['userId'] },
+                  now: new Date(),
+                })
+                log.info(
+                  { module: moduleId, workspaceId: p.workspaceId, ...summary },
+                  summary.skipped ? 'demo seed skipped; workspace not empty' : 'demo data seeded',
+                )
+              } catch (err) {
+                log.error(
+                  { module: moduleId, workspaceId: p.workspaceId, err: (err as Error).message },
+                  'demo seed failed',
+                )
+              }
+            },
+            { durable: `${opts.service}-${moduleId}-demo-seed` },
+          )
         }
       }
       // drop cached permissions on changes

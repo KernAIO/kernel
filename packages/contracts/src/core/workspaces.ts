@@ -27,6 +27,19 @@ export const CreateWorkspace = z.object({
   name: z.string().min(1).max(80),
   slug: Slug,
   description: z.string().max(500).optional(),
+  /**
+   * Fill the new workspace with each module's demo content.
+   *
+   * Core does not write any of it — it publishes `core.workspace.demo_seed` and every module that
+   * declares a `demo` seeder fills its own `mod_<id>` schema. So the work happens after this call
+   * returns, in whichever service hosts the module, and the workspace fills in over the next few
+   * seconds rather than arriving complete.
+   *
+   * `.optional()` rather than `.default(false)`: a default would put the key in the inferred output
+   * type and break every place that constructs one of these in a repository that publishes on its
+   * own cadence.
+   */
+  seedDemo: z.boolean().optional(),
 })
 export const UpdateWorkspace = Workspace.pick({
   name: true,

@@ -161,6 +161,76 @@ export interface ModuleHttpRoute {
   handler: (ctx: ModuleHttpContext) => Promise<unknown> | unknown
 }
 
+/**
+ * The event core publishes when a workspace was created with demo data asked for.
+ *
+ * Named here rather than in `@kernhq/contracts` for the same reason the purge events are named in
+ * core: only core emits it, and a module never constructs one. The kernel needs the string because
+ * it is the kernel — not each module — that subscribes a `demo` seeder to it.
+ */
+export const DEMO_SEED_EVENT = 'core.workspace.demo_seed'
+
+/** What a module's demo seeder is handed. */
+export interface DemoSeedContext {
+  kernel: Kernel
+  /** the workspace to fill; it exists, and the person who asked is already its owner */
+  workspaceId: string
+  /** who asked for the demo data — the workspace's creator */
+  actorId: string
+  /**
+   * The principal to write as: a service principal carrying `actorId`.
+   *
+   * Both halves matter. It is a **service** principal, so a seeder passes every permission and
+   * project-visibility check without the module having to special-case itself — the workspace was
+   * created a moment ago and has no roles or memberships beyond its owner. And it carries the
+   * owner's `userId`, so everything it writes is authored by the person who asked for it rather
+   * than by a nameless system actor: the demo issues have a reporter, the demo documents have an
+   * author, and the avatars on screen are theirs.
+   */
+  actor: Principal
+  /**
+   * The instant the seed is anchored to.
+   *
+   * Demo content has to read as *recent* whenever somebody looks at it, so dates are written
+   * relative to this rather than as literals — an issue "due next Tuesday", a shift yesterday. A
+   * fixed date in a seeder is what makes a demo workspace look abandoned three months after it was
+   * written.
+   */
+  now: Date
+}
+
+/**
+ * A module's demo data.
+ *
+ * Kern is judged from the first workspace somebody opens, and an empty product cannot be judged at
+ * all: every screen renders its empty state, so nothing shows what the module is *for*. A workspace
+ * created with "Fill it with demo data" ticked therefore asks every module to write its own —
+ * projects and issues for the tracker, a document tree for quire, people and shifts for HR.
+ *
+ * Three rules, and all three are what stop this becoming a liability:
+ *
+ *  1. **A module writes only into its own `mod_<id>` schema**, through the same tables its
+ *     procedures use. It is ordinary data, not a fixture: it can be edited and deleted from the
+ *     product like anything else, and nothing marks it as special afterwards.
+ *  2. **It must be idempotent, and the guard is "is this workspace empty?"** Delivery is
+ *     at-least-once, so a seeder can be asked twice for one workspace; seeding into a workspace
+ *     somebody has already used would drop unexplained rows into their data. Return early instead.
+ *  3. **It may never fail the thing that asked for it.** The kernel runs this off an event, after
+ *     the workspace exists and its creator is already inside it, and it logs a throw rather than
+ *     propagating one. A demo that does not appear is a disappointment; a workspace that could not
+ *     be created because its demo data failed is a defect.
+ */
+export interface ModuleDemo {
+  seed: (ctx: DemoSeedContext) => Promise<DemoSeedSummary> | DemoSeedSummary
+}
+
+/** What a seeder made, for the log line. `skipped` means the workspace already held data. */
+export interface DemoSeedSummary {
+  skipped?: boolean
+  /** rows written, by whatever the module counts in ({ projects: 3, issues: 24 }) */
+  created?: Record<string, number>
+}
+
 export interface ModuleDefinition<TSettings extends z.ZodTypeAny = z.ZodTypeAny> {
   id: string
   name: string
@@ -227,6 +297,11 @@ export interface ServerModule<TSettings extends z.ZodTypeAny = z.ZodTypeAny> {
       handler: (input: any, ctx: { kernel: Kernel; principal: Principal }) => Promise<any>
     }
   >
+  /**
+   * Demo content for a workspace created with demo data asked for. See `ModuleDemo` for the three
+   * rules a seeder has to follow; the kernel subscribes it to `DEMO_SEED_EVENT` for you.
+   */
+  demo?: ModuleDemo
   /** lifecycle */
   onBoot?: (kernel: Kernel) => Promise<void> | void
   onWorkspaceEnabled?: (workspaceId: string, kernel: Kernel) => Promise<void> | void
