@@ -294,9 +294,33 @@ export function createDatabase(opts: {
 
 /** Common column helpers for module schemas. */
 export { sql }
+/**
+ * The row-level-security statements for one tenant table, ready to paste into a module migration.
+ *
+ * The `drop policy if exists` is not decoration. `create policy` has no `if not exists` form at
+ * all, so the statement below is the one thing in a generated migration that cannot survive being
+ * applied twice — and a module migration that throws does not degrade its own feature, it takes
+ * down the whole host service, because the kernel migrates every module at boot. `core` hosts five.
+ *
+ * A replay is not hypothetical: drizzle keys applied migrations by content hash, so editing any
+ * file in the folder makes every file run again against a schema that already has its objects.
+ *
+ * This helper omitted the drop until 2026-09-06, while three module READMEs and three
+ * `drizzle.config.ts` comments named it as the way to write a policy — so an author following the
+ * documented path got a migration that worked once and threw for ever after. The first-party
+ * modules were hand-patched and their migration headers claimed the helper emitted what it did not.
+ *
+ * `enable`/`force row level security` need no guard; they set a flag and are already idempotent.
+ *
+ * This is deliberately the strict per-workspace policy with no `'*'` escape hatch. A table that
+ * genuinely serves every workspace at once — a registry a scheduler enumerates, say — needs a
+ * second policy admitting the `'*'` sentinel, written by hand. Never widen this one to admit an
+ * *unbound* transaction: that turns forgetting to bind into a silent leak instead of a refusal.
+ */
 export const rlsPolicySql = (schema: string, table: string) => `
 alter table "${schema}"."${table}" enable row level security;
 alter table "${schema}"."${table}" force row level security;
+drop policy if exists "${table}_ws_isolation" on "${schema}"."${table}";
 create policy "${table}_ws_isolation" on "${schema}"."${table}"
   using (workspace_id::text = current_setting('app.workspace_id', true))
   with check (workspace_id::text = current_setting('app.workspace_id', true));

@@ -127,6 +127,30 @@ describe.skipIf(!BASE_URL)('row-level security and the role the pool connects as
     expect(await widgetsIn(asSuperuser, WS_A)).toEqual(['a-1', 'a-2', 'b-1'])
   })
 
+  it('emits statements a module can apply twice, because migrations get replayed', async () => {
+    // The whole reason the helper carries a `drop policy if exists`. `create policy` has no
+    // `if not exists`, and drizzle keys applied migrations by content hash — so editing any file in
+    // a module's folder replays every file against a schema that already has its objects. A module
+    // migration that throws takes down the entire host service, not just its own feature.
+    //
+    // Applying the emitted SQL a second time is the only thing that proves this; reading it does
+    // not, which is how the helper shipped without the drop while three READMEs pointed at it.
+    const replay = new pg.Client({ connectionString: superuserUrl })
+    await replay.connect()
+    try {
+      await expect(replay.query(rlsPolicySql(SCHEMA, 'widgets'))).resolves.toBeDefined()
+      const { rows } = await replay.query<{ count: string }>(
+        `select count(*) from pg_policy p
+           join pg_class c on c.oid = p.polrelid
+          where c.relnamespace = $1::regnamespace and c.relname = 'widgets'`,
+        [SCHEMA],
+      )
+      expect(rows[0]?.count, 'the replay duplicated the policy instead of replacing it').toBe('1')
+    } finally {
+      await replay.end()
+    }
+  })
+
   it('reports the connection honestly', async () => {
     const owner = await inspectRls(asOwner.pool)
     expect(owner).toMatchObject({ role: roleName, superuser: false, bypassRls: false, enforced: true })
